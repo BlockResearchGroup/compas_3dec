@@ -32,7 +32,7 @@ setup(
     description="Add-on for Discrete Element Modelling Analysis using COMPAS framework and 3DEC by Itasca",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/BlockResearchGroup/compas_3dec",
+    url="https://github.com/BRG-research/compas_3dec",
     author="Alessandro Dell'Endice",
     author_email="dellendice@arch.ethz.ch",
     license="MIT license",
