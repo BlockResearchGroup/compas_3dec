@@ -1,6 +1,6 @@
 # compas_3dec
 
-Add-on for Discrete Element Modelling Analysis using COMPAS framework and 3DEC by Itasca
+Discrete Element Modelling add-on for the COMPAS framework using 3DEC by Itasca
 
 
 ## Getting started with this project
