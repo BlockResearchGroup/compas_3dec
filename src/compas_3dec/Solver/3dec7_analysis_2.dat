@@ -1,0 +1,18 @@
+model new
+program call 'support_geometry.dat'
+program call 'block_geometry.dat'
+block generate
+
+
+
+;block property density 1500 range group 'Supports'
+;BLOCK CONTACT GENERATE-SUBCONTACTS
+;block contact property stiffness-normal 20000000000.0 stiffness-shear 8000000000.0 friction 90
+;block property density 1000 range group 'Blocks'
+;block contact property stiffness-normal 40000000000.0 stiffness-shear 6000000000.0 friction 90
+
+
+
+
+
+

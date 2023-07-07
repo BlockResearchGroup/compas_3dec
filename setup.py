@@ -60,7 +60,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=requirements,
-    python_requires=">=3.8",
+    python_requires=">=3.6",
     extras_require=optional_requirements,
     entry_points={
         "console_scripts": [],
