@@ -9,7 +9,7 @@ flake8
 graphviz
 invoke >=0.14
 ipykernel
-ipython >=5.8
+ipython >=3.6
 isort
 m2r2
 matplotlib
