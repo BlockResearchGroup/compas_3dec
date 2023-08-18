@@ -1,0 +1,36 @@
+    fish define out_of_balance_concave
+      ii=io.out(' centr - result - veloc')
+      ic = block.contact.head
+      loop foreach ib block.list
+            bid = block.id(ib)
+            br=block.region(ib)
+        ii=io.out('block '+string(bid))
+        ii=io.out('region '+string(br))
+        ii=io.out('centroid'+' '+'='+' '+string(block.pos.x(ib))+','+string(block.pos.y(ib))+','+string(block.pos.z(ib))+' '+string(br))
+        ii=io.out('mass '+' '+string(block.mass(ib)))
+        ii=io.out('volume '+' '+string(block.vol(ib)))
+        vel=block.vel(ib)
+        rx=block.force.unbal.x(ib)
+        ry=block.force.unbal.y(ib)
+        rz=block.force.unbal.z(ib)
+        lx=block.force.app.x(ib)
+        ly=block.force.app.y(ib)
+        lz=block.force.app.z(ib)
+        ; if there is gravity, the block weight should be added
+        rz=block.force.unbal.z(ib)+block.mass(ib)*global.gravity.z
+        ii=io.out('forces'+' '+'='+' '+string(rx)+','+string(ry)+','+string(rz)+' '+string(br))
+        ii=io.out('moment'+' '+'='+' '+string(block.moment.x(ib))+','+string(block.moment.y(ib))+','+string(block.moment.z(ib))+' '+string(br))
+        ii=io.out('loads'+' '+'='+' '+string(lx)+','+string(ly)+','+string(lz)+' '+string(br))
+        ii=io.out('velocity'+' '+'='+' '+string(vel)+' '+string(br))
+        loop foreach vi block.gplist(ib)
+            ii = io.out('vertex'+' '+'='+' '+string(block.gp.pos(vi))+' '+string(block.region(block.gp.hostblock(vi))))
+            vi = block.gp.next(vi)
+       endloop
+      ib = block.next(ib)
+      endloop
+    end
+
+log on
+log-file 'init_state.txt'
+@out_of_balance_concave
+log off

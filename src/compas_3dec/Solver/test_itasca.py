@@ -1,9 +1,9 @@
 import itasca as it
-# import os
-# import json
-# import compas
-# import vec
-# from compas.datastructures import Mesh
+import os
+import json
+import compas
+import vec
+from compas.datastructures import Mesh
 it.command("python-reset-state false")
 
 it.command("""
@@ -14,12 +14,12 @@ program call 'block_geometry.dat'
 
 
 block contact generate-subcontacts
-block property density 1500
+block property density 1500 range group 'Supports'
 block contact property stiffness-normal 20000000000.0 stiffness-shear 8000000000.0 friction 90
 block contact material-table default property stiffness-normal 20000000000.0 stiffness-shear 8000000000.0
 block fix range group 'Supports'
 
-block property density 1000
+block property density 1000 range group 'ale'
 block contact generate-subcontacts
 block contact property stiffness-normal 40000000000.0 stiffness-shear 6000000000.0 friction 90
 block contact material-table default property stiffness-normal 40000000000.0 stiffness-shear 6000000000.0

@@ -14,6 +14,7 @@ class Solver():
         args = ["cd", project_path, "&&", self.executable_path] + sequence
         call(" ".join(args), shell=True)
 
+
 # if __name__ == "__main__":
 #     s = solver()
 #     s.run()

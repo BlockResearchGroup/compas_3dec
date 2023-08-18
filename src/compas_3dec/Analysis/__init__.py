@@ -39,6 +39,5 @@ from .analysis import (
 
 __all__ = [
     'Analysis',
-
     'selfweight'
 ]

@@ -1,0 +1,23 @@
+;___________________________________________________________________________
+def contact_concave
+  ic = contact_head
+  loop while ic#0
+  si = c_cx(ic)
+  ii=out('contact'+' '+'='+' '+string(ic)+' '+string(c_type(ic))+' '+string(b_id(c_b1(ic)))+' '+string(b_id(c_b2(ic)))+' '+string(c_pos(ic))+' '+string(c_n(ic)))
+  loop while si#0
+  ii=out('subcontact'+' '+'='+' '+string(cx_pos(si))+' '+string(cx_nforce(si))+' '+string(cx_sforce(si))+' '+string(si))
+  si = cx_next(si)
+  endloop
+  ic = c_next(ic)
+  endloop
+  end
+;___________________________________________________________________________
+
+
+
+;___________________________________________________________________________
+set log on
+set logf contact_grav.txt
+@contact_concave
+set log off
+;___________________________________________________________________________
