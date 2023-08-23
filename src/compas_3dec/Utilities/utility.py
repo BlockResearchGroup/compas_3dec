@@ -3,17 +3,18 @@ import time
 # from compas_3dec.Utilities import blocks_output
 # from compas_3dec.Utilities import save_blocks_output
 
-from compas_3dec.Utilities.fish import blocks_output
-from compas_3dec.Utilities.fish import save_blocks_output
-from compas_3dec.Utilities.fish import save_analysis
-from compas_3dec.Utilities.fish import restore_analysis
-from compas_3dec.Utilities.fish import contacts_output
-from compas_3dec.Utilities.fish import save_contacts_output
+from compas_3dec.utilities.fish import blocks_output
+from compas_3dec.utilities.fish import save_blocks_output
+from compas_3dec.utilities.fish import save_analysis
+from compas_3dec.utilities.fish import restore_analysis
+from compas_3dec.utilities.fish import contacts_output
+from compas_3dec.utilities.fish import save_contacts_output
 
 __all__ = ['overwrite_file',
            'threedec7_support_description',
            'threedec7_block_description',
-           'main_file'
+           'main_file',
+           'from_assembly'
            ]
 
 
@@ -164,7 +165,7 @@ def main_file(MechParam, path, title):
     block contact material-table default property stiffness-normal {1} stiffness-shear {2}
     block fix range group 'Supports'
 
-    block property density 1000 range group 'Alex'
+    block property density 1000 range group 'Blocks'
     block contact generate-subcontacts
     block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
     block contact material-table default property stiffness-normal {1} stiffness-shear {2}
@@ -193,3 +194,40 @@ def main_file(MechParam, path, title):
     main_string += save_analysis(title,'grav')
     overwrite_file(name, main_string)
     return
+
+
+
+def from_assembly(assembly, group):
+    from compas_3dec.datastructures import Assembly_3dec
+    """Construct a compas_3dec model starting from an assembly of 3D compas meshes with
+    supports already defined.
+
+    Parameters
+    ----------
+    Assembly:       class
+    group's name:   str
+
+    Returns
+    -------
+    :class:`Assembly_3dec`
+
+    Examples
+    --------
+    """
+
+    # Notes: add .json files generation if needed for post processing
+
+    assembly_3dec = Assembly_3dec()
+
+    for node in assembly.nodes():
+        if assembly.graph.node_attribute(node, "is_support"):
+            support = assembly.node_block(node)
+            node_support = assembly_3dec.add_block(support)
+            assembly_3dec.graph.node_attribute(node_support, "is_support", True)
+            assembly_3dec.graph.node_attribute(node_support, "3dec_group", 'Supports')
+        else:
+            block = assembly.node_block(node)
+            node_block = assembly_3dec.add_block(block)
+            assembly_3dec.graph.node_attribute(node_block, "3dec_group", group)
+
+    return assembly_3dec

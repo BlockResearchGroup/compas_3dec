@@ -1,12 +1,12 @@
 
 import os
 import compas
-from compas_3dec.Analysis import Analysis
-from compas_3dec.Geometry import Model
-from compas_3dec.Parameters import MechParam
+from compas_3dec.analysis import Analysis
+from compas_3dec.datastructures import Assembly_3dec
+from compas_3dec.mechanical import MechParam
 
 path = os.path.dirname(__file__)
-model = Model.from_rhino_select(path)
+model = Assembly_3dec.from_rhino_select(path)
 mechparam = MechParam.standard_material()
 
 

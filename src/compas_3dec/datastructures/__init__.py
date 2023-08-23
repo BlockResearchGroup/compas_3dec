@@ -1,10 +1,10 @@
 
 """
 ********************************************************************************
-compas_3dec.model
+compas_3dec.assembly_3dec
 ********************************************************************************
 
-.. currentmodule:: compas_3dec.model
+.. currentmodule:: compas_3dec.assembly_3dec
 
 Classes
 =======
@@ -26,10 +26,7 @@ Routines
 
 
 """
-from .model import Model
+from .assembly_3dec import Assembly_3dec
 
 
-
-__all__ = [
-    'Model'
-]
+__all__ = [name for name in dir() if not name.startswith('_')]

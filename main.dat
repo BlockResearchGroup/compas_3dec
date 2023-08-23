@@ -1,40 +1,28 @@
-__all__ = ['blocks_output',
-           'save_blocks_output',
-           'save_analysis',
-           'restore_analysis',
-           'contacts_output',
-           'save_contacts_output'
+;23/08/2023 13:42:48
+        model new
+        model large-strain on
+        program call 'support_geometry.dat'
+        program call 'block_geometry.dat'
 
-           ]
+        block contact generate-subcontacts
+        block property density 2200 range group 'Supports'
+        block contact property stiffness-normal 100000000000 stiffness-shear 70000000000 friction 35
+        block contact material-table default property stiffness-normal 100000000000 stiffness-shear 70000000000
+        block fix range group 'Supports'
 
+        block property density 1000 range group 'Alex'
+        block contact generate-subcontacts
+        block contact property stiffness-normal 100000000000 stiffness-shear 70000000000 friction 35
+        block contact material-table default property stiffness-normal 100000000000 stiffness-shear 70000000000
 
+        block mechanical damping global
 
-def blocks_output():
-    """FISH function: get blocks data from 3DEC analysis:
-
-    Returns
-    -------
-    per block:
-        region n in 3DEC
-            int
-        centroid
-            x,y,z (precision = 18)
-        mass
-            float [Kg]
-        volume
-            float [mc]
-        out of balance force
-            fx,fy,fz [N]
-        moments
-            mx,my,mz [Nm]
-        loads
-            lx,ly,lz [N]
-        velocity
-            (vx,vy,vz) [m/s]
-        list of vertices (coordinates)
-            x,y,z (precision = 18)
-    """
-    blocks_output = """
+        plot create
+        plot clear
+        plot active on
+        plot background 'white'
+        plot item create block
+        
 
 ;___________________________________________________________________________
 fish define blocks_output
@@ -70,28 +58,14 @@ fish define blocks_output
     endloop
 end
 ;___________________________________________________________________________
-"""
-    return blocks_output
 
-def save_blocks_output(state):
-    save_blocks_output = """
 ;___________________________________________________________________________
 log on
-log-file '{}_state.txt'
+log-file 'init_state.txt'
 @blocks_output
 log off
 ;___________________________________________________________________________
-""".format(state)
-    return save_blocks_output
 
-def contacts_output():
-    """FISH function: get contacts data from 3DEC analysis:
-
-    Returns
-    -------
-
-    """
-    contacts_output = """
 ;___________________________________________________________________________
 fish define contacts_output
   loop foreach ic block.contact.list()
@@ -109,44 +83,39 @@ fish define contacts_output
   endloop
   end
 ;___________________________________________________________________________
-"""
-    return contacts_output
 
-def save_contacts_output(state):
-    save_contacts_output = """
 ;___________________________________________________________________________
 log on
-log-file 'contact_{}.txt'
+log-file 'contact_init.txt'
 @contacts_output
 log off
 ;___________________________________________________________________________
-""".format(state)
-    return save_contacts_output
 
-def save_analysis(name, stage):
-    """
-    Stages:     init
-                grav
-                step
-    """
-    save_analysis = """
 ;_______SAVE ANALYSIS_______________________________________________________
-    model save "./{}_{}.sav" compress
+    model save "./Analysis_test_init.sav" compress
 ;___________________________________________________________________________
-""".format(name, stage)
-    return save_analysis
 
-def restore_analysis(name, stage):
-    """
-    Stages:     init
-                grav
-                step
-    """
-    restore_analysis = """
 ;_______RESTORE ANALYSIS____________________________________________________
-    model restore "./{}_{}.sav"
+    model restore "./Analysis_test_init.sav"
 ;___________________________________________________________________________
-""".format(name, stage)
-    return restore_analysis
 
+        model gravity 0 0 -9.806
+        model solve ratio-local 1e-06
+        
+;___________________________________________________________________________
+log on
+log-file 'grav_state.txt'
+@blocks_output
+log off
+;___________________________________________________________________________
 
+;___________________________________________________________________________
+log on
+log-file 'contact_grav.txt'
+@contacts_output
+log off
+;___________________________________________________________________________
+
+;_______SAVE ANALYSIS_______________________________________________________
+    model save "./Analysis_test_grav.sav" compress
+;___________________________________________________________________________

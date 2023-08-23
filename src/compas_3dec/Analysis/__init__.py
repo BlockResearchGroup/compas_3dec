@@ -37,7 +37,4 @@ from .analysis import (
 #     load_capacity
 # )
 
-__all__ = [
-    'Analysis',
-    'selfweight'
-]
+__all__ = [name for name in dir() if not name.startswith('_')]

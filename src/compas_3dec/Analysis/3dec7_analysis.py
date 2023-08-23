@@ -5,13 +5,13 @@ import json
 import compas
 import vec
 from compas_assembly.datastructures import Block
-from compas_3dec.Geometry import Model
+from compas_3dec.datastructures import Model
 #from compas_3dec.Geometry import Model
 
 HERE = os.path.dirname('C:/Users/adellend/Code/compas_3dec/src/compas_3dec/Geometry/')
 
 FILE = os.path.join(HERE, "mod.json")
-init_model = compas.json_load(FILE) 
+init_model = compas.json_load(FILE)
 
 
 bld = []
