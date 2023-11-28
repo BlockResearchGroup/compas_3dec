@@ -1,0 +1,130 @@
+;Test 03/09/2023 22:23:26
+
+
+;_______RESTORE ANALYSIS____________________________________________________
+    model restore "./Analysis_test_grav.sav"
+;___________________________________________________________________________
+block mechanical damping local
+
+
+
+;___________________________________________________________________________
+fish define blocks_output
+    ii = io.out('solve ratio = '+' '+string(mech.solve('ratio-local')))
+    ii = io.out('timestep = '+' '+string(mech.timestep))
+    ii=io.out(' centr - result - veloc')
+    ic = block.contact.head
+    loop foreach ib block.list
+        bid = block.id(ib)
+        br=block.region(ib)
+    ii=io.out('block '+string(bid))
+    ii=io.out('region '+string(br))
+    ii=io.out('centroid'+' '+'='+' '+string(block.pos.x(ib))+','+string(block.pos.y(ib))+','+string(block.pos.z(ib))+' '+string(br))
+    ii=io.out('mass '+' '+string(block.mass(ib)))
+    ii=io.out('volume '+' '+string(block.vol(ib)))
+    vel=block.vel(ib)
+    rx=block.force.unbal.x(ib)
+    ry=block.force.unbal.y(ib)
+    rz=block.force.unbal.z(ib)
+    lx=block.force.app.x(ib)
+    ly=block.force.app.y(ib)
+    lz=block.force.app.z(ib)
+    ; if there is gravity, the block weight should be added
+    rz=block.force.unbal.z(ib)+block.mass(ib)*global.gravity.z
+    ii=io.out('forces'+' '+'='+' '+string(rx)+','+string(ry)+','+string(rz)+' '+string(br))
+    ii=io.out('moment'+' '+'='+' '+string(block.moment.x(ib))+','+string(block.moment.y(ib))+','+string(block.moment.z(ib))+' '+string(br))
+    ii=io.out('loads'+' '+'='+' '+string(lx)+','+string(ly)+','+string(lz)+' '+string(br))
+    ii=io.out('velocity'+' '+'='+' '+string(vel)+' '+string(br))
+    loop foreach vi block.gplist(ib)
+        ii = io.out('vertex'+' '+'='+' '+string(block.gp.pos(vi))+' '+string(block.region(block.gp.hostblock(vi))))
+        vi = block.gp.next(vi)
+    endloop
+    ib = block.next(ib)
+    endloop
+end
+;___________________________________________________________________________
+
+;___________________________________________________________________________
+fish define contacts_output
+  loop foreach ic block.contact.list()
+  ii=io.out('contact'+' '+'='+' '+string(ic)+' '+string(block.contact.type(ic))+' '+string(block.id(block.contact.b1(ic)))+' '+string(block.id(block.contact.b2(ic)))+' '+string(block.contact.pos(ic))+' '+string(block.contact.normal(ic)))
+    loop foreach si block.contact.subcontactlist(ic)
+        ii=io.out('subcontact'+' '+'='+' '+string(block.subcontact.pos(si))+' '+string(block.subcontact.force.norm(si))+' '+string(block.subcontact.force.shear(si))+' '+string(si)+' '+string(block.subcontact.disp.norm(si))+' '+string(block.subcontact.disp.shear(si)))
+        fi = block.subcontact.face(si)
+        if fi then
+            fo = block.face.bface(fi)
+            ii = io.out('face centroid'+' '+'='+' '+string(block.face.pos(fo)))
+        endif
+        si = block.subcontact.next(si)
+    endloop
+  ic = block.contact.next(ic)
+  endloop
+  end
+;___________________________________________________________________________
+;____________________________________________________________________
+;_____DISPLACEMENT_____ Step_1___x_0.0mm_y_0.0mm_z_0.0mm
+;____________________________________________________________________
+block apply velocity-x 0.0063666141231 range id 5
+block apply velocity-y 5.58663556086e-08 range id 5
+block apply velocity-z -0.0189595945264 range id 5
+model cycle 81085
+;_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+;FISH FUNCTIONS
+
+;___________________________________________________________________________
+log on
+log-file 'step_01___x_0.0mm_y_0.0mm_z_0.0mm.txt'
+@blocks_output
+log off
+;___________________________________________________________________________
+
+
+
+;___________________________________________________________________________
+log on
+log-file 'step_contact_01___x_0.0mm_y_0.0mm_z_0.0mm.txt'
+@contacts_output
+log off
+;___________________________________________________________________________
+
+
+;_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+;_____EQUILIBRIUM_CHECK_____
+block apply velocity-x 0 range id 5
+block apply velocity-y 0 range id 5
+block apply velocity-z 0 range id 5
+model solve unbalanced-maximum 0.00001 time 3
+
+;___________________________________________________________________________
+log on
+log-file 'step_01_equ__x_0.0mm_y_0.0mm_z_0.0mm.txt'
+@blocks_output
+log off
+;___________________________________________________________________________
+
+
+
+;___________________________________________________________________________
+log on
+log-file 'step_contact_equ_01__x_0.0mm_y_0.0mm_z_0.0mm.txt'
+@contacts_output
+log off
+;___________________________________________________________________________
+
+
+;_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+;_______SAVE ANALYSIS_______________________________________________________
+    model save "./step_equ_01__x_0.0mm_y_0.0mm_z_0.0mm_d.sav" compress
+;___________________________________________________________________________
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+;_______SAVE ANALYSIS_______________________________________________________
+    model save "./Analysis_test_displ.sav" compress
+;___________________________________________________________________________
+
+
+exit()

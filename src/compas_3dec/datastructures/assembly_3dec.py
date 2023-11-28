@@ -2,13 +2,16 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-import os
-import compas
 from compas.datastructures import Graph
 from compas_assembly.datastructures import Assembly, Block
-from compas_3dec.utilities import threedec7_support_description,threedec7_block_description,overwrite_file
+from compas.datastructures import mesh_weld
+from compas.datastructures import mesh_explode
 
-__all__ = ['from_rhino_select', 'from_assembly','geometry_dat']
+
+__all__ = ['from_rhino_select_convex',
+           'from_rhino_select_concave',
+           'from_assembly',
+           ]
 
 class Assembly_3dec(Assembly):
     """A data structure for managing the analysis of discrete geometries
@@ -45,7 +48,7 @@ class Assembly_3dec(Assembly):
                 "block":            None,
                 "mass":             None,
                 "weight":           None,
-                "volume":           None,
+                "density":          None,
                 "is_support":       False,
                 "section":          None,
                 "mesh_size":        None,
@@ -53,6 +56,7 @@ class Assembly_3dec(Assembly):
                 "3dec_block_ID":    None,
                 "3dec_group":       None,
                 "3dec_unbal_force": None,
+                "3dec_velocity":    None,
                 "3dec_moment":      None,
                 "3dec_step":        None,
                 "displacement":     [0, 0, 0, 0, 0, 0],
@@ -65,25 +69,16 @@ class Assembly_3dec(Assembly):
         )
 
     @classmethod
-    def from_rhino_select(cls, path):
-        """Construct a compas_3dec model by manually selecting Rhino meshes.
+    def from_rhino_select_convex(cls):
+        """Construct an assembly by manually selecting Rhino convex meshes.
         At least one mesh as a support and one mesh as a block should be
-        selected.`
-
-        Parameters
-        ----------
-        guids : list[str]
-            A list of GUIDs identifying the meshes representing the blocks of the assembly.
+        selected. The meshes in Rhino should be closed.
 
         Returns
         -------
         :class:`Assembly_3dec`
-
-        Examples
-        --------
+            The assembly datastructure with Supports and Blocks defined.
         """
-
-        # Notes: delete .json files generation if not anymore needed for post processing
 
         import compas_rhino
         from compas_rhino.geometry import RhinoMesh
@@ -91,59 +86,86 @@ class Assembly_3dec(Assembly):
 
         assembly_3dec = cls()
         supports = select_meshes('Select support meshes')
-        support_meshes = []
         for guid in supports:
-            support_mesh = []
-            submeshes = compas_rhino.rs.ExplodeMeshes(guid)
-            for submesh in submeshes:
-                mesh = RhinoMesh.from_guid(submesh)
-                compas_mesh = mesh.to_compas()
-                support_mesh.append(compas_mesh)
-                assembly_3dec.add_block(compas_mesh)
-                for node in assembly_3dec.nodes():
-                    assembly_3dec.graph.node_attribute(node, "is_support", True)
-                    assembly_3dec.graph.node_attribute(node, "3dec_group", 'Supports')
-            support_meshes.append(support_mesh)
-            compas_rhino.rs.UnselectAllObjects()
-        FILE = os.path.join(path, 'supports.json')
-        compas.json_dump(support_meshes, FILE, True)
+            mesh = RhinoMesh.from_guid(guid)
+            compas_mesh = mesh.to_compas()
+            compas_mesh = mesh_weld(compas_mesh)
+            s_node = assembly_3dec.add_block(compas_mesh)
+            assembly_3dec.graph.node_attribute(s_node, "is_support", True)
+            assembly_3dec.graph.node_attribute(s_node, "3dec_group", 'Supports')
+        compas_rhino.rs.UnselectAllObjects()
 
-        # pro function: multiple groups
-        # while True:
-        out = compas_rhino.rs.GetString("Input Block's group")
-        # if not out:
-        #     break
-
-        blocks = select_meshes('Select meshes belonging to {}'.format(out))
-        block_meshes = []
+        blocks = select_meshes('Select block meshes')
         for guid in blocks:
-            block_mesh = []
-            submeshes = compas_rhino.rs.ExplodeMeshes(guid)
-            for submesh in submeshes:
-                mesh = RhinoMesh.from_guid(submesh)
-                compas_mesh = mesh.to_compas()
-                block_mesh.append(compas_mesh)
-                assembly_3dec.add_block(compas_mesh)
-                for node in assembly_3dec.nodes():
-                    if assembly_3dec.graph.node_attribute(node, "is_support") == False:
-                        assembly_3dec.graph.node_attribute(node, "3dec_group", str(out))
-            block_meshes.append(block_mesh)
-            compas_rhino.rs.UnselectAllObjects()
-        FILE = os.path.join(path, '{}.json'.format(out))
-        FILE_a = os.path.join(path, 'assembly_3dec.json')
-        compas.json_dump(block_meshes, FILE, True)
-        compas.json_dump(assembly_3dec,FILE_a, True)
+            mesh = RhinoMesh.from_guid(guid)
+            compas_mesh = mesh.to_compas()
+            compas_mesh = mesh_weld(compas_mesh)
+            b_node = assembly_3dec.add_block(compas_mesh)
+            assembly_3dec.graph.node_attribute(b_node, "3dec_group", 'Blocks')
+        compas_rhino.rs.UnselectAllObjects()
         return assembly_3dec
 
     @classmethod
-    def from_assembly(cls, assembly, group):
+    def from_rhino_select_concave(cls):
+        """Construct an assembly by manually selecting Rhino concave or
+        convex meshes. At least one mesh as a support and one mesh as a
+        block should be selected. The meshes in Rhino should be closed
+        and with welded vertices. The concave meshes should be made out
+        of convex meshes joined together in Rhino.
+
+        Returns
+        -------
+        :class:`Assembly_3dec`
+            The assembly datastructure with Supports, Blocks and compound
+            groups defined.
+        """
+        import compas_rhino
+        from compas_rhino.geometry import RhinoMesh
+        from compas_rhino.utilities import select_meshes
+
+        assembly_3dec = cls()
+        supports = select_meshes('Select support meshes')
+        support_count = 0
+        for guid in supports:
+            s_comp_group = 'Support_comp_' + str(support_count)
+            mesh = RhinoMesh.from_guid(guid)
+            compas_mesh = mesh.to_compas()
+            submeshes = mesh_explode(compas_mesh)
+            for submesh in submeshes:
+                compas_mesh = mesh_weld(submesh)
+                s_node = assembly_3dec.add_block(compas_mesh)
+                assembly_3dec.graph.node_attribute(s_node, "is_support", True)
+                assembly_3dec.graph.node_attribute(s_node, "3dec_group", 'Supports')
+                assembly_3dec.graph.node_attribute(s_node, "comp_group", str(s_comp_group))
+            support_count += 1
+        compas_rhino.rs.UnselectAllObjects()
+
+        blocks = select_meshes('Select block meshes')
+        block_count = 0
+        for guid in blocks:
+            b_comp_group = 'Block_comp_' + str(block_count)
+            mesh = RhinoMesh.from_guid(guid)
+            compas_mesh = mesh.to_compas()
+            submeshes = mesh_explode(compas_mesh)
+            for submesh in submeshes:
+                compas_mesh = mesh_weld(submesh)
+                b_node = assembly_3dec.add_block(compas_mesh)
+                assembly_3dec.graph.node_attribute(b_node, "3dec_group", 'Blocks')
+                assembly_3dec.graph.node_attribute(b_node, "comp_group", str(b_comp_group))
+            block_count += 1
+        compas_rhino.rs.UnselectAllObjects()
+        return assembly_3dec
+
+    @classmethod
+    def from_assembly(cls, assembly):
         """Construct a compas_3dec model starting from an assembly of 3D compas meshes with
-        supports already defined.
+        supports already defined. In the case of complex concave blocks, each block needs to
+         be first subdivided in smaller convex components and then joined using the command
+         "compas.datastructures.meshes_join".
 
         Parameters
         ----------
         Assembly:       class
-        group's name:   str
 
         Returns
         -------
@@ -152,11 +174,8 @@ class Assembly_3dec(Assembly):
         Examples
         --------
         """
-
         # Notes: add .json files generation if needed for post processing
-
         assembly_3dec = cls()
-
         for node in assembly.nodes():
             if assembly.graph.node_attribute(node, "is_support"):
                 support = assembly.node_block(node)
@@ -166,29 +185,5 @@ class Assembly_3dec(Assembly):
             else:
                 block = assembly.node_block(node)
                 node_block = assembly_3dec.add_block(block)
-                assembly_3dec.graph.node_attribute(node_block, "3dec_group", group)
-
+                assembly_3dec.graph.node_attribute(node_block, "3dec_group", 'Blocks')
         return assembly_3dec
-
-
-    @classmethod
-    def geometry_dat(cls, path):
-        assembly_3dec = cls()
-
-        string_s = ';__create geometry__' + '\n'
-        string_b = ';__create geometry__' + '\n'
-        geometry_path_s = os.path.join(path, 'support_geometry.dat')
-        geometry_path_b = os.path.join(path, 'block_geometry.dat')
-        for node in assembly_3dec.nodes():
-            print(node)
-            if assembly_3dec.graph.node_attribute(node, "is_support") == True:
-                support = assembly_3dec.node_block(node)
-                string_s += threedec7_support_description(support,node, precision=10)
-            else:
-                block = assembly_3dec.node_block(node)
-                group = assembly_3dec.node_attribute(node, "3dec_group")
-                string_b += threedec7_block_description(
-                block, group,node, precision=10)
-        overwrite_file(geometry_path_s, string_s)
-        overwrite_file(geometry_path_b, string_b)
-        return

@@ -39,6 +39,7 @@ def blocks_output():
 ;___________________________________________________________________________
 fish define blocks_output
     ii = io.out('solve ratio = '+' '+string(mech.solve('ratio-local')))
+    ii = io.out('timestep = '+' '+string(mech.timestep))
     ii=io.out(' centr - result - veloc')
     ic = block.contact.head
     loop foreach ib block.list
@@ -77,7 +78,7 @@ def save_blocks_output(state):
     save_blocks_output = """
 ;___________________________________________________________________________
 log on
-log-file '{}_state.txt'
+log-file '{}.txt'
 @blocks_output
 log off
 ;___________________________________________________________________________
@@ -116,7 +117,7 @@ def save_contacts_output(state):
     save_contacts_output = """
 ;___________________________________________________________________________
 log on
-log-file 'contact_{}.txt'
+log-file '{}.txt'
 @contacts_output
 log off
 ;___________________________________________________________________________

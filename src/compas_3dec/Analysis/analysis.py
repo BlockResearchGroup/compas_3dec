@@ -9,11 +9,11 @@ from compas_3dec.utilities import threedec7_support_description
 from compas_3dec.utilities import threedec7_block_description
 # from compas_3dec.utilities import main_file
 from compas_3dec.utilities import blocks_output, save_blocks_output, save_analysis, restore_analysis, contacts_output, save_contacts_output
-
-
+from compas_3dec.utilities import find_duplicate_dict
 
 __all__ = ['selfweight',
            'geometry_dat',
+           'geometry_assembly_dat',
            'main_dat'
            ]
 
@@ -51,17 +51,17 @@ class Analysis():
                 # create support_geometry.dat
                 name = 'support_geometry.dat'
                 geometry_path_s = os.path.join(path, name)
-                string_s += threedec7_support_description(support,node, precision=10)
+                string_s += threedec7_support_description(support, node, precision=10)
             else:
                 block = model.node_block(node)
                 group = model.graph.node_attribute(node, "3dec_group")
                 name = 'block_geometry.dat'
                 geometry_path_b = os.path.join(path, name)
                 string_b += threedec7_block_description(
-                block, group,node, precision=10)
+                    block, group, node, precision=10)
         overwrite_file(geometry_path_s, string_s)
         overwrite_file(geometry_path_b, string_b)
-        main_file(mechparam, path,title)
+        # main_dat(mechparam, path,title)
         return
 
     @classmethod
@@ -76,28 +76,76 @@ class Analysis():
         path : _type_
             _description_
         """
-        # title = compas_rhino.rs.GetString("Analysis Title")
         string_s = ';__create geometry__' + '\n'
         string_b = ';__create geometry__' + '\n'
+        s_comp_dict = {}
+        b_comp_dict = {}
         for node in assembly_3dec.nodes():
             if assembly_3dec.graph.node_attribute(node, "is_support") == True:
                 support = assembly_3dec.node_block(node)
                 name = 'support_geometry.dat'
                 geometry_path_s = os.path.join(path, name)
-                string_s += threedec7_support_description(support,node, precision=10)
+                node_i = int(node)
+                s_comp_group = assembly_3dec.graph.node_attribute(node_i, "comp_group")
+                s_comp_dict[node_i] = s_comp_group
+                string_s += threedec7_support_description(support, node_i, precision=10)
             else:
                 block = assembly_3dec.node_block(node)
                 group = assembly_3dec.graph.node_attribute(node, "3dec_group")
                 name = 'block_geometry.dat'
                 geometry_path_b = os.path.join(path, name)
+                node_j = int(node)
+                b_comp_group = assembly_3dec.graph.node_attribute(node_j, "comp_group")
+                b_comp_dict[node_j] = b_comp_group
                 string_b += threedec7_block_description(
-                block, group,node, precision=10)
+                    block, group, node_j, precision=10)
+
+        joined_block_names = find_duplicate_dict(b_comp_dict)
+        for j in joined_block_names:
+            string_b += ('block join range region {}'.format(j)) +'\n'
+        joined_block_s_names = find_duplicate_dict(s_comp_dict)
+        for js in joined_block_s_names:
+            string_s += ('block join range region {}'.format(js)) +'\n'
         overwrite_file(geometry_path_s, string_s)
         overwrite_file(geometry_path_b, string_b)
         return
 
     @classmethod
-    def main_dat(cls,parameters, path,title):
+    def geometry_assembly_dat(cls, assembly_3dec, path):
+        """Create .dat files for 3DEC with the Block's geometry from an
+        Assembly_3DEC object.
+
+        Parameters
+        ----------
+        assembly_3dec : _type_
+            _description_
+        path : _type_
+            _description_
+        """
+        string_s = ';__create geometry__' + '\n'
+        string_b = ';__create geometry__' + '\n'
+
+        for node in assembly_3dec.nodes():
+            if assembly_3dec.graph.node_attribute(node, "is_support") == True:
+                support = assembly_3dec.node_block(node)
+                name = 'support_geometry.dat'
+                geometry_path_s = os.path.join(path, name)
+                node_i = int(node)
+                string_s += threedec7_support_description(support, node_i, precision=10)
+            else:
+                block = assembly_3dec.node_block(node)
+                group = assembly_3dec.graph.node_attribute(node, "3dec_group")
+                name = 'block_geometry.dat'
+                geometry_path_b = os.path.join(path, name)
+                node_j = int(node)
+                string_b += threedec7_block_description(
+                    block, group, node_j, precision=10)
+        overwrite_file(geometry_path_s, string_s)
+        overwrite_file(geometry_path_b, string_b)
+        return
+
+    @classmethod
+    def main_dat(cls, parameters, path, title):
         parameters = MechParam.standard_material()
         name = 'main.dat'
         main_path = os.path.join(path, name)
@@ -129,18 +177,18 @@ class Analysis():
         """.format(parameters.parameters['density'], parameters.parameters['jkn'], parameters.parameters['jks'], parameters.parameters['friction'], 'global')
         main_string += create_header
         main_string += blocks_output()
-        main_string += save_blocks_output('init')
+        main_string += save_blocks_output('init_state')
         main_string += contacts_output()
-        main_string += save_contacts_output('init')
-        main_string += save_analysis(title,'init')
-        main_string += restore_analysis(title,'init')
+        main_string += save_contacts_output('contacts_init')
+        main_string += save_analysis(title, 'init')
+        main_string += restore_analysis(title, 'init')
         main_string += """
         model gravity 0 0 -9.806
-        model solve ratio-local 1e-06
+        model solve ratio-local 1e-06 time 1
         """
-        main_string += save_blocks_output('grav')
-        main_string += save_contacts_output('grav')
-        main_string += save_analysis(title,'grav')
+        main_string += save_blocks_output('grav_state')
+        main_string += save_contacts_output('contact_grav')
+        main_string += save_analysis(title, 'grav')
+        main_string += 'exit()'
         overwrite_file(main_path, main_string)
-
         return

@@ -38,7 +38,8 @@ class MechParam():
         mechparam = cls()
         mechparam.parameters['density'] = 2200
         mechparam.parameters['jkn'] = 100000000000
-        mechparam.parameters['jks'] = 70000000000
+        mechparam.parameters['jkn'] = 90000000000
+        mechparam.parameters['jks'] = 50000000000
         mechparam.parameters['friction'] = 35
 
         return mechparam

@@ -1,0 +1,63 @@
+;08/11/2023 15:08:38
+        model new
+        model large-strain on
+        program call 'support_geometry.dat'
+        program call 'block_geometry.dat'
+
+        block contact generate-subcontacts
+        block property density 2200 range group 'Supports'
+        block contact property stiffness-normal 90000000000 stiffness-shear 50000000000 friction 35
+        block contact material-table default property stiffness-normal 90000000000 stiffness-shear 50000000000
+        block fix range group 'Supports'
+
+        block property density 1000 range group 'Blocks'
+        block contact generate-subcontacts
+        block contact property stiffness-normal 90000000000 stiffness-shear 50000000000 friction 35
+        block contact material-table default property stiffness-normal 90000000000 stiffness-shear 50000000000
+
+        block mechanical damping global
+
+        plot create
+        plot clear
+        plot active on
+        plot background 'white'
+        plot item create block
+        
+
+
+;_______SAVE ANALYSIS_______________________________________________________
+    model save "./Analysis_test_init.sav" compress
+;___________________________________________________________________________
+
+;_______RESTORE ANALYSIS____________________________________________________
+    model restore "./Analysis_test_init.sav"
+;___________________________________________________________________________
+
+        model gravity 0 0 -9.806
+        model solve ratio-local 1e-06 time 1
+        
+;_______SAVE ANALYSIS_______________________________________________________
+    model save "./Analysis_test_grav.sav" compress
+;___________________________________________________________________________
+
+;def mech
+;    ale = block.mech.ratio()
+;    end
+;
+;[ale]
+
+;[mech.solve('ratio-local')]
+
+fish define result
+    ale = mech.solve('ratio-local')
+    return ale
+    end
+    
+    
+    ;io.out(ale)
+;    if ale >= 1.0000e-06 then io.out('equilibrium not reached')
+;    else  ii.out('no')
+;   end
+   
+[result]
+

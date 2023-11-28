@@ -1,3 +1,4 @@
+
 """
 ********************************************************************************
 compas_3dec.analysis
@@ -24,12 +25,13 @@ Routines
     selfweight
     displacement_capacity
     load_capacity
+    geometry_dat
+    main_dat
+
 
 """
 
-from .analysis import (
-    Analysis
-)
+from .analysis import Analysis
 
 # from .routines import (
 #     selfweight,
