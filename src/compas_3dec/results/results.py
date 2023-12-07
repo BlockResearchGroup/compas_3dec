@@ -1,6 +1,2 @@
 import os
 import compas
-
-
-
-

@@ -1,12 +1,12 @@
-__all__ = ['blocks_output',
-           'save_blocks_output',
-           'save_analysis',
-           'restore_analysis',
-           'contacts_output',
-           'save_contacts_output'
-
-           ]
-
+__all__ = [
+    "blocks_output",
+    "save_blocks_output",
+    "save_analysis",
+    "restore_analysis",
+    "contacts_output",
+    "save_contacts_output",
+    "gravity_equilibrium"
+]
 
 
 def blocks_output():
@@ -74,6 +74,7 @@ end
 """
     return blocks_output
 
+
 def save_blocks_output(state):
     save_blocks_output = """
 ;___________________________________________________________________________
@@ -82,8 +83,11 @@ log-file '{}.txt'
 @blocks_output
 log off
 ;___________________________________________________________________________
-""".format(state)
+""".format(
+        state
+    )
     return save_blocks_output
+
 
 def contacts_output():
     """FISH function: get contacts data from 3DEC analysis:
@@ -113,6 +117,7 @@ fish define contacts_output
 """
     return contacts_output
 
+
 def save_contacts_output(state):
     save_contacts_output = """
 ;___________________________________________________________________________
@@ -121,8 +126,11 @@ log-file '{}.txt'
 @contacts_output
 log off
 ;___________________________________________________________________________
-""".format(state)
+""".format(
+        state
+    )
     return save_contacts_output
+
 
 def save_analysis(name, stage):
     """
@@ -134,8 +142,11 @@ def save_analysis(name, stage):
 ;_______SAVE ANALYSIS_______________________________________________________
     model save "./{}_{}.sav" compress
 ;___________________________________________________________________________
-""".format(name, stage)
+""".format(
+        name, stage
+    )
     return save_analysis
+
 
 def restore_analysis(name, stage):
     """
@@ -147,7 +158,53 @@ def restore_analysis(name, stage):
 ;_______RESTORE ANALYSIS____________________________________________________
     model restore "./{}_{}.sav"
 ;___________________________________________________________________________
-""".format(name, stage)
+""".format(
+        name, stage
+    )
     return restore_analysis
+
+
+def gravity_equilibrium(steps, keyword, ratio, time, final_ratio, time_final_step):
+    """_summary_
+
+    Parameters
+    ----------
+    steps : _type_
+        _description_
+    keyword : _type_
+        _description_
+    ratio : _type_
+        _description_
+    time : _type_
+        _description_
+    final_ratio : _type_
+        _description_
+    time_final_step : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+
+    g = (-9.806 / steps)
+    g = round(g, 3)
+    text = ';GRAVITY APPLIED IN' + ' ' + str(steps) + ' ' + 'STEPS ' + '\n'
+    text += ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
+    for i in range(steps):
+        gr = g * (i+1)
+        # header = ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
+        header = ';_____GRAVITY_____' + " " + 'step' + " " + str(i+1) + '\n'
+        header += 'model gravity' + ' ' + '0' + " " + '0' + " " + str(gr) + '\n'
+        header += 'model solve' + " " + str(keyword) +  " " + str(ratio) + \
+            " " + 'time' + " " + str(time) + '\n'
+        text += header
+    text += 'model solve' + " " + str(keyword) + " " +str(final_ratio) + \
+            " " + 'time' + " " + str(time_final_step) + '\n'
+    text += ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
+    return text
+
+
 
 

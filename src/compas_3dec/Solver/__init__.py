@@ -20,7 +20,4 @@ from __future__ import print_function
 from .solver import Solver
 
 
-__all__ = [
-    'Solver',
-    'run'
-]
+__all__ = ["Solver", "run"]

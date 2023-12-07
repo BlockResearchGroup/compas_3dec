@@ -1,25 +1,40 @@
 import os
-import compas
 import time
-# import compas_rhino
 from compas_3dec.datastructures import Assembly_3dec
 from compas_3dec.mechanical import MechParam
-from compas_3dec.utilities import overwrite_file
-from compas_3dec.utilities import threedec7_support_description
-from compas_3dec.utilities import threedec7_block_description
-# from compas_3dec.utilities import main_file
-from compas_3dec.utilities import blocks_output, save_blocks_output, save_analysis, restore_analysis, contacts_output, save_contacts_output
-from compas_3dec.utilities import find_duplicate_dict
+from compas_3dec.utilities import (
+    blocks_output,
+    save_blocks_output,
+    save_analysis,
+    restore_analysis,
+    contacts_output,
+    save_contacts_output,
+    gravity_equilibrium,
+    find_duplicate_dict,
+    overwrite_file,
+    threedec7_support_description,
+    threedec7_block_description
 
-__all__ = ['selfweight',
-           'geometry_dat',
-           'geometry_assembly_dat',
-           'main_dat'
-           ]
+)
 
+__all__ = ["selfweight", "geometry_dat_concave", "geometry_dat_convex", "main_dat_txt"]
 
-class Analysis():
+class Analysis:
     """The Analysis class contains all the methods to setup a 3DEC analysis.
+
+    Attributes
+    ----------
+    name : str
+        Name of the analysis.
+
+    settings : dict
+        Dictionary to store analysis settings.
+
+    assembly_3dec : compas_3dec.assembly.Assembly3D
+        3DEC assembly object.
+
+    mechparam : compas_3dec.parameters.MechParam
+        3DEC mechanical parameters.
 
     Examples
     --------
@@ -40,34 +55,11 @@ class Analysis():
         self.mechparam = None
         self.name = name
 
-    @classmethod
-    def selfweight(cls, model, mechparam, path):
-        # title = compas_rhino.rs.GetString("Analysis Title")
-        string_s = ';__create geometry__' + '\n'
-        string_b = ';__create geometry__' + '\n'
-        for node in model.nodes():
-            if model.graph.node_attribute(node, "is_support") == True:
-                support = model.node_block(node)
-                # create support_geometry.dat
-                name = 'support_geometry.dat'
-                geometry_path_s = os.path.join(path, name)
-                string_s += threedec7_support_description(support, node, precision=10)
-            else:
-                block = model.node_block(node)
-                group = model.graph.node_attribute(node, "3dec_group")
-                name = 'block_geometry.dat'
-                geometry_path_b = os.path.join(path, name)
-                string_b += threedec7_block_description(
-                    block, group, node, precision=10)
-        overwrite_file(geometry_path_s, string_s)
-        overwrite_file(geometry_path_b, string_b)
-        # main_dat(mechparam, path,title)
-        return
 
     @classmethod
-    def geometry_dat(cls, assembly_3dec, path):
-        """Create .dat files for 3DEC with the Block's geometry from an
-        Assembly_3DEC object.
+    def geometry_dat_concave(cls, assembly_3dec, path):
+        """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
+        Assembly_3DEC object with concave blocks.
 
         Parameters
         ----------
@@ -75,15 +67,19 @@ class Analysis():
             _description_
         path : _type_
             _description_
+
+        Returns
+        -------
+        :files:`block_geometry.dat and support_geometry.dat`
         """
-        string_s = ';__create geometry__' + '\n'
-        string_b = ';__create geometry__' + '\n'
+        string_s = ";__create geometry__" + "\n"
+        string_b = ";__create geometry__" + "\n"
         s_comp_dict = {}
         b_comp_dict = {}
         for node in assembly_3dec.nodes():
             if assembly_3dec.graph.node_attribute(node, "is_support") == True:
                 support = assembly_3dec.node_block(node)
-                name = 'support_geometry.dat'
+                name = "support_geometry.dat"
                 geometry_path_s = os.path.join(path, name)
                 node_i = int(node)
                 s_comp_group = assembly_3dec.graph.node_attribute(node_i, "comp_group")
@@ -92,28 +88,27 @@ class Analysis():
             else:
                 block = assembly_3dec.node_block(node)
                 group = assembly_3dec.graph.node_attribute(node, "3dec_group")
-                name = 'block_geometry.dat'
+                name = "block_geometry.dat"
                 geometry_path_b = os.path.join(path, name)
                 node_j = int(node)
                 b_comp_group = assembly_3dec.graph.node_attribute(node_j, "comp_group")
                 b_comp_dict[node_j] = b_comp_group
-                string_b += threedec7_block_description(
-                    block, group, node_j, precision=10)
+                string_b += threedec7_block_description(block, group, node_j, precision=10)
 
         joined_block_names = find_duplicate_dict(b_comp_dict)
         for j in joined_block_names:
-            string_b += ('block join range region {}'.format(j)) +'\n'
+            string_b += ("block join range region {}".format(j)) + "\n"
         joined_block_s_names = find_duplicate_dict(s_comp_dict)
         for js in joined_block_s_names:
-            string_s += ('block join range region {}'.format(js)) +'\n'
+            string_s += ("block join range region {}".format(js)) + "\n"
         overwrite_file(geometry_path_s, string_s)
         overwrite_file(geometry_path_b, string_b)
         return
 
     @classmethod
-    def geometry_assembly_dat(cls, assembly_3dec, path):
-        """Create .dat files for 3DEC with the Block's geometry from an
-        Assembly_3DEC object.
+    def geometry_dat_convex(cls, assembly_3dec, path):
+        """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
+        Assembly_3DEC object with convex blocks.
 
         Parameters
         ----------
@@ -121,35 +116,55 @@ class Analysis():
             _description_
         path : _type_
             _description_
+
+        Returns
+        -------
+        :files:`block_geometry.dat and support_geometry.dat`
         """
-        string_s = ';__create geometry__' + '\n'
-        string_b = ';__create geometry__' + '\n'
+        string_s = ";__create geometry__" + "\n"
+        string_b = ";__create geometry__" + "\n"
 
         for node in assembly_3dec.nodes():
             if assembly_3dec.graph.node_attribute(node, "is_support") == True:
                 support = assembly_3dec.node_block(node)
-                name = 'support_geometry.dat'
+                name = "support_geometry.dat"
                 geometry_path_s = os.path.join(path, name)
                 node_i = int(node)
                 string_s += threedec7_support_description(support, node_i, precision=10)
             else:
                 block = assembly_3dec.node_block(node)
                 group = assembly_3dec.graph.node_attribute(node, "3dec_group")
-                name = 'block_geometry.dat'
+                name = "block_geometry.dat"
                 geometry_path_b = os.path.join(path, name)
                 node_j = int(node)
-                string_b += threedec7_block_description(
-                    block, group, node_j, precision=10)
+                string_b += threedec7_block_description(block, group, node_j, precision=10)
         overwrite_file(geometry_path_s, string_s)
         overwrite_file(geometry_path_b, string_b)
         return
 
     @classmethod
-    def main_dat(cls, parameters, path, title):
+    def main_dat_txt(cls, parameters, path, title):
+        """Create the main.dat file essential for running a 3DEC analysis. Once in
+        3DEC, it calls the .dat files with the geometry of blocks and supports, gets the
+        mechanical parameters, and applies gravity to the model. Moreover, it exports the
+        3DEC results in .txt files and saves .sav files of the analysis.
+
+        Parameters
+        ----------
+        parameters : _type_
+            _description_
+        path : _str_
+            Path where the .txt file will be saved.
+        title : _str_
+            The title given from the user to the analysis.
+        Returns
+        -------
+        :files:`main.dat`
+        """
         parameters = MechParam.standard_material()
-        name = 'main.dat'
+        name = "main.dat"
         main_path = os.path.join(path, name)
-        main_string = ';' + time.strftime("%d/%m/%Y") + ' ' + time.strftime("%H:%M:%S")
+        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
         create_header = """
         model new
         model large-strain on
@@ -174,21 +189,26 @@ class Analysis():
         plot active on
         plot background 'white'
         plot item create block
-        """.format(parameters.parameters['density'], parameters.parameters['jkn'], parameters.parameters['jks'], parameters.parameters['friction'], 'global')
+        """.format(
+            parameters.parameters["density"],
+            parameters.parameters["jkn"],
+            parameters.parameters["jks"],
+            parameters.parameters["friction"],
+            "global",
+        )
         main_string += create_header
         main_string += blocks_output()
-        main_string += save_blocks_output('init_state')
+        main_string += save_blocks_output("init_state")
         main_string += contacts_output()
-        main_string += save_contacts_output('contacts_init')
-        main_string += save_analysis(title, 'init')
-        main_string += restore_analysis(title, 'init')
-        main_string += """
-        model gravity 0 0 -9.806
-        model solve ratio-local 1e-06 time 1
-        """
-        main_string += save_blocks_output('grav_state')
-        main_string += save_contacts_output('contact_grav')
-        main_string += save_analysis(title, 'grav')
-        main_string += 'exit()'
+        main_string += save_contacts_output("contacts_init")
+        main_string += save_analysis(title, "init")
+        main_string += restore_analysis(title, "init")
+        main_string +=  '\n'
+        main_string += gravity_equilibrium(10,'ratio-local',1e-4,0.02,1e-5,1)
+        main_string += save_blocks_output("grav_state")
+        main_string += save_contacts_output("contact_grav")
+        main_string += save_analysis(title, "grav")
+        main_string += "exit()"
         overwrite_file(main_path, main_string)
         return
+

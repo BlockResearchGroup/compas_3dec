@@ -1,4 +1,3 @@
-
 """
 ********************************************************************************
 compas_3dec.mechparam
@@ -29,8 +28,4 @@ Routines
 from .mechparam import MechParam
 
 
-__all__ = [
-    'MechParam',
-
-    'standard_material'
-]
+__all__ = ["MechParam", "standard_material"]

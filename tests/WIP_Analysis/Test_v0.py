@@ -9,11 +9,10 @@ path = os.path.dirname(__file__)
 mechparam = MechParam.standard_material()
 
 
-
-FILE = os.path.join(path, 'model.json')
+FILE = os.path.join(path, "model.json")
 assembly_3dec = compas.json_load(FILE)
 
 # analysis = Analysis.selfweight(model, mechparam, path)
 
-Analysis.geometry_dat(assembly_3dec,path)
-Analysis.main_dat(mechparam,path,'Analysis_test')
+Analysis.geometry_dat(assembly_3dec, path)
+Analysis.main_dat(mechparam, path, "Analysis_test")

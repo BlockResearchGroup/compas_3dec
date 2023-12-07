@@ -1,4 +1,3 @@
-
 """
 ********************************************************************************
 compas_3dec.analysis
@@ -39,4 +38,4 @@ from .analysis import Analysis
 #     load_capacity
 # )
 
-__all__ = [name for name in dir() if not name.startswith('_')]
+__all__ = [name for name in dir() if not name.startswith("_")]

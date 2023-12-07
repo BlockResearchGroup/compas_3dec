@@ -1,4 +1,3 @@
-
 """
 ********************************************************************************
 compas_3dec.assembly_3dec
@@ -31,4 +30,4 @@ Routines
 from .assembly_3dec import Assembly_3dec
 
 
-__all__ = [name for name in dir() if not name.startswith('_')]
+__all__ = [name for name in dir() if not name.startswith("_")]

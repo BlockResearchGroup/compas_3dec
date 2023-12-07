@@ -13,7 +13,7 @@ from compas_assembly.datastructures import Block
 from compas_3dec.datastructures import Assembly_3dec
 
 HERE = os.path.dirname(__file__)
-FILE = os.path.join(HERE, 'model3.json')
+FILE = os.path.join(HERE, "model3.json")
 
 model = compas.json_load(FILE)
 
@@ -31,12 +31,7 @@ for node in model.nodes():
 #         print (group)
 
 
-
-
-
-
-
-    # print (centroid)
+# print (centroid)
 
 # def from_rhino_select(Model,path):
 #         """Construct a compas_3dec model by manually selecting Rhino meshes. The user

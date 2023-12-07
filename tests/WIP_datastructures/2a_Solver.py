@@ -11,7 +11,7 @@ HERE = os.path.dirname(__file__)
 # Solver
 # ==============================================================================
 s = Solver()
-s.run(HERE, ['main.py'])
+s.run(HERE, ["main.py"])
 
 # FILE = os.path.join(HERE, 'grav_state.txt')
 # solve_ratio(FILE)

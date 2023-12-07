@@ -12,24 +12,25 @@ from adem.threedec import cracks
 # ==============================================================================
 # Initialise folders and layers
 # ==============================================================================
-compas.PRECISION = '10'
+compas.PRECISION = "10"
 start = time.time()
 HERE = os.path.dirname(__file__)
-readpath = os.path.join(HERE, 'json_data')
+readpath = os.path.join(HERE, "json_data")
 
 displ_x = 0.0
 displ_y = 0.0
 displ_z = 0.0
-for n in range(0,1):
+for n in range(0, 1):
     filename = threedec_data_contact_step(n, displ_x, displ_y, displ_z)
     # get geometry from json
-    support_blocks = get_blocks_from_json_file_2(HERE, 'supports.json')
-    compound_blocks = get_blocks_from_json_file_2(HERE, 'blocks.json')
+    support_blocks = get_blocks_from_json_file_2(HERE, "supports.json")
+    compound_blocks = get_blocks_from_json_file_2(HERE, "blocks.json")
     # mapping + mechanical update
     blocks, blocks_grav, blocks_step = threedec_data_init_grav_step_concave(
-        'init_state.txt', 'grav_state.txt', n, 0.0, 0.0, 0.0, True)
-    bindex_mindex = mesh_block_map_dict_concave(blocks, support_blocks, compound_blocks,1,3)
-    up_mesh = update_concave(bindex_mindex, blocks_step,2)
+        "init_state.txt", "grav_state.txt", n, 0.0, 0.0, 0.0, True
+    )
+    bindex_mindex = mesh_block_map_dict_concave(blocks, support_blocks, compound_blocks, 1, 3)
+    up_mesh = update_concave(bindex_mindex, blocks_step, 2)
     cracks(filename, up_mesh, 0.0001, 0.0001, 0.01)
 
     # rs.AddLayer('new')
@@ -37,4 +38,4 @@ for n in range(0,1):
     # rs.LayerVisible('Default',False)
 
 end = time.time()
-print('analysis_3dec time',end - start)
+print("analysis_3dec time", end - start)

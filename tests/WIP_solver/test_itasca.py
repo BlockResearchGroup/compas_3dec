@@ -4,9 +4,11 @@ import json
 import compas
 import vec
 from compas.datastructures import Mesh
+
 it.command("python-reset-state false")
 
-it.command("""
+it.command(
+    """
 model new
 model large-strain on
 program call 'support_geometry.dat'
@@ -35,6 +37,5 @@ plot item create block
 
 model gravity 0 0 -9.806
 model solve ratio-local 1e-06
-""")
-
-
+"""
+)

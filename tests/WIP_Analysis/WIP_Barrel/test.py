@@ -1,4 +1,3 @@
-
 import os
 import compas
 from compas_3dec.analysis import Analysis
@@ -10,9 +9,8 @@ model = Assembly_3dec.from_rhino_select(path)
 mechparam = MechParam.standard_material()
 
 
-
-FILE = os.path.join(path, 'model.json')
+FILE = os.path.join(path, "model.json")
 compas.json_dump(model, FILE, True)
 
 analysis = Analysis.selfweight(model, mechparam, path)
-Analysis.main_dat(mechparam,path,'Analysis_test')
+Analysis.main_dat(mechparam, path, "Analysis_test")

@@ -18,14 +18,14 @@ HERE = os.path.dirname(__file__)
 # ==============================================================================
 assembly_3dec = Assembly_3dec.from_rhino_select(HERE)
 
-compas_rhino.rs.AddLayer('IDs')
-compas_rhino.rs.DeleteObjects(compas_rhino.rs.ObjectsByLayer('IDs'))
-compas_rhino.rs.CurrentLayer('IDs')
+compas_rhino.rs.AddLayer("IDs")
+compas_rhino.rs.DeleteObjects(compas_rhino.rs.ObjectsByLayer("IDs"))
+compas_rhino.rs.CurrentLayer("IDs")
 for node in assembly_3dec.nodes():
     centroid = assembly_3dec.node_block(node).centroid()
-    compas_rhino.rs.AddTextDot(int(node)+1,centroid)
-compas_rhino.rs.CurrentLayer('Default')
-compas_rhino.rs.LayerVisible('IDs', False)
+    compas_rhino.rs.AddTextDot(int(node) + 1, centroid)
+compas_rhino.rs.CurrentLayer("Default")
+compas_rhino.rs.LayerVisible("IDs", False)
 
 # ==============================================================================
 # Get/set mechanical parameters
@@ -35,7 +35,5 @@ mechparam = MechParam.standard_material()
 # ==============================================================================
 # Analysis
 # ==============================================================================
-Analysis.geometry_dat(assembly_3dec,HERE)
-Analysis.main_dat(mechparam,HERE,'Analysis_test')
-
-
+Analysis.geometry_dat(assembly_3dec, HERE)
+Analysis.main_dat(mechparam, HERE, "Analysis_test")

@@ -26,4 +26,4 @@ from __future__ import print_function
 from .utility import *
 from .fish import *
 
-__all__ = [name for name in dir() if not name.startswith('_')]
+__all__ = [name for name in dir() if not name.startswith("_")]

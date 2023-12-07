@@ -1,9 +1,7 @@
-
-
-
 import itasca as it
 
-it.command("""
+it.command(
+    """
 model new
 model large-strain on
 program call 'support_geometry.dat'
@@ -50,7 +48,8 @@ fish define mech
     model save "./Analysis_test_grav.sav" compress
 ;___________________________________________________________________________
 
-""")
+"""
+)
 
 import itasca as it
 import vec
@@ -60,30 +59,29 @@ unba = []
 for b in it.block.list():
     if it.block.Block.is_fix(b) == False:
         unbalanced_force = it.block.Block.force_unbal(b)
-        unbalanced_force_vec = round(vec.vec3.x(unbalanced_force)/1000,8), round(vec.vec3.y(unbalanced_force)/1000,8), round(vec.vec3.z(unbalanced_force)/1000,8)
+        unbalanced_force_vec = (
+            round(vec.vec3.x(unbalanced_force) / 1000, 8),
+            round(vec.vec3.y(unbalanced_force) / 1000, 8),
+            round(vec.vec3.z(unbalanced_force) / 1000, 8),
+        )
         unb = norm_vector(unbalanced_force_vec)
         mass = it.block.Block.mass(b)
-        weight = round((mass*9.806)/1000,8)
-        ratio = (weight-unb)
+        weight = round((mass * 9.806) / 1000, 8)
+        ratio = weight - unb
         unba.append(ratio)
 
 total = sum(unba)
 le = len(unba)
-average = total/le
-print (average)
+average = total / le
+print(average)
 
 if average > 1.0000e-05:
-    it.command("""
+    it.command(
+        """
         model gravity 0 0 -9.806
         model solve ratio-local 1e-06 time 3
         [mech.solve('ratio-local')]
-        """)
+        """
+    )
 else:
-    print ('equilibrium reached')
-        
-        
-        
-        
-        
-        
-        
+    print("equilibrium reached")

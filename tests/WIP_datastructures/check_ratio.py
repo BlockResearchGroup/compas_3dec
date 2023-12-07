@@ -3,9 +3,10 @@ import compas
 import vec
 import itasca as it
 
-ale = it.command("""
+ale = it.command(
+    """
 [mech.solve('ratio-local')]
-""")
+"""
+)
 
-print (ale)
-    
+print(ale)

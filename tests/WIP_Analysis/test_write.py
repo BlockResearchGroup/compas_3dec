@@ -3,10 +3,11 @@ import compas
 
 
 path = os.path.dirname(__file__)
-FILE = os.path.join(path, 'mod.py')
+FILE = os.path.join(path, "mod.py")
 
 f = open(FILE, "w")
-f.write("""
+f.write(
+    """
 import itasca as it
 import os
 import json
@@ -14,7 +15,8 @@ import compas
 import vec
 from compas.datastructures import Mesh
 it.command("python-reset-state false")
-""")
+"""
+)
 
 # it.command("""
 # model new
@@ -50,6 +52,3 @@ it.command("python-reset-state false")
 
 
 compas.json_dump(f, FILE, True)
-
-
-

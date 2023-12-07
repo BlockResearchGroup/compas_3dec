@@ -1,13 +1,16 @@
 import itasca as it
 import numpy
 import os
-#import json
-#import compas
+
+# import json
+# import compas
 import vec
-#from compas.datastructures import Mesh
+
+# from compas.datastructures import Mesh
 it.command("python-reset-state false")
 
-it.command("""
+it.command(
+    """
 
 model new
 model large-strain on
@@ -38,4 +41,5 @@ plot item create block
 model gravity 0 0 -9.806
 model solve ratio-local 1e-06
 
-""")
+"""
+)

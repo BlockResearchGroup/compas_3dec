@@ -9,17 +9,17 @@ from compas_assembly.geometry import Arch
 
 
 HERE = os.path.dirname(__file__)
-FILE_Ar = os.path.join(HERE, 'arch_assembly.json')
+FILE_Ar = os.path.join(HERE, "arch_assembly.json")
 
-FILE_1 = os.path.join(HERE, 'init_state.txt')
-FILE_2 = os.path.join(HERE, 'grav_state.txt')
-FILE_3 = os.path.join(HERE, 'contacts_init')
-FILE_4 = os.path.join(HERE, 'contact_grav.txt')
-FILE_5 = os.path.join(HERE, 'assembly_3dec.json')
-FILE_6 = os.path.join(HERE, 'blocks.json')
-FILE_7 = os.path.join(HERE, 'supports.json')
-FILE_8 = os.path.join(HERE, 'Analysis_test_init.sav')
-FILE_9 = os.path.join(HERE, 'Analysis_test_grav.sav')
+FILE_1 = os.path.join(HERE, "init_state.txt")
+FILE_2 = os.path.join(HERE, "grav_state.txt")
+FILE_3 = os.path.join(HERE, "contacts_init")
+FILE_4 = os.path.join(HERE, "contact_grav.txt")
+FILE_5 = os.path.join(HERE, "assembly_3dec.json")
+FILE_6 = os.path.join(HERE, "blocks.json")
+FILE_7 = os.path.join(HERE, "supports.json")
+FILE_8 = os.path.join(HERE, "Analysis_test_init.sav")
+FILE_9 = os.path.join(HERE, "Analysis_test_grav.sav")
 
 try:
     if FILE_1:
@@ -42,11 +42,11 @@ except Exception:
     pass
 
 
-if rs.IsLayer('Layer 1'):
-    compas_rhino.rs.DeleteObjects(compas_rhino.rs.ObjectsByLayer('Layer 1'))
+if rs.IsLayer("Layer 1"):
+    compas_rhino.rs.DeleteObjects(compas_rhino.rs.ObjectsByLayer("Layer 1"))
 
-if rs.IsLayer('Support'):
-    compas_rhino.rs.DeleteObjects(compas_rhino.rs.ObjectsByLayer('Support'))
+if rs.IsLayer("Support"):
+    compas_rhino.rs.DeleteObjects(compas_rhino.rs.ObjectsByLayer("Support"))
 
 # =============================================================================
 # arch
@@ -55,18 +55,13 @@ arch = Arch(rise=5, span=10, thickness=0.5, depth=0.5, n=20)
 assembly = Assembly.from_template(arch)
 
 
-
 # =============================================================================
 # View
 # =============================================================================
-compas_rhino.rs.AddLayer('Model')
-compas_rhino.rs.DeleteObjects(compas_rhino.rs.ObjectsByLayer('Model'))
+compas_rhino.rs.AddLayer("Model")
+compas_rhino.rs.DeleteObjects(compas_rhino.rs.ObjectsByLayer("Model"))
 for node in assembly.nodes():
     block = assembly.node_block(node)
-    artist = Artist(block, layer = 'Model')
-    artist.draw(color = Color.from_rgb255(10, 10, 10))
-compas_rhino.rs.CurrentLayer('Model')
-
-
-
-
+    artist = Artist(block, layer="Model")
+    artist.draw(color=Color.from_rgb255(10, 10, 10))
+compas_rhino.rs.CurrentLayer("Model")

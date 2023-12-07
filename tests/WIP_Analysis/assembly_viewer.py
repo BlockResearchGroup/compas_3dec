@@ -5,13 +5,9 @@ from compas_assembly.viewer import DEMViewer
 from compas.artists import Artist
 
 
-
-HERE = os.path.dirname('C:/Users/adellend/Code/compas_3dec/src/compas_3dec/Analysis/WIP/')
+HERE = os.path.dirname("C:/Users/adellend/Code/compas_3dec/src/compas_3dec/Analysis/WIP/")
 FILE_I = os.path.join(HERE, "Test_assembly.json")
 init_assembly = compas.json_load(FILE_I)
-
-
-
 
 
 viewer = DEMViewer()

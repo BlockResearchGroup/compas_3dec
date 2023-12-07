@@ -1,4 +1,3 @@
-
 import os
 import compas
 import sys
@@ -6,7 +5,6 @@ from compas_3dec.datastructures import Assembly_3dec
 from compas_3dec.analysis import Analysis
 from compas_3dec.mechanical import MechParam
 from compas_3dec.solver import Solver
-
 
 
 # ==============================================================================

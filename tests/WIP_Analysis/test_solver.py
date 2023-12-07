@@ -5,6 +5,6 @@ HERE = os.path.dirname(__file__)
 # FILE = os.path.join(HERE, 'model.json')
 
 s = Solver()
-s.run(HERE, ['main.dat'])
+s.run(HERE, ["main.dat"])
 
 # print ('done')
