@@ -5,8 +5,6 @@ compas_3dec.utilities
 
 .. currentmodule:: compas_3dec.utilities
 
-___
-
 
 Classes
 =======

@@ -14,20 +14,6 @@ Classes
 
     Analysis
 
-Routines
-========
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    selfweight
-    displacement_capacity
-    load_capacity
-    geometry_dat
-    main_dat
-
-
 """
 
 from .analysis import Analysis

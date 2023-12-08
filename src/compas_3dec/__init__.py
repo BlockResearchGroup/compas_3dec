@@ -3,12 +3,16 @@
 compas_3dec
 ********************************************************************************
 
-.. currentmodule:: compas_3dec
-
 
 .. toctree::
     :maxdepth: 1
 
+    compas_3dec.analysis
+    compas_3dec.datastructures
+    compas_3dec.mechanical
+    compas_3dec.results
+    compas_3dec.solver
+    compas_3dec.utilities
 
 """
 

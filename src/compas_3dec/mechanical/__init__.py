@@ -14,16 +14,6 @@ Classes
 
     MechParam
 
-Routines
-========
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    standard_material
-
-
 """
 from .mechparam import MechParam
 

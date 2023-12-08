@@ -5,10 +5,7 @@ compas_3dec.results
 
 .. currentmodule:: compas_3dec.results
 
-___
-
-
-Classes
+Functions
 =======
 
 .. autosummary::

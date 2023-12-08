@@ -15,9 +15,9 @@ from compas_3dec.utilities import (
 )
 
 __all__ = [
-    "from_rhino_select_convex",
-    "from_rhino_select_concave",
+    "from_rhino_select",
     "from_assembly",
+    "to_3dec",
 ]
 
 class Assembly_3dec(Assembly):
@@ -187,7 +187,7 @@ class Assembly_3dec(Assembly):
 
         Returns
         -------
-        :files:`block_geometry.dat and support_geometry.dat`
+        files:  block_geometry.dat and support_geometry.dat
         """
         string_s = ";__create geometry__" + "\n"
         string_b = ";__create geometry__" + "\n"

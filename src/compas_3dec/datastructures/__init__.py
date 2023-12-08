@@ -1,30 +1,18 @@
 """
 ********************************************************************************
-compas_3dec.assembly_3dec
+compas_3dec.datastructures
 ********************************************************************************
 
-.. currentmodule:: compas_3dec.assembly_3dec
+.. currentmodule:: compas_3dec.datastructures
 
 Classes
 =======
 
 .. autosummary::
-    :toctree: generated/
+    :toctree: generated/in
     :nosignatures:
 
-    Model
-
-Routines
-========
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    from_rhino_select_convex
-    from_rhino_select_concave
-    from_assembly
-    geometry_dat
+    Assembly_3dec
 
 """
 from .assembly_3dec import Assembly_3dec
