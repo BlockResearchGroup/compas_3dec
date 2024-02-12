@@ -1,3 +1,3 @@
 # Authors
 
-- Alessandro Dell'Endice <<dellendice@arch.ethz.ch>> [@dellalex](https://github.com/dellalex)
+- Alessandro Dell'Endice, Petras Vestartas <<dellendice@arch.ethz.ch>> [@adellendice](https://github.com/adellendice)

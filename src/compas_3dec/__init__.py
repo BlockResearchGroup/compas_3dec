@@ -1,28 +1,10 @@
-"""
-********************************************************************************
-compas_3dec
-********************************************************************************
-
-
-.. toctree::
-    :maxdepth: 1
-
-    compas_3dec.analysis
-    compas_3dec.datastructures
-    compas_3dec.mechanical
-    compas_3dec.results
-    compas_3dec.solver
-    compas_3dec.utilities
-
-"""
-
 from __future__ import print_function
 
 import os
 
 
-__author__ = ["Alessandro Dell'Endice"]
-__copyright__ = "Alessandro Dell'Endice"
+__author__ = ["Alessandro Dell'Endice, Petras Vestartas"]
+__copyright__ = "Block Research Group"
 __license__ = "MIT License"
 __email__ = "dellendice@arch.ethz.ch"
 __version__ = "0.1.0"

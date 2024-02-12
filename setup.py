@@ -33,7 +33,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/BRG-research/compas_3dec",
-    author="Alessandro Dell'Endice",
+    author="Alessandro Dell'Endice, Petras Vestartas",
     author_email="dellendice@arch.ethz.ch",
     license="MIT license",
     classifiers=[
@@ -60,7 +60,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=requirements,
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     extras_require=optional_requirements,
     entry_points={
         "console_scripts": [],

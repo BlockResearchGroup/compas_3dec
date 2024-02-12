@@ -4,7 +4,7 @@ compas_3dec
 
 .. rst-class:: lead
 
-Add-on for Discrete Element Modelling Analysis using COMPAS framework and 3DEC by Itasca
+Discrete Element Modelling add-on for the COMPAS framework using 3DEC by Itasca
 
 .. .. figure:: /_images/
      :figclass: figure
