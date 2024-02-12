@@ -1,6 +1,6 @@
 # compas_3dec
 
-Discrete Element Modelling add-on for the COMPAS2 framework using 3DEC by Itasca.
+Discrete Element Modelling add-on for the COMPAS2 framework using 3DEC by Itasca consulting group.
 
 
 ## Getting started with this project
