@@ -1,0 +1,60 @@
+**********************************************
+* Logging started at Mon Feb 26 10:51:53 2024
+* By 3dec Version 7.00 Release 159
+* 
+* 
+* Job Title: 
+**********************************************
+3dec>    @blocks_output
+solve ratio =  0
+timestep =  1.79769e+308
+ centr - result - veloc
+block 1
+region 0
+centroid = 0.5,0.5,0.5 0
+mass  0
+volume  1
+forces = 0,0,0 0
+moment = 0,0,0 0
+loads = 0,0,0 0
+velocity = (0,0,0) 0
+vertex = (0,0,1) 0
+vertex = (1,0,1) 0
+vertex = (1,1,1) 0
+vertex = (0,1,1) 0
+vertex = (0,1,0) 0
+vertex = (1,1,0) 0
+vertex = (1,0,0) 0
+vertex = (0,0,0) 0
+block 2
+region 1
+centroid = 0.5,0.5,1.5 1
+mass  0
+volume  1
+forces = 0,0,0 1
+moment = 0,0,0 1
+loads = 0,0,0 1
+velocity = (0,0,0) 1
+vertex = (0,0,2) 1
+vertex = (1,0,2) 1
+vertex = (1,1,2) 1
+vertex = (0,1,2) 1
+vertex = (0,1,1) 1
+vertex = (1,1,1) 1
+vertex = (1,0,1) 1
+vertex = (0,0,1) 1
+3dec>    log off
+**********************************************
+* Logging ended at Mon Feb 26 10:51:53 2024
+**********************************************
+**********************************************
+* Logging started at Mon Feb 26 10:51:54 2024
+* By 3dec Version 7.00 Release 159
+* 
+* 
+* Job Title: 
+**********************************************
+3dec>    log-file 'grav_state.txt'
+**********************************************
+* Logging ended at Mon Feb 26 10:51:54 2024
+**********************************************
