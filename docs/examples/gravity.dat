@@ -1,18 +1,18 @@
-;26/02/2024 10:51:52
+;27/02/2024 14:24:35
 model new
 model large-strain on
 program call 'geometry.dat'
 
 block contact generate-subcontacts
 block property density 2200 range group 'Supports'
-block contact property stiffness-normal 500000.0 stiffness-shear 208333.33333333334 friction 35
-block contact material-table default property stiffness-normal 500000.0 stiffness-shear 208333.33333333334
+block contact property stiffness-normal 5000000.0 stiffness-shear 2083333.3333333335 friction 35
+block contact material-table default property stiffness-normal 5000000.0 stiffness-shear 2083333.3333333335
 block fix range group 'Supports'
 
 block property density 2200 range group 'Blocks'
 block contact generate-subcontacts
-block contact property stiffness-normal 500000.0 stiffness-shear 208333.33333333334 friction 35
-block contact material-table default property stiffness-normal 500000.0 stiffness-shear 208333.33333333334
+block contact property stiffness-normal 5000000.0 stiffness-shear 2083333.3333333335 friction 35
+block contact material-table default property stiffness-normal 5000000.0 stiffness-shear 2083333.3333333335
 
 block mechanical damping global
 
@@ -58,7 +58,7 @@ block mechanical damping global
     loop foreach ic block.contact.list()
     ii=io.out('contact'+' '+'='+' '+string(ic)+' '+string(block.contact.type(ic))+' '+string(block.region(block.contact.b1(ic)))+' '+string(block.region(block.contact.b2(ic)))+' '+string(block.contact.pos(ic))+' '+string(block.contact.normal(ic)))
         loop foreach si block.contact.subcontactlist(ic)
-            ii=io.out('subcontact'+' '+'='+' '+string(block.subcontact.pos(si))+' '+string(block.subcontact.force.norm(si))+' '+string(block.subcontact.force.shear(si))+' '+string(si)+' '+string(block.subcontact.disp.norm(si))+' '+string(block.subcontact.disp.shear(si)))
+            ii=io.out('subcontact'+' '+'='+' '+string(block.subcontact.pos(si))+' '+string(block.subcontact.force.norm(si))+' '+string(block.subcontact.force.shear(si))+' '+string(si)+' '+string(block.subcontact.disp.norm(si))+' '+string(block.subcontact.disp.shear(si))+' '+string(block.subcontact.stress.norm(si))+' '+string(block.subcontact.stress.shear(si))+' '+string(block.subcontact.area(si)))
             fi = block.subcontact.face(si)
             if fi then
                 fo = block.face.bface(fi)

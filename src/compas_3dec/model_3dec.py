@@ -1,16 +1,17 @@
+import os
+import inspect
+from subprocess import call
+
+from compas.files import OBJ
+from compas.datastructures import Mesh
+from compas.geometry import convex_hull_xy, Plane, Frame, Transformation, transform_points, Polygon
+
 from compas_model.model import Model, GroupNode
 from compas_model.elements import BlockElement, InterfaceElement
-from compas_3dec.utilities import threedec7_support_description, overwrite_file, threedec7_mesh_description
-import os
-from compas_3dec.mechanical_parameters import MechanicalParameters, Damping
+
 from compas_3dec.threedec_config import ThreedecConfig
-from compas.files import OBJ
-from subprocess import call
-from compas.datastructures import Mesh
-import inspect
-from compas_3dec.gravity_template import gravity_template
-from compas.tolerance import Tolerance
-# from compas.utilities import geometric_key
+from compas_3dec.interactions_3dec import Interaction3dec
+
 
 class Model_3dec(Model):
     """Class representing a general model of hierarchically organised elements, with interactions.
@@ -35,8 +36,12 @@ class Model_3dec(Model):
 
     """
 
-
-    def __init__(self, name=None, executable_path='"C:\\Program Files\\Itasca\\3DEC700\\exe64\\3dec700_console.exe"', working_path=None):
+    def __init__(
+        self,
+        name=None,
+        executable_path='"C:\\Program Files\\Itasca\\3DEC700\\exe64\\3dec700_console.exe"',
+        working_path=None,
+    ):
         super(Model_3dec, self).__init__(name)
         self.threedec_config = ThreedecConfig()
         self.executable_path = executable_path
@@ -120,7 +125,7 @@ class Model_3dec(Model):
         obj.read()
         meshes = []
         for name in obj.objects:
-            mesh = Mesh.from_vertices_and_faces(* obj.objects[name])
+            mesh = Mesh.from_vertices_and_faces(*obj.objects[name])
             mesh.name = name
             meshes.append(mesh)
         return meshes
@@ -131,17 +136,65 @@ class Model_3dec(Model):
         caller_filename = caller_frame.filename
         meshes_supports = Model_3dec.from_obj(path_supports)
         meshes_blocks = Model_3dec.from_obj(path_blocks)
-        model = Model_3dec(working_path = os.path.dirname(os.path.abspath(caller_filename)))
+        model = Model_3dec(working_path=os.path.dirname(os.path.abspath(caller_filename)))
         group_supports = model.add_group("Supports")
         group_blocks = model.add_group("Blocks")
         for i in range(len(meshes_supports)):
-                support = BlockElement(meshes_supports[i], is_support=True)
-                group_supports.add_element(support)
+            support = BlockElement(meshes_supports[i], is_support=True)
+            model.add_element(support, group_supports)
+            # group_supports.add(ElementNode(support))
         for i in range(len(meshes_blocks)):
-                block = BlockElement(meshes_blocks[i], is_support=False)
-                group_blocks.add_element(block)
+            block = BlockElement(meshes_blocks[i], is_support=False)
+            model.add_element(block, group_blocks)
+            # group_blocks.add(ElementNode(block))
         return model
 
+    def _overwrite_file(self, file_path, replace_string):
+        # Overwrite existing file with replace_string
+
+        if os.path.exists(file_path):
+            if os.access(file_path, os.W_OK):
+                f = open(file_path, "w+")
+                f.write(replace_string)
+                f.close()
+            else:
+                "File write access denied..."
+        else:
+            with open(file_path, "a+") as f:
+                f.write(replace_string)
+
+    def _threedec7_mesh_description(self, meshes, indices, group=None, precision=10):
+        # create blocks
+        # ***************************************************************************
+        unit_scale = 1.0
+        block_description = ""
+        for i, mesh in enumerate(meshes):
+            face_description = ""  # should not work with sub_blocks
+            for face in mesh.faces():
+                # add new face
+                face_description += "face "
+                # get the vertices of the face in order!
+                vertices = list(mesh.face_vertices(face))
+                # reverse vertex order for 3DEC
+                vertices.reverse()
+                # add the vertices of this face
+                for vertex in vertices:
+                    vertex_coordinates = mesh.vertex_coordinates(vertex)
+                    face_description += "{0:.{3}f},{1:.{3}f},{2:.{3}f} ".format(
+                        vertex_coordinates[0] / unit_scale,
+                        vertex_coordinates[1] / unit_scale,
+                        vertex_coordinates[2] / unit_scale,
+                        precision,
+                    )
+            # add all faces of the block to the block description
+            sub_block_description = (
+                "block create group " + '"' + str(group) + '"' + " poly %s r=%i" % (face_description, indices[i])
+            )
+            block_description += sub_block_description + "\n"
+        if len(meshes) > 1:
+            str_indices = [str(num) for num in indices]
+            block_description += "block join range region " + " ".join(str_indices) + "\n"
+        return block_description
 
     def to_3dec_geometry(self):
         """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
@@ -152,7 +205,7 @@ class Model_3dec(Model):
         # path = os.path.dirname(__file__)
 
         outputs = ""
-        for node in self.tree_nodes:
+        for node in self.tree.root.children:
             outputs += ";__create " + str(node.name) + "__" + "\n"
             for subnode in node:
                 indices = []
@@ -164,18 +217,17 @@ class Model_3dec(Model):
                 else:
                     meshes.append(subnode.element.geometry)
                     indices.append(subnode.element.graph_node)
-                outputs += threedec7_mesh_description(meshes, indices, node.name, precision=10)
+                outputs += self._threedec7_mesh_description(meshes, indices, node.name, precision=10)
         geometry_path = os.path.join(self.working_path, "geometry.dat")
-        overwrite_file(geometry_path, outputs)
+        self._overwrite_file(geometry_path, outputs)
 
-    def run(self,sequence=[]):
+    def run(self, sequence=[]):
         args = ["cd", self.working_path, "&&", self.executable_path] + sequence
         call(" ".join(args), shell=True)
 
-
-    def from_3dec_blocks(self,filename):
+    def from_3dec_blocks(self, filename):
         blocks = {}
-        with open(os.path.join(self.working_path, filename), 'r') as fo:
+        with open(os.path.join(self.working_path, filename), "r") as fo:
             for line in fo:
                 line = line.strip()
                 if not line:
@@ -183,54 +235,52 @@ class Model_3dec(Model):
                 parts = line.split()
                 if not len(parts):
                     continue
-                if parts[0] == 'block':
-                    id = int(parts[1])-1
+                if parts[0] == "block":
+                    id = int(parts[1]) - 1
                     blocks[id] = {
-                        'centroid': None,
-                        'vertices': [],
-                        'force': None,
-                        'velocity': None,
-                        'mass': None,
-                        'region': None,
-                        'moment': None,
-                        'load'  : None,
+                        "centroid": None,
+                        "vertices": [],
+                        "force": None,
+                        "velocity": None,
+                        "mass": None,
+                        "region": None,
+                        "moment": None,
+                        "load": None,
                     }
                     continue
-                if parts[0] == 'centroid':
-                    blocks[id]['centroid'] = [float(c)
-                                            for c in parts[2].split(',')]
+                if parts[0] == "centroid":
+                    blocks[id]["centroid"] = [float(c) for c in parts[2].split(",")]
                     continue
-                if parts[0] == 'vertex':
-                    xyz = [float(c) for c in parts[2][1:-1].split(',')]
-                    blocks[id]['vertices'].append(xyz)
+                if parts[0] == "vertex":
+                    xyz = [float(c) for c in parts[2][1:-1].split(",")]
+                    blocks[id]["vertices"].append(xyz)
                     continue
-                if parts[0] == 'forces':
-                    xyz = [float(c) for c in parts[2].split(',')]
-                    blocks[id]['force'] = xyz
+                if parts[0] == "forces":
+                    xyz = [float(c) for c in parts[2].split(",")]
+                    blocks[id]["force"] = xyz
                     continue
-                if parts[0] == 'loads':
-                    xyz = [float(c) for c in parts[2].split(',')]
-                    blocks[id]['load'] = xyz
+                if parts[0] == "loads":
+                    xyz = [float(c) for c in parts[2].split(",")]
+                    blocks[id]["load"] = xyz
                     continue
-                if parts[0] == 'moment':
-                    xyz = [float(c) for c in parts[2].split(',')]
-                    blocks[id]['moment'] = xyz
+                if parts[0] == "moment":
+                    xyz = [float(c) for c in parts[2].split(",")]
+                    blocks[id]["moment"] = xyz
                     continue
-                if parts[0] == 'velocity':
-                    xyz = [float(c) for c in parts[2][1:-1].split(',')]
-                    blocks[id]['velocity'] = xyz
+                if parts[0] == "velocity":
+                    xyz = [float(c) for c in parts[2][1:-1].split(",")]
+                    blocks[id]["velocity"] = xyz
                     continue
-                if parts[0] == 'region':
+                if parts[0] == "region":
                     region = int(parts[1])
-                    blocks[id]['region'] = region
-                if parts[0] == 'mass':
+                    blocks[id]["region"] = region
+                if parts[0] == "mass":
                     mass = float(parts[1])
-                    blocks[id]['mass'] = mass
+                    blocks[id]["mass"] = mass
                     continue
         return blocks
 
-
-    def solve_ratio_check(self,filename):
+    def solve_ratio_check(self, filename):
         with open(os.path.join(self.working_path, filename), "r") as fo:
             for line in fo:
                 line = line.strip()
@@ -249,8 +299,7 @@ class Model_3dec(Model):
                         print("solve ratio = " + str(solve_r))
         return
 
-
-    def geometric_key(self, xyz, precision='3f', sanitize=True):
+    def geometric_key(self, xyz, precision="3f", sanitize=True):
         """Convert XYZ coordinates to a string that can be used as a dict key.
 
         Parameters
@@ -283,7 +332,7 @@ class Model_3dec(Model):
         """
         x, y, z = xyz
         if not precision:
-            precision = '3f'
+            precision = "3f"
         if precision == "d":
             return "{0},{1},{2}".format(int(x), int(y), int(z))
         if sanitize:
@@ -296,35 +345,47 @@ class Model_3dec(Model):
                 z = 0.0
         return "{0:.{3}},{1:.{3}},{2:.{3}}".format(x, y, z, precision)
 
-    def mapping(self,init_dict_3dec):
+    def mapping(self, init_dict_3dec):
         block_map = {}
-        for bkey,block in init_dict_3dec.items():
-            region = block['region']
+        for bkey, block in init_dict_3dec.items():
+            region = block["region"]
             block_gkey_index = {}
-            for index, xyz in enumerate(block['vertices']):
+            for index, xyz in enumerate(block["vertices"]):
                 gkey = self.geometric_key(xyz)
                 block_gkey_index[gkey] = index
             block_map[region] = {}
-            for vkey in self.elements_list[region].geometry.vertices():
-                xyz = self.elements_list[region].geometry.vertex_coordinates(vkey)
+            for vkey in self.elementlist[region].geometry.vertices():
+                xyz = self.elementlist[region].geometry.vertex_coordinates(vkey)
                 gkey = self.geometric_key(xyz)
                 v_index = block_gkey_index[gkey]
                 block_map[region][vkey] = v_index
         return block_map
 
-    def update_blocks(self,step_dict,mapping_dict):
-        for index, block_element in enumerate(self.elements_list):
+    def update_blocks(self, step_dict, mapping_dict):
+        for index, block_element in enumerate(self.elementlist):
             for vkey, attr in block_element.geometry.vertices(True):
                 vertex_3dec = mapping_dict[index][vkey]
-                xyz = step_dict[index]['vertices'][vertex_3dec]
-                attr['x'] = xyz[0]
-                attr['y'] = xyz[1]
-                attr['z'] = xyz[2]
+                xyz = step_dict[index]["vertices"][vertex_3dec]
+                attr["x"] = xyz[0]
+                attr["y"] = xyz[1]
+                attr["z"] = xyz[2]
 
+    def _remove_duplicate_points(self, points, tolerance=0.00001):
+        unique_points = []
+        for point in points:
+            is_unique = True
+            for existing_point in unique_points:
+                distance = sum((a - b) ** 2 for a, b in zip(point, existing_point)) ** 0.5
+                if distance < tolerance:
+                    is_unique = False
+                    break
+            if is_unique:
+                unique_points.append(point)
+        return unique_points
 
     def from_3dec_contacts(self, filename):
         contacts = {}
-        with open(os.path.join(self.working_path, filename), 'r') as fo:
+        with open(os.path.join(self.working_path, filename), "r") as fo:
             for line in fo:
                 line = line.strip()
                 if not line:
@@ -332,47 +393,71 @@ class Model_3dec(Model):
                 parts = line.split()
                 if not len(parts):
                     continue
-                if (parts[0] == 'contact' and ((int(parts[3]) == 1) or (int(parts[3]) == 3) or (int(parts[3]) == 5) or (int(parts[3]) == 4) or (int(parts[3]) == 2) or (int(parts[3]) == 0))):
+                if parts[0] == "contact" and (
+                    (int(parts[3]) == 1)
+                    or (int(parts[3]) == 3)
+                    or (int(parts[3]) == 5)
+                    or (int(parts[3]) == 4)
+                    or (int(parts[3]) == 2)
+                    or (int(parts[3]) == 0)
+                ):
                     id = int(parts[2])
                     contacts[id] = {
-                        'type': int(parts[3]),
-                        'neighbours': [int(parts[4]), int(parts[5])],
-                        'position': [float(c) for c in parts[6][1:-1].split(',')],
-                        'normal': [float(c) for c in parts[7][1:-1].split(',')],
-                        'subcontacts': {}
+                        "type": int(parts[3]),
+                        "neighbours": [int(parts[4]), int(parts[5])],
+                        "position": [float(c) for c in parts[6][1:-1].split(",")],
+                        "normal": [float(c) for c in parts[7][1:-1].split(",")],
+                        "subcontacts": {},
                     }
                     continue
-                if parts[0] == 'subcontact':
+                if parts[0] == "subcontact":
                     ids = int(parts[5])
-                    contacts[id]['subcontacts'][ids] = {}
-                    coordinates = [float(c) for c in parts[2][1:-1].split(',')]
+                    contacts[id]["subcontacts"][ids] = {}
+                    coordinates = [float(c) for c in parts[2][1:-1].split(",")]
                     normal_force = float(parts[3])
-                    shear_force = [float(c) for c in parts[4][1:-1].split(',')]
+                    shear_force = [float(c) for c in parts[4][1:-1].split(",")]
                     normal_displ = float(parts[6])
-                    shear_displ = [float(c) for c in parts[7][1:-1].split(',')]
-                    contacts[id]['subcontacts'][ids]['coordinates'] = coordinates
-                    contacts[id]['subcontacts'][ids]['normal_force'] = normal_force
-                    contacts[id]['subcontacts'][ids]['shear_force'] = shear_force
-                    contacts[id]['subcontacts'][ids]['normal_displ'] = normal_displ
-                    contacts[id]['subcontacts'][ids]['shear_displ'] = shear_displ
+                    shear_displ = [float(c) for c in parts[7][1:-1].split(",")]
+                    normal_stress = float(parts[8])
+                    shear_stress = float(parts[9])
+                    area = float(parts[10])
+                    contacts[id]["subcontacts"][ids]["coordinates"] = coordinates
+                    contacts[id]["subcontacts"][ids]["normal_force"] = normal_force
+                    contacts[id]["subcontacts"][ids]["shear_force"] = shear_force
+                    contacts[id]["subcontacts"][ids]["normal_displ"] = normal_displ
+                    contacts[id]["subcontacts"][ids]["shear_displ"] = shear_displ
+                    contacts[id]["subcontacts"][ids]["normal_stress"] = normal_stress
+                    contacts[id]["subcontacts"][ids]["shear_stress"] = shear_stress
+                    contacts[id]["subcontacts"][ids]["area"] = area
                     continue
+
+        for key, value in contacts.items():
+            neighbours = value["neighbours"]
+            # get list of subcontacts coordinates
+            points = []
+            for key, subcontact in value["subcontacts"].items():
+                point = subcontact["coordinates"]
+                print(point)
+                points.append(point)
+
+            # remove duplicates and create polygon
+            self._remove_duplicate_points(points)
+            normal = value["normal"]
+            position = value["position"]
+            plane = Plane(position, normal)
+            frame = Frame.from_plane(plane)
+            transformation = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+            points = transform_points(points, transformation)
+
+            if len(points) > 3:
+                points = convex_hull_xy(points)
+            points = transform_points(points, transformation.inverse())
+            polygon = Polygon(points)
+
+            interaction = Interaction3dec(type=value["type"], normal=value["normal"], polygon=polygon)
+            self.add_interaction(self.elementlist[neighbours[0]], self.elementlist[neighbours[1]], interaction)
+        self.print()
         return contacts
-
-
-
-
-    def update_contacts(self,step_contact):
-        for key,value in step_contact.items():
-            neighbours = value['neighbours']
-            return neighbours
-
-
-
-
-
-
-
-
 
         # for index, block_element in enumerate(self.elements_list):  # index and mesh from compas mesh
         #     block_map[index] = {
@@ -384,12 +469,6 @@ class Model_3dec(Model):
         #         v_index = block_gkey_index[region][gkey]
         #         block_map[index]['vertices'][vkey] = v_index
         # return block_map
-
-
-
-
-
-
 
         # # FILE1 = os.path.join(HERE, 'supports.json')
         # # FILE2 = os.path.join(HERE, 'blocks.json')
@@ -475,26 +554,11 @@ class Model_3dec(Model):
 
         # return bindex_mindex
 
-
-
-
-
-
-
-
-
-
-
-
-
     def solve(self):
         pass
 
     def result(self):
         pass
-
-
-
 
 
 # =============================================================================

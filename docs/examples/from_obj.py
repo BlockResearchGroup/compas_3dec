@@ -12,6 +12,7 @@ from compas.colors import Color
 path_s = r"C:\Users\adellend\Code2\compas_3dec\src\compas_3dec\data\support.obj"
 path_b = r"C:\Users\adellend\Code2\compas_3dec\src\compas_3dec\data\block.obj"
 
+
 model = Model_3dec.model_from_obj(path_s, path_b)
 
 # =============================================================================
@@ -30,7 +31,7 @@ model.threedec_config.add_material("concrete", 2200, 35, 5000000, 0.2)
 # =============================================================================
 # calculate joint stiffness from material and geometric input
 # to be changed considering the Material class from compas_model
-model.threedec_config.get_joint_stiffness_one_material("concrete", 1, 10)
+model.threedec_config.get_joint_stiffness_one_material("concrete", 1, 1)
 gravity_dat = model.threedec_config.set_gravity_analysis("concrete")
 
 # =============================================================================
@@ -47,8 +48,8 @@ grav_dict = model.from_3dec_blocks("grav_state.txt")
 model.update_blocks(grav_dict,mapping_dict)
 
 contact_grav = model.from_3dec_contacts("contact_grav.txt")
-print(contact_grav)
-print (model.update_contacts(contact_grav))
+# print(contact_grav)
+# print (model.update_contacts(contact_grav))
 # model.update_contacts(contact_grav)
 # model.print
 
@@ -66,12 +67,17 @@ print (model.update_contacts(contact_grav))
 # =============================================================================
 # Viewer
 # =============================================================================
-# from compas_viewer import Viewer
-# viewer = Viewer()
-# for m in model.elements_list:
-#     me = m.geometry
-#     viewer.add(me,  color=Color.azure())
-# viewer.show()
+from compas_viewer import Viewer
+viewer = Viewer()
+for m in model.elementlist:
+    me = m.geometry
+    viewer.add(me, opacity=0.5)
+for edge,interaction in model.graph.edges(True):
+    viewer.add(interaction["interaction"].polygon, facescolor=Color.azure())
+    # viewer.add(polygon)
+
+
+viewer.show()
 
 #viewer = Viewer()
 #for index, block_element in enumerate(model.elements_list):

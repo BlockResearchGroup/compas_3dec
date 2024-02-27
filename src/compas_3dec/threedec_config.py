@@ -2,14 +2,14 @@ import time
 from enum import Enum
 import inspect
 import os
-from compas_3dec.utilities import overwrite_file, check_and_delete_gravity_files
+
 
 class Damping(Enum):
     GLOBAL = 1
     LOCAL = 2
 
-class ThreedecConfig:
 
+class ThreedecConfig:
     def __init__(self):
         self.material = {}
         self._damping = "global"
@@ -53,7 +53,6 @@ class ThreedecConfig:
         self.jkn = jkn / reduction_factor
         self.jks = jks / reduction_factor
 
-
         return self.jkn, self.jks
 
     def get_joint_stiffness_two_materials(
@@ -76,7 +75,7 @@ class ThreedecConfig:
 
         return self.jkn, self.jks
 
-    def save_analysis(self,stage):
+    def save_analysis(self, stage):
         """
         Stages:     init
                     grav
@@ -86,7 +85,9 @@ class ThreedecConfig:
 ;_______SAVE ANALYSIS_______________________________________________________
     model save "./{}.sav" compress
 ;___________________________________________________________________________
-""".format(stage)
+""".format(
+            stage
+        )
         return save_analysis
 
     def restore_analysis(self, stage):
@@ -104,8 +105,9 @@ class ThreedecConfig:
         )
         return restore_analysis
 
-
-    def gravity_equilibrium(self, steps=10, keyword="ratio-local", ratio=1e-06, time=0.02, final_ratio=1e-06, time_final_step=1):
+    def gravity_equilibrium(
+        self, steps=10, keyword="ratio-local", ratio=1e-06, time=0.02, final_ratio=1e-06, time_final_step=1
+    ):
         """_summary_
 
         Parameters
@@ -129,23 +131,31 @@ class ThreedecConfig:
             _description_
         """
 
-        g = (-9.806 / steps)
+        g = -9.806 / steps
         g = round(g, 3)
-        text = ';GRAVITY APPLIED IN' + ' ' + str(steps) + ' ' + 'STEPS ' + '\n'
-        text += ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
+        text = ";GRAVITY APPLIED IN" + " " + str(steps) + " " + "STEPS " + "\n"
+        text += ";^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" + "\n"
         for i in range(steps):
-            gr = g * (i+1)
+            gr = g * (i + 1)
             # header = ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
-            header = ';_____GRAVITY_____' + " " + 'step' + " " + str(i+1) + '\n'
-            header += 'model gravity' + ' ' + '0' + " " + '0' + " " + str(gr) + '\n'
-            header += 'model solve' + " " + str(keyword) +  " " + str(ratio) + \
-                " " + 'time' + " " + str(time) + '\n'
+            header = ";_____GRAVITY_____" + " " + "step" + " " + str(i + 1) + "\n"
+            header += "model gravity" + " " + "0" + " " + "0" + " " + str(gr) + "\n"
+            header += "model solve" + " " + str(keyword) + " " + str(ratio) + " " + "time" + " " + str(time) + "\n"
             text += header
-        text += 'model solve' + " " + str(keyword) + " " +str(final_ratio) + \
-                " " + 'time' + " " + str(time_final_step) + '\n'
-        text += ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
+        text += (
+            "model solve"
+            + " "
+            + str(keyword)
+            + " "
+            + str(final_ratio)
+            + " "
+            + "time"
+            + " "
+            + str(time_final_step)
+            + "\n"
+        )
+        text += ";^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" + "\n"
         return text
-
 
     def blocks_output(self):
         """FISH function: get blocks data from 3DEC analysis:
@@ -172,6 +182,7 @@ class ThreedecConfig:
             list of vertices (coordinates)
                 x,y,z (precision = 18)
         """
+
         blocks_output = """
 
     ;___________________________________________________________________________
@@ -210,10 +221,10 @@ class ThreedecConfig:
     end
     ;___________________________________________________________________________
     """
+
         return blocks_output
 
-
-    def save_blocks_output(self,state):
+    def save_blocks_output(self, state):
         save_blocks_output = """
     ;___________________________________________________________________________
     log on
@@ -225,7 +236,6 @@ class ThreedecConfig:
             state
         )
         return save_blocks_output
-
 
     def contacts_output(self):
         """FISH function: get contacts data from 3DEC analysis:
@@ -240,7 +250,7 @@ class ThreedecConfig:
     loop foreach ic block.contact.list()
     ii=io.out('contact'+' '+'='+' '+string(ic)+' '+string(block.contact.type(ic))+' '+string(block.region(block.contact.b1(ic)))+' '+string(block.region(block.contact.b2(ic)))+' '+string(block.contact.pos(ic))+' '+string(block.contact.normal(ic)))
         loop foreach si block.contact.subcontactlist(ic)
-            ii=io.out('subcontact'+' '+'='+' '+string(block.subcontact.pos(si))+' '+string(block.subcontact.force.norm(si))+' '+string(block.subcontact.force.shear(si))+' '+string(si)+' '+string(block.subcontact.disp.norm(si))+' '+string(block.subcontact.disp.shear(si)))
+            ii=io.out('subcontact'+' '+'='+' '+string(block.subcontact.pos(si))+' '+string(block.subcontact.force.norm(si))+' '+string(block.subcontact.force.shear(si))+' '+string(si)+' '+string(block.subcontact.disp.norm(si))+' '+string(block.subcontact.disp.shear(si))+' '+string(block.subcontact.stress.norm(si))+' '+string(block.subcontact.stress.shear(si))+' '+string(block.subcontact.area(si)))
             fi = block.subcontact.face(si)
             if fi then
                 fo = block.face.bface(fi)
@@ -254,7 +264,6 @@ class ThreedecConfig:
     ;___________________________________________________________________________
     """
         return contacts_output
-
 
     def save_contacts_output(self, state):
         save_contacts_output = """
@@ -272,10 +281,10 @@ class ThreedecConfig:
     def get_gravity_input(self, material_name):
 
         if not self.jkn or not self.jks:
-            raise ValueError ("Missing Joint Stiffness values")
+            raise ValueError("Missing Joint Stiffness values")
 
         if not self.damping:
-            raise ValueError ("Missing damping value")
+            raise ValueError("Missing damping value")
 
         main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
         create_header = """
@@ -300,7 +309,7 @@ block mechanical damping {4}
             self.jkn,
             self.jks,
             self.material[material_name]["friction_angle"],
-            self.damping
+            self.damping,
         )
         main_string += create_header
         main_string += self.blocks_output()
@@ -308,29 +317,58 @@ block mechanical damping {4}
         main_string += self.save_blocks_output("init_state")
         main_string += self.save_analysis("init")
         main_string += self.restore_analysis("init")
-        main_string +=  '\n'
-        main_string += self.gravity_equilibrium(steps, keyword, ratio, time_step, final_ratio, time_final_step)
+        main_string += "\n"
+        main_string += self.gravity_equilibrium()
         main_string += self.save_blocks_output("grav_state")
         main_string += self.save_contacts_output("contact_grav")
         main_string += self.save_analysis("grav")
         main_string += "exit()"
         return main_string
 
+    def _check_and_delete_gravity_files(self, current_directory):
+        # Get the current working directory
+        # current_directory = os.getcwd()
+        print(f"Checking in the current directory: {current_directory}")
 
+        # List of files to check and potentially delete
+        files_to_check = ["init_state.txt", "grav_state.txt", "contact_grav.txt"]
 
-    def set_gravity_analysis(self, material_name, steps=10, keyword="ratio-local", ratio=1e-06, time_step=0.02, final_ratio=1e-05, time_final_step=1):
+        # Iterate through each file in the list
+        for file_name in files_to_check:
+            # Construct the full path to the file
+            full_path = os.path.join(current_directory, file_name)
+
+            # Check if the file exists
+            if os.path.exists(full_path):
+                # If the file exists, delete it
+                os.remove(full_path)
+                print(f"Deleted {file_name}")
+            else:
+                # If the file does not exist, print a message
+                print(f"{file_name} does not exist in the current directory and was not deleted")
+
+    def set_gravity_analysis(
+        self,
+        material_name,
+        steps=10,
+        keyword="ratio-local",
+        ratio=1e-06,
+        time_step=0.02,
+        final_ratio=1e-05,
+        time_final_step=1,
+    ):
 
         caller_frame = inspect.stack()[1]
         caller_filename = caller_frame.filename
         current_directory = os.path.dirname(os.path.abspath(caller_filename))
 
-        check_and_delete_gravity_files(current_directory)
+        self._check_and_delete_gravity_files(current_directory)
 
         if not self.jkn or not self.jks:
-            raise ValueError ("Missing Joint Stiffness values")
+            raise ValueError("Missing Joint Stiffness values")
 
         if not self.damping:
-            raise ValueError ("Missing damping value")
+            raise ValueError("Missing damping value")
 
         main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
         create_header = """
@@ -355,7 +393,7 @@ block mechanical damping {4}
             self.jkn,
             self.jks,
             self.material[material_name]["friction_angle"],
-            self.damping
+            self.damping,
         )
         main_string += create_header
         main_string += self.blocks_output()
@@ -363,7 +401,7 @@ block mechanical damping {4}
         main_string += self.save_blocks_output("init_state")
         main_string += self.save_analysis("init")
         main_string += self.restore_analysis("init")
-        main_string +=  '\n'
+        main_string += "\n"
         main_string += self.gravity_equilibrium(steps, keyword, ratio, time_step, final_ratio, time_final_step)
         main_string += self.save_blocks_output("grav_state")
         main_string += self.save_contacts_output("contact_grav")
@@ -373,6 +411,6 @@ block mechanical damping {4}
         caller_filename = caller_frame.filename
         output_path = os.path.dirname(os.path.abspath(caller_filename))
         filename = "gravity.dat"
-        with open(os.path.join(output_path,filename), 'w') as file:
+        with open(os.path.join(output_path, filename), "w") as file:
             file.write(main_string)
         return filename
