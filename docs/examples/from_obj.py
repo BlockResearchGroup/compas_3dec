@@ -24,14 +24,14 @@ model.to_3dec_geometry()
 # input material
 # =============================================================================
 # to be moved to compas_model
-model.threedec_config.add_material("concrete", 2200, 35, 5000000, 0.2)
+model.threedec_config.add_material("concrete", 2200, 35, 5000000, 0.8)
 
 # =============================================================================
 # create analysis.dat files
 # =============================================================================
 # calculate joint stiffness from material and geometric input
 # to be changed considering the Material class from compas_model
-model.threedec_config.get_joint_stiffness_one_material("concrete", 1, 1)
+model.threedec_config.get_joint_stiffness_one_material("concrete", 1, 0.1)
 gravity_dat = model.threedec_config.set_gravity_analysis("concrete")
 
 # =============================================================================
@@ -47,8 +47,8 @@ mapping_dict = model.mapping(init_dict)
 grav_dict = model.from_3dec_blocks("grav_state.txt")
 model.update_blocks(grav_dict,mapping_dict)
 
-contact_grav = model.from_3dec_contacts("contact_grav.txt")
-# print(contact_grav)
+output_3dec_per_vertex = model.from_3dec_contacts("contact_grav.txt")
+
 # print (model.update_contacts(contact_grav))
 # model.update_contacts(contact_grav)
 # model.print
@@ -73,7 +73,7 @@ for m in model.elementlist:
     me = m.geometry
     viewer.add(me, opacity=0.5)
 for edge,interaction in model.graph.edges(True):
-    viewer.add(interaction["interaction"].polygon, facescolor=Color.azure())
+    viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
     # viewer.add(polygon)
 
 

@@ -1,18 +1,18 @@
-;27/02/2024 14:24:35
+;28/02/2024 18:39:52
 model new
 model large-strain on
 program call 'geometry.dat'
 
 block contact generate-subcontacts
 block property density 2200 range group 'Supports'
-block contact property stiffness-normal 5000000.0 stiffness-shear 2083333.3333333335 friction 35
-block contact material-table default property stiffness-normal 5000000.0 stiffness-shear 2083333.3333333335
+block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
+block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
 block fix range group 'Supports'
 
 block property density 2200 range group 'Blocks'
 block contact generate-subcontacts
-block contact property stiffness-normal 5000000.0 stiffness-shear 2083333.3333333335 friction 35
-block contact material-table default property stiffness-normal 5000000.0 stiffness-shear 2083333.3333333335
+block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
+block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
 
 block mechanical damping global
 

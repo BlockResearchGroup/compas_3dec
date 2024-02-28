@@ -4,7 +4,8 @@ from subprocess import call
 
 from compas.files import OBJ
 from compas.datastructures import Mesh
-from compas.geometry import convex_hull_xy, Plane, Frame, Transformation, transform_points, Polygon
+from compas.geometry import convex_hull_xy, Transformation, transform_points, scale_vector
+from compas.geometry import Plane, Frame, Polygon, Point, Line
 
 from compas_model.model import Model, GroupNode
 from compas_model.elements import BlockElement, InterfaceElement
@@ -383,7 +384,7 @@ class Model_3dec(Model):
                 unique_points.append(point)
         return unique_points
 
-    def from_3dec_contacts(self, filename):
+    def from_3dec_contacts(self, filename, rounding=3):
         contacts = {}
         with open(os.path.join(self.working_path, filename), "r") as fo:
             for line in fo:
@@ -431,33 +432,88 @@ class Model_3dec(Model):
                     contacts[id]["subcontacts"][ids]["area"] = area
                     continue
 
-        for key, value in contacts.items():
-            neighbours = value["neighbours"]
+        for key, contact in contacts.items():
+            neighbours = contact["neighbours"]
+
             # get list of subcontacts coordinates
-            points = []
-            for key, subcontact in value["subcontacts"].items():
+            output_3dec_per_vertex = {}
+
+            for key, subcontact in contact["subcontacts"].items():
                 point = subcontact["coordinates"]
-                print(point)
-                points.append(point)
+                position = self.geometric_key(point)
+                normal_force = scale_vector(contact["normal"], subcontact["normal_force"])
+                shear_force = subcontact["shear_force"]
+                normal_displacement = scale_vector(contact["normal"], subcontact["normal_displ"])
+                shear_displacement = subcontact["shear_displ"]
+                normal_stress = subcontact["normal_stress"]
+                shear_stress = subcontact["shear_stress"]
+                area = subcontact["area"]
 
-            # remove duplicates and create polygon
-            self._remove_duplicate_points(points)
-            normal = value["normal"]
-            position = value["position"]
-            plane = Plane(position, normal)
-            frame = Frame.from_plane(plane)
-            transformation = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-            points = transform_points(points, transformation)
+                if position in output_3dec_per_vertex:
+                    # Correctly access and update the dictionary for the existing key
+                    output_3dec_per_vertex[position]["normal_force"] = [
+                        x + y for x, y in zip(output_3dec_per_vertex[position]["normal_force"], normal_force)
+                    ]
+                    output_3dec_per_vertex[position]["shear_force"] = [
+                        x + y for x, y in zip(output_3dec_per_vertex[position]["shear_force"], shear_force)
+                    ]
+                    output_3dec_per_vertex[position]["normal_displacement"] = [
+                        x + y
+                        for x, y in zip(output_3dec_per_vertex[position]["normal_displacement"], normal_displacement)
+                    ]
+                    output_3dec_per_vertex[position]["shear_displacement"] = [
+                        x + y
+                        for x, y in zip(output_3dec_per_vertex[position]["shear_displacement"], shear_displacement)
+                    ]
+                    output_3dec_per_vertex[position]["normal_stress"] += normal_stress
+                    output_3dec_per_vertex[position]["shear_stress"] += shear_stress
+                    output_3dec_per_vertex[position]["area"] += area
+                else:
+                    output_3dec_per_vertex[position] = {
+                        "position": point,
+                        "normal_force": normal_force,
+                        "shear_force": shear_force,
+                        "normal_displacement": normal_displacement,
+                        "shear_displacement": shear_displacement,
+                        "normal_stress": normal_stress,
+                        "shear_stress": shear_stress,
+                        "area": area,
+                    }
 
-            if len(points) > 3:
+            points = []
+            output_list = []
+            for key, value in output_3dec_per_vertex.items():
+                points.append(value["position"])
+
+            if len(points) > 2:
+                normal = contact["normal"]
+                position = contact["position"]
+                plane = Plane(position, normal)
+                frame = Frame.from_plane(plane)
+                transformation = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+                points = transform_points(points, transformation)
                 points = convex_hull_xy(points)
-            points = transform_points(points, transformation.inverse())
-            polygon = Polygon(points)
+                points = transform_points(points, transformation.inverse())
+                contact_geometry = Polygon(points)
+                for point in points:
+                    gkey = self.geometric_key(point)
+                    output_list.append(output_3dec_per_vertex[gkey])
 
-            interaction = Interaction3dec(type=value["type"], normal=value["normal"], polygon=polygon)
+            elif len(points) == 2:
+                contact_geometry = Line(points[0], points[1])
+                output_list = output_3dec_per_vertex.values()
+            else:
+                contact_geometry = Point(points[0])
+                output_list = output_3dec_per_vertex.values()
+
+            interaction = Interaction3dec(
+                type=contact["type"],
+                normal=contact["normal"],
+                contact_geometry=contact_geometry,
+                forces_per_vertex=output_list,
+            )
             self.add_interaction(self.elementlist[neighbours[0]], self.elementlist[neighbours[1]], interaction)
-        self.print()
-        return contacts
+        return output_3dec_per_vertex
 
         # for index, block_element in enumerate(self.elements_list):  # index and mesh from compas mesh
         #     block_map[index] = {
