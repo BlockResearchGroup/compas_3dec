@@ -1,5 +1,5 @@
 **********************************************
-* Logging started at Wed Feb 28 18:39:53 2024
+* Logging started at Mon Mar 4 13:47:41 2024
 * By 3dec Version 7.00 Release 159
 * 
 * 
@@ -45,10 +45,10 @@ vertex = (1,0,1) 1
 vertex = (0,0,1) 1
 3dec>    log off
 **********************************************
-* Logging ended at Wed Feb 28 18:39:53 2024
+* Logging ended at Mon Mar 4 13:47:41 2024
 **********************************************
 **********************************************
-* Logging started at Wed Feb 28 18:39:53 2024
+* Logging started at Mon Mar 4 13:47:41 2024
 * By 3dec Version 7.00 Release 159
 * 
 * 
@@ -56,5 +56,5 @@ vertex = (0,0,1) 1
 **********************************************
 3dec>    log-file 'grav_state.txt'
 **********************************************
-* Logging ended at Wed Feb 28 18:39:53 2024
+* Logging ended at Mon Mar 4 13:47:41 2024
 **********************************************

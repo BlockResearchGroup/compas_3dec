@@ -1,6 +1,7 @@
 import os
 from compas_3dec.model_3dec import Model_3dec
 from compas.colors import Color
+from compas.geometry import Rotation
 
 #from compas_viewer import Viewer
 #from compas.scene import Scene
@@ -14,6 +15,9 @@ path_b = r"C:\Users\adellend\Code2\compas_3dec\src\compas_3dec\data\block.obj"
 
 
 model = Model_3dec.model_from_obj(path_s, path_b)
+
+# for element in model.elementlist:
+#     element.transform(Rotation.from_axis_and_angle([0,1,0],0.1,[0,0,0]))
 
 # =============================================================================
 # create geometry.dat
@@ -48,6 +52,9 @@ grav_dict = model.from_3dec_blocks("grav_state.txt")
 model.update_blocks(grav_dict,mapping_dict)
 
 output_3dec_per_vertex = model.from_3dec_contacts("contact_grav.txt")
+# print(output_3dec_per_vertex)
+
+
 
 # print (model.update_contacts(contact_grav))
 # model.update_contacts(contact_grav)
@@ -74,9 +81,10 @@ for m in model.elementlist:
     viewer.add(me, opacity=0.5)
 for edge,interaction in model.graph.edges(True):
     viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
+    normal, shear, points, mesh_normal_stress, mesh_shear_stress = interaction["interaction"].vector_force_display(0.1)
+    viewer.add(normal,lineswidth=5, linescolor=Color.red())
+    viewer.add(shear, lineswidth=5, linescolor=Color.blue())
     # viewer.add(polygon)
-
-
 viewer.show()
 
 #viewer = Viewer()

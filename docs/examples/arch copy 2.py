@@ -20,14 +20,14 @@ group_supports = model.add_group("Supports")
 group_blocks = model.add_group("Blocks")
 support_0 = BlockElement(meshes[0], is_support=True)
 support_1 = BlockElement(meshes[-1], is_support=True)
-group_supports.add_element(support_0)
-group_supports.add_element(support_1)
+model.add_element(support_0, group_supports)
+model.add_element(support_1, group_supports)
 
-compound0 = group_blocks.add_group("Compound_0")
-compound0.add_elements([BlockElement(meshes[1]), BlockElement(meshes[2])])
+compound0 = model.add_group("Compound_0", group_blocks)
+model.add_elements([BlockElement(meshes[1]), BlockElement(meshes[2])], compound0)
 
 for i in range(3, len(meshes) - 1):
-    group_blocks.add_element(BlockElement(meshes[i]))
+    model.add_element(BlockElement(meshes[i]), group_blocks)
 
 
 # =============================================================================
@@ -39,14 +39,14 @@ model.to_3dec_geometry()
 # input material
 # =============================================================================
 # to be moved to compas_model
-model.threedec_config.add_material("concrete", 2200, 35, 90000000, 0.2)
+model.threedec_config.add_material("concrete", 2200, 35, 5000000, 0.8)
 
 # =============================================================================
 # create analysis.dat files
 # =============================================================================
 # calculate joint stiffness from material and geometric input
 # to be changed considering the Material class from compas_model
-model.threedec_config.get_joint_stiffness_one_material("concrete", 1, 1)
+model.threedec_config.get_joint_stiffness_one_material("concrete", 1, 0.1)
 gravity_dat = model.threedec_config.set_gravity_analysis("concrete")
 
 # =============================================================================
@@ -62,14 +62,21 @@ mapping_dict = model.mapping(init_dict)
 grav_dict = model.from_3dec_blocks("grav_state.txt")
 model.update_blocks(grav_dict,mapping_dict)
 
-model.from_3dec_contacts("contact_grav.txt")
+output_3dec_per_vertex = model.from_3dec_contacts("contact_grav.txt")
+
+
+
+
+# print (model.update_contacts(contact_grav))
+# model.update_contacts(contact_grav)
+# model.print
 
 # =============================================================================
 # equilibrium check
 # =============================================================================
-HERE = os.path.dirname(__file__)
-FILE = os.path.join(HERE, "grav_state.txt")
-model.solve_ratio_check("grav_state.txt")
+# HERE = os.path.dirname(__file__)
+# FILE = os.path.join(HERE, "grav_state.txt")
+# model.solve_ratio_check("grav_state.txt")
 
 
 # =============================================================================
@@ -78,18 +85,19 @@ model.solve_ratio_check("grav_state.txt")
 # =============================================================================
 # Viewer
 # =============================================================================
-# from compas_viewer import Viewer
-# viewer = Viewer()
-# for m in model.elements_list:
-#     me = m.geometry
-#     viewer.add(me,  color=Color.azure())
-# viewer.show()
-
+from compas_viewer import Viewer
 viewer = Viewer()
-for index, block_element in enumerate(model.elements_list):
-    # print(block_element.geometry)
-    if block_element.is_support:
-        viewer.add(block_element.geometry, linescolor=Color.red())
-    else:
-        viewer.add(block_element.geometry)
+for m in model.elementlist:
+    me = m.geometry
+    # viewer.add(me, opacity=0.5)
+for edge,interaction in model.graph.edges(True):
+    # viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
+    normal, shear, points, mesh_normal_stress, mesh_shear_stress = interaction["interaction"].vector_force_display(0.05)
+    viewer.add(normal,lineswidth=3, linescolor=Color.red())
+    viewer.add(shear, lineswidth=3, linescolor=Color.blue())
+    viewer.add(points, show_points=True, pointssize=10)
+    viewer.add(mesh_normal_stress, use_vertexcolors=True)
+    # viewer.add(mesh_shear_stress, use_vertexcolors=True)
+
+    # viewer.add(polygon)
 viewer.show()
