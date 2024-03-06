@@ -1,10 +1,10 @@
-from compas.scene import Scene
 from compas.datastructures import Mesh
-from compas_model.elements import BlockElement
+from compas_3dec.blockelement3dec import BlockElement
 from compas_3dec.model_3dec import Model_3dec
 from compas_3dec.data.arch import Arch
 import os
-from compas_viewer import Viewer
+
+# from compas_viewer import Viewer
 from compas.colors import Color
 from compas_3dec.interactions_3dec import Interaction3dec
 from compas_3dec.rigid_interaction import RigidInteraction
@@ -17,7 +17,8 @@ meshes = arch.blocks()
 # =============================================================================
 # Model
 # =============================================================================
-model = Model_3dec()
+# model = Model_3dec(working_path = r"C:\Users\adellend\Code2\compas_3dec\docs\examples" )
+model = Model_3dec(working_path = os.getcwd())
 for m in meshes:
     model.add_element(BlockElement(m))
 model.elementlist[0].is_support = True
@@ -28,7 +29,6 @@ model.add_interaction(model.elementlist[2], model.elementlist[3], RigidInteracti
 model.add_interaction(model.elementlist[-2], model.elementlist[-3], RigidInteraction())
 model.add_interaction(model.elementlist[-3], model.elementlist[-4], RigidInteraction())
 model.add_interaction(model.elementlist[-5], model.elementlist[-6], RigidInteraction())
-
 
 # =============================================================================
 # create geometry.dat
@@ -67,63 +67,8 @@ output_3dec_per_vertex = model.from_3dec_contacts("contact_grav.txt")
 
 
 
-# print (model.update_contacts(contact_grav))
-# model.update_contacts(contact_grav)
-# model.print
-
-# =============================================================================
-# equilibrium check
-# =============================================================================
-# HERE = os.path.dirname(__file__)
-# FILE = os.path.join(HERE, "grav_state.txt")
-# model.solve_ratio_check("grav_state.txt")
-
-
-# =============================================================================
-# visualisation
-# =============================================================================
-# =============================================================================
-# Viewer
-# =============================================================================
-# from compas_viewer import Viewer
-
-# scene = Scene(context= "Notebook")
-# scene.add(model.elementlist[0])
-# scene.draw()
-# # scene.draw()
 
 from compas_notebook.viewer import Viewer
 viewer = Viewer()
-# scene = Scene(context= "Notebook")
-for m in model.elementlist:
-    viewer.scene.add(m)
-viewer.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# for m in model.elementlist:
-#     me = m.geometry
-#     viewer.add(me, opacity=0.5)
-# for edge,interaction in model.graph.edges(True):
-#     if isinstance(interaction["interaction"], Interaction3dec):
-#     # viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
-#         normal, shear, points, mesh_normal_stress, mesh_shear_stress = interaction["interaction"].vector_force_display(0.05)
-#         viewer.add(normal,lineswidth=3, linescolor=Color.red())
-#         viewer.add(shear, lineswidth=3, linescolor=Color.blue())
-#         viewer.add(points, show_points=True, pointssize=10)
-#         viewer.add(mesh_normal_stress, use_vertexcolors=True)
-#     # viewer.add(mesh_shear_stress, use_vertexcolors=True)
-
-#     # viewer.add(polygon)
-# viewer.show()
+viewer.scene.context = "Notebook"
+viewer.scene.add(model)

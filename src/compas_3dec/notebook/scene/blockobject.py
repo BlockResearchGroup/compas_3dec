@@ -5,10 +5,12 @@ import pythreejs as three
 from compas.geometry import Polygon
 from compas.geometry import earclip_polygon
 
-from .elementobject3dec import ThreeBlockElementObject
+# from .elementobject import ThreeElementObject
+from compas_notebook.scene import ThreeSceneObject
+from compas_3dec.scene.blockobject import BlockObject
 
 
-class ThreeBlock3decObject(ThreeBlockElementObject):
+class ThreeBlockObject(ThreeSceneObject, BlockObject):
     """Scene object for drawing block objects."""
 
     def __init__(self, *args, **kwargs):
@@ -26,7 +28,6 @@ class ThreeBlock3decObject(ThreeBlockElementObject):
         self._guids = []
 
         mesh = self.element.geometry  # type: ignore
-
 
         vertices = list(mesh.vertices())  # type: ignore
         faces = list(mesh.faces())  # type: ignore
@@ -119,7 +120,7 @@ class ThreeBlock3decObject(ThreeBlockElementObject):
 
             for face in faces:
                 vertices = mesh.face_vertices(face)  # type: ignore
-                c = self.facecolor[face]
+                c = self.facecolor[face]  # type: ignore
 
                 if len(vertices) == 3:
                     positions.append(vertex_xyz[vertices[0]])

@@ -46,7 +46,7 @@ class Model_3dec(Model):
         working_path=None,
     ):
         super(Model_3dec, self).__init__(name)
-        self.threedec_config = ThreedecConfig()
+        self.threedec_config = ThreedecConfig(self)
         self.executable_path = executable_path
         self.working_path = working_path
         logging.warning("Model is created" +'\n')
@@ -55,46 +55,7 @@ class Model_3dec(Model):
             caller_filename = caller_frame.filename
             self.working_path = os.path.dirname(os.path.abspath(caller_filename))
 
-    def init_element_features(self):
-        for guid, element in self.elements.items():
-            if isinstance(element, BlockElement):
-                element.features = {
-                    "unbalanced_force": [],
-                    "velocity": [],
-                    "density": None,
-                    "mass": None,
-                    "weight": None,
-                    "position": {},
-                    "transformation": [],
-                    "material_properties": {
-                        "density": None,
-                        "friction_angle": None,
-                        "young_modulus": None,
-                        "poisson_ration": None,
-                    },
-                }
-            elif isinstance(element, InterfaceElement):
-                element.features = {
-                    "type": None,
-                    "frame": None,
-                    "polygon": None,
-                    "neighbours": [],
-                    "vertices": {
-                        "position": [],
-                        "normal_force": None,
-                        "shear_force": [],
-                        "normal_stress": None,
-                        "shear_stress": None,
-                        "normal_displ": None,
-                        "shear_displ": [],
-                    },
-                    "material_properties": {
-                        "density": None,
-                        "friction_angle": None,
-                        "young_modulus": None,
-                        "poisson_ration": None,
-                    },
-                }
+
 
     @classmethod
     def from_model(cls, model: Model):
@@ -119,8 +80,6 @@ class Model_3dec(Model):
         Examples
         --------
         """
-        # Notes: add .json files generation if needed for post processing
-
         return
 
     @staticmethod
@@ -135,22 +94,18 @@ class Model_3dec(Model):
         return meshes
 
     @staticmethod
-    def model_from_obj(path_supports, path_blocks):
-        caller_frame = inspect.stack()[1]
-        caller_filename = caller_frame.filename
+    def model_from_obj(path_supports, path_blocks, working_path=None):
         meshes_supports = Model_3dec.from_obj(path_supports)
         meshes_blocks = Model_3dec.from_obj(path_blocks)
-        model = Model_3dec(working_path=os.path.dirname(os.path.abspath(caller_filename)))
+        model = Model_3dec(working_path=working_path)
         group_supports = model.add_group("Supports")
         group_blocks = model.add_group("Blocks")
         for i in range(len(meshes_supports)):
             support = BlockElement(meshes_supports[i], is_support=True)
             model.add_element(support, group_supports)
-            # group_supports.add(ElementNode(support))
         for i in range(len(meshes_blocks)):
             block = BlockElement(meshes_blocks[i], is_support=False)
             model.add_element(block, group_blocks)
-            # group_blocks.add(ElementNode(block))
         return model
 
     def _overwrite_file(self, file_path, replace_string):
@@ -206,8 +161,6 @@ class Model_3dec(Model):
         a group of 3D convex meshes joined together forming a concave shape) enabling
         the creation of Master/Slave compounds in 3DEC.
         """
-        # path = os.path.dirname(__file__)
-
         outputs = ""
         for node in self.tree.root.children:
             outputs += ";__create " + str(node.name) + "__" + "\n"
@@ -241,7 +194,6 @@ class Model_3dec(Model):
             outputs += self._threedec7_mesh_description(meshes, indices, name, precision=10)
         geometry_path = os.path.join(self.working_path, "geometry.dat")
         self._overwrite_file(geometry_path, outputs)
-
 
     def run(self, sequence=[]):
         args = ["cd", self.working_path, "&&", self.executable_path] + sequence
@@ -669,10 +621,8 @@ class Model_3dec(Model):
     #         resultant_points = []
     #         for key, value in output_3dec_per_vertex.items():
     #             vertex = value["position"]
-    #             ri = (vertex[0] - centroid[0], vertex[1] - centroid[1], vertex[2] - centroid[2])
-    #             print("RI",ri)
-    #             Ni = value["normal_force"]
-    #             print ("NI", Ni)
+    #             ri = [vertex[0] - centroid[0], vertex[1] - centroid[1], vertex[2] - centroid[2]]
+    #             Ni = value["normal_force"][2]
     #             Mi = cross_vectors(ri, scale_vector(contact_normal, Ni))
     #             Mtot = sum_vectors([Mtot, Mi])
     #             Ntot = Ntot + Ni

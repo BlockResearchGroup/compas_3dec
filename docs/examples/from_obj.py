@@ -51,7 +51,7 @@ mapping_dict = model.mapping(init_dict)
 grav_dict = model.from_3dec_blocks("grav_state.txt")
 model.update_blocks(grav_dict,mapping_dict)
 
-output_3dec_per_vertex = model.from_3dec_contacts("contact_grav.txt")
+output_3dec_per_vertex = model.from_3dec_contacts_resultant("contact_grav.txt")
 # print(output_3dec_per_vertex)
 
 
@@ -81,9 +81,11 @@ for m in model.elementlist:
     viewer.add(me, opacity=0.5)
 for edge,interaction in model.graph.edges(True):
     viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
-    normal, shear, points, mesh_normal_stress, mesh_shear_stress = interaction["interaction"].vector_force_display(0.1)
+    normal, shear, points, mesh_normal_stress, mesh_shear_stress, resultant_force = interaction["interaction"].vector_force_display(0.1)
     viewer.add(normal,lineswidth=5, linescolor=Color.red())
     viewer.add(shear, lineswidth=5, linescolor=Color.blue())
+    viewer.add(resultant_force,lineswidth=5, linescolor=Color.green())
+
     # viewer.add(polygon)
 viewer.show()
 

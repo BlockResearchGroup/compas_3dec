@@ -1,4 +1,4 @@
-;04/03/2024 13:47:38
+;06/03/2024 17:29:53
 model new
 model large-strain on
 program call 'geometry.dat'

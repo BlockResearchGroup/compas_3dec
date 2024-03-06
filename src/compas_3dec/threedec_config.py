@@ -1,6 +1,5 @@
 import time
 from enum import Enum
-import inspect
 import os
 
 
@@ -10,11 +9,12 @@ class Damping(Enum):
 
 
 class ThreedecConfig:
-    def __init__(self):
+    def __init__(self, model):
         self.material = {}
         self._damping = "global"
         self.jkn = None
         self.jks = None
+        self.model = model
 
     @property
     def damping(self):
@@ -358,11 +358,7 @@ block mechanical damping {4}
         time_final_step=1,
     ):
 
-        caller_frame = inspect.stack()[1]
-        caller_filename = caller_frame.filename
-        current_directory = os.path.dirname(os.path.abspath(caller_filename))
-
-        self._check_and_delete_gravity_files(current_directory)
+        self._check_and_delete_gravity_files(self.model.working_path)
 
         if not self.jkn or not self.jks:
             raise ValueError("Missing Joint Stiffness values")
@@ -407,9 +403,7 @@ block mechanical damping {4}
         main_string += self.save_contacts_output("contact_grav")
         main_string += self.save_analysis("grav")
         main_string += "exit()"
-        caller_frame = inspect.stack()[1]
-        caller_filename = caller_frame.filename
-        output_path = os.path.dirname(os.path.abspath(caller_filename))
+        output_path = self.model.working_path
         filename = "gravity.dat"
         with open(os.path.join(output_path, filename), "w") as file:
             file.write(main_string)

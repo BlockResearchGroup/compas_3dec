@@ -5,16 +5,20 @@ import pythreejs as three
 from compas.geometry import Polygon
 from compas.geometry import earclip_polygon
 
-from .elementobject import ThreeElementObject
+# from .interactionobject import ThreeinteractionObject
+from compas_notebook.scene import ThreeSceneObject
+from compas_3dec.scene.interactionobject import InteractionObject
 
 
-class ThreeBlockObject(ThreeElementObject):
+class ThreeInteractionObject(ThreeSceneObject, InteractionObject):
     """Scene object for drawing block objects."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def draw(self):
+
+
+    def draw_mesh(self, mesh, color = None):
         """Draw the mesh associated with the scene object.
 
         Returns
@@ -23,20 +27,19 @@ class ThreeBlockObject(ThreeElementObject):
             List of pythreejs objects created.
 
         """
-        self._guids = []
+        guids = []
 
-        mesh = self.element.geometry  # type: ignore
 
         vertices = list(mesh.vertices())  # type: ignore
         faces = list(mesh.faces())  # type: ignore
         edges = list(mesh.edges())  # type: ignore
 
-        transformation = self.element.worldtransformation
+        # transformation = self.interaction.worldtransformation
 
-        if transformation:
-            matrix = (  # noqa: F841  # type: ignore
-                numpy.array(transformation.matrix, dtype=numpy.float32).transpose().ravel().tolist()
-            )
+        # if transformation:
+        #     matrix = (  # noqa: F841  # type: ignore
+        #         numpy.array(transformation.matrix, dtype=numpy.float32).transpose().ravel().tolist()
+        #     )
 
         vertex_xyz = {vertex: mesh.vertex_attributes(vertex, "xyz") for vertex in vertices}  # type: ignore
 
@@ -69,7 +72,7 @@ class ThreeBlockObject(ThreeElementObject):
             # threeobject.matrix = matrix
             # threeobject.matrixAutoUpdate = False
 
-            self._guids.append(threeobject)
+            guids.append(threeobject)
 
         # =============================================================================
         # Edges
@@ -103,7 +106,7 @@ class ThreeBlockObject(ThreeElementObject):
             # threeobject.matrix = matrix
             # threeobject.matrixAutoUpdate = False
 
-            self._guids.append(threeobject)
+            guids.append(threeobject)
 
         # =============================================================================
         # Faces
@@ -129,18 +132,19 @@ class ThreeBlockObject(ThreeElementObject):
                     colors.append(c)
 
                 elif len(vertices) == 4:
+
                     positions.append(vertex_xyz[vertices[0]])
                     positions.append(vertex_xyz[vertices[1]])
                     positions.append(vertex_xyz[vertices[2]])
-                    colors.append(c)
-                    colors.append(c)
-                    colors.append(c)
+                    colors.append(mesh.vertex_attribute(vertices[0], "color"))
+                    colors.append(mesh.vertex_attribute(vertices[1], "color"))
+                    colors.append(mesh.vertex_attribute(vertices[2], "color"))
                     positions.append(vertex_xyz[vertices[0]])
                     positions.append(vertex_xyz[vertices[2]])
                     positions.append(vertex_xyz[vertices[3]])
-                    colors.append(c)
-                    colors.append(c)
-                    colors.append(c)
+                    colors.append(mesh.vertex_attribute(vertices[0], "color"))
+                    colors.append(mesh.vertex_attribute(vertices[2], "color"))
+                    colors.append(mesh.vertex_attribute(vertices[3], "color"))
 
                 else:
                     polygon = Polygon([vertex_xyz[v] for v in vertices])
@@ -149,9 +153,9 @@ class ThreeBlockObject(ThreeElementObject):
                         positions.append(vertex_xyz[vertices[ear[0]]])
                         positions.append(vertex_xyz[vertices[ear[1]]])
                         positions.append(vertex_xyz[vertices[ear[2]]])
-                        colors.append(c)
-                        colors.append(c)
-                        colors.append(c)
+                        colors.append(mesh.vertex_attribute(vertices[0], "color"))
+                        colors.append(mesh.vertex_attribute(vertices[1], "color"))
+                        colors.append(mesh.vertex_attribute(vertices[2], "color"))
 
             positions = numpy.array(positions, dtype=numpy.float32)
             colors = numpy.array(colors, dtype=numpy.float32)
@@ -171,6 +175,90 @@ class ThreeBlockObject(ThreeElementObject):
             # threeobject.matrix = matrix
             # threeobject.matrixAutoUpdate = False
 
-            self._guids.append(threeobject)
+            guids.append(threeobject)
+
+        return guids
+
+    def draw_lines(self, lines, color, scale_factor=1):
+        guids = []
+        positions = []
+        colors = []
+
+        for line in lines:
+            positions.append(line.start)
+            positions.append(line.end)
+            colors.append(color)
+            colors.append(color)
+
+        positions = numpy.array(positions, dtype=numpy.float32)
+        colors = numpy.array(colors, dtype=numpy.float32)
+
+        geometry = three.BufferGeometry(
+            attributes={
+                "position": three.BufferAttribute(positions, normalized=False),
+                "color": three.BufferAttribute(colors, normalized=False, itemSize=3),
+            }
+        )
+        material = three.LineBasicMaterial(vertexColors="VertexColors", linewidth = self.thickness_lines)
+
+        threeobject = three.LineSegments(geometry, material)
+        # threeobject.matrix = matrix
+        # threeobject.matrixAutoUpdate = False
+
+        guids.append(threeobject)
+        return guids
+
+    def draw_points(self, points, color):
+        guids = []
+        geometry = three.BufferGeometry(
+                attributes={
+                    "position": three.BufferAttribute(points, normalized=False),
+                    "color": three.BufferAttribute(color, normalized=False, itemSize=3),
+
+                }
+            )
+        material = three.PointsMaterial(
+            size=self.vertexsize*0.1,
+            vertexColors="VertexColors",
+        )
+
+        threeobject = three.Points(geometry, material)
+        guids.append(threeobject)
+
+        return guids
+
+
+    def draw(self):
+        """Draw the mesh associated with the scene object.
+
+        Returns
+        -------
+        list[three.Mesh, three.LineSegments]
+            List of pythreejs objects created.
+
+        """
+        self._guids = []
+
+        if self.show_normal_force_lines:
+            guids = self.draw_lines(self.interaction.normal_force_lines, self.color_normal_force_lines)
+            self._guids.extend(guids)
+
+        if self.show_shear_force_lines:
+            guids = self.draw_lines(self.interaction.shear_force_lines, self.color_shear_force_lines)
+            self._guids.extend(guids)
+
+        if self.show_points:
+            guids = self.draw_points(self.interaction.points, self.color_points)
+            self._guids.extend(guids)
+
+        if self.show_mesh_normal_stress:
+            guids = self.draw_mesh(self.interaction.mesh_normal_stress)
+            self._guids.extend(guids)
+
+        if self.show_mesh_shear_stress:
+            guids = self.draw_mesh(self.interaction.mesh_shear_stress)
+            self._guids.extend(guids)
+
+
 
         return self.guids
