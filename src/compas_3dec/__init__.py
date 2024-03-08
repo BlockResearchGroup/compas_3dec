@@ -24,5 +24,3 @@ __all_plugins__ = [
     "compas_3dec.scene",
     "compas_3dec.notebook.scene",
 ]
-
-

@@ -16,9 +16,7 @@ class ThreeInteractionObject(ThreeSceneObject, InteractionObject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
-
-    def draw_mesh(self, mesh, color = None):
+    def draw_mesh(self, mesh, color=None):
         """Draw the mesh associated with the scene object.
 
         Returns
@@ -28,7 +26,6 @@ class ThreeInteractionObject(ThreeSceneObject, InteractionObject):
 
         """
         guids = []
-
 
         vertices = list(mesh.vertices())  # type: ignore
         faces = list(mesh.faces())  # type: ignore
@@ -199,7 +196,7 @@ class ThreeInteractionObject(ThreeSceneObject, InteractionObject):
                 "color": three.BufferAttribute(colors, normalized=False, itemSize=3),
             }
         )
-        material = three.LineBasicMaterial(vertexColors="VertexColors", linewidth = self.thickness_lines)
+        material = three.LineBasicMaterial(vertexColors="VertexColors", linewidth=self.thickness_lines)
 
         threeobject = three.LineSegments(geometry, material)
         # threeobject.matrix = matrix
@@ -211,14 +208,13 @@ class ThreeInteractionObject(ThreeSceneObject, InteractionObject):
     def draw_points(self, points, color):
         guids = []
         geometry = three.BufferGeometry(
-                attributes={
-                    "position": three.BufferAttribute(points, normalized=False),
-                    "color": three.BufferAttribute(color, normalized=False, itemSize=3),
-
-                }
-            )
+            attributes={
+                "position": three.BufferAttribute(points, normalized=False),
+                "color": three.BufferAttribute(color, normalized=False, itemSize=3),
+            }
+        )
         material = three.PointsMaterial(
-            size=self.vertexsize*0.1,
+            size=self.vertexsize * 0.1,
             vertexColors="VertexColors",
         )
 
@@ -226,7 +222,6 @@ class ThreeInteractionObject(ThreeSceneObject, InteractionObject):
         guids.append(threeobject)
 
         return guids
-
 
     def draw(self):
         """Draw the mesh associated with the scene object.
@@ -258,7 +253,5 @@ class ThreeInteractionObject(ThreeSceneObject, InteractionObject):
         if self.show_mesh_shear_stress:
             guids = self.draw_mesh(self.interaction.mesh_shear_stress)
             self._guids.extend(guids)
-
-
 
         return self.guids

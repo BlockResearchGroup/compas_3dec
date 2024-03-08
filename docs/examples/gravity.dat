@@ -1,21 +1,21 @@
-;06/03/2024 17:29:53
-model new
-model large-strain on
-program call 'geometry.dat'
+;08/03/2024 09:10:56
+    model new
+    model large-strain on
+    program call 'geometry.dat'
 
-block contact generate-subcontacts
-block property density 2200 range group 'Supports'
-block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
-block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
-block fix range group 'Supports'
+    block contact generate-subcontacts
+    block property density 2200 range group 'Supports'
+    block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
+    block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
+    block fix range group 'Supports'
 
-block property density 2200 range group 'Blocks'
-block contact generate-subcontacts
-block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
-block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
+    block property density 2200 range group 'Blocks'
+    block contact generate-subcontacts
+    block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
+    block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
 
-block mechanical damping global
-
+    block mechanical damping global
+    
 
     ;___________________________________________________________________________
     fish define blocks_output

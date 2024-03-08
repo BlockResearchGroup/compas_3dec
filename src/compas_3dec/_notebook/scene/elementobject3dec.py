@@ -3,7 +3,6 @@ from compas_notebook.scene import ThreeSceneObject
 from compas_3dec.scene import BlockElement3decObject
 
 
-
 class ThreeBlockElementObject(ThreeSceneObject, BlockElement3decObject):
     """Scene object for drawing mesh."""
 

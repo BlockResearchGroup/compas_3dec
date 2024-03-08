@@ -1,9 +1,6 @@
-import compas.datastructures  # noqa: F401
-import compas.geometry  # noqa: F401
 from compas_notebook.scene import ThreeSceneObject
 
 from compas_3dec.scene import BlockObject
-from compas_3dec.scene import InteractionObject
 from compas_3dec.scene import ModelObject
 
 

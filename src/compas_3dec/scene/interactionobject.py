@@ -81,8 +81,6 @@ class InteractionObject(SceneObject):
         self.color_points = kwargs.get("color_points", Color.black())
         self.thickness_lines = kwargs.get("thickness_lines", 2.0)
 
-
-
     @property
     def interaction(self):
         # type: () -> compas_3dec.interactions.interaction

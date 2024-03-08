@@ -38,6 +38,9 @@ class ThreedecConfig:
         }
         return self.material[name]
 
+    # =============================================================================
+    # joint stiffness
+    # =============================================================================
     def get_joint_stiffness_one_material(self, material_name, block_height, reduction_factor, block_length=None):
         E = self.material[material_name]["young_modulus"]
         v = self.material[material_name]["poisson_ratio"]
@@ -75,36 +78,9 @@ class ThreedecConfig:
 
         return self.jkn, self.jks
 
-    def save_analysis(self, stage):
-        """
-        Stages:     init
-                    grav
-                    step
-        """
-        save_analysis = """
-;_______SAVE ANALYSIS_______________________________________________________
-    model save "./{}.sav" compress
-;___________________________________________________________________________
-""".format(
-            stage
-        )
-        return save_analysis
-
-    def restore_analysis(self, stage):
-        """
-        Stages:     init
-                    grav
-                    step
-        """
-        restore_analysis = """
-;_______RESTORE ANALYSIS____________________________________________________
-    model restore "./{}.sav"
-;___________________________________________________________________________
-""".format(
-            stage
-        )
-        return restore_analysis
-
+    # =============================================================================
+    # gravity.dat
+    # =============================================================================
     def gravity_equilibrium(
         self, steps=10, keyword="ratio-local", ratio=1e-06, time=0.02, final_ratio=1e-06, time_final_step=1
     ):
@@ -157,6 +133,97 @@ class ThreedecConfig:
         text += ";^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" + "\n"
         return text
 
+    def set_gravity_analysis(
+        self,
+        material_name,
+        steps=10,
+        keyword="ratio-local",
+        ratio=1e-06,
+        time_step=0.02,
+        final_ratio=1e-05,
+        time_final_step=1,
+    ):
+
+        self._check_and_delete_gravity_files(self.model.working_path)
+        if not self.jkn or not self.jks:
+            raise ValueError("Missing Joint Stiffness values")
+
+        if not self.damping:
+            raise ValueError("Missing damping value")
+
+        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
+        create_header = """
+    model new
+    model large-strain on
+    program call 'geometry.dat'
+
+    block contact generate-subcontacts
+    block property density {0} range group 'Supports'
+    block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
+    block contact material-table default property stiffness-normal {1} stiffness-shear {2}
+    block fix range group 'Supports'
+
+    block property density {0} range group 'Blocks'
+    block contact generate-subcontacts
+    block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
+    block contact material-table default property stiffness-normal {1} stiffness-shear {2}
+
+    block mechanical damping {4}
+    """.format(
+            self.material[material_name]["density"],
+            self.jkn,
+            self.jks,
+            self.material[material_name]["friction_angle"],
+            self.damping,
+        )
+        main_string += create_header
+        main_string += self.blocks_output()
+        main_string += self.contacts_output()
+        main_string += self.save_blocks_output("init_state")
+        main_string += self.save_analysis("init")
+        main_string += self.restore_analysis("init")
+        main_string += "\n"
+        main_string += self.gravity_equilibrium(steps, keyword, ratio, time_step, final_ratio, time_final_step)
+        main_string += self.save_blocks_output("grav_state")
+        main_string += self.save_contacts_output("contact_grav")
+        main_string += self.save_analysis("grav")
+        main_string += "exit()"
+        output_path = self.model.working_path
+        filename = "gravity.dat"
+        with open(os.path.join(output_path, filename), "w") as file:
+            file.write(main_string)
+        return filename
+
+    # =============================================================================
+    # displacement.dat
+    # =============================================================================
+    def set_displacement_capacity_analysis():
+        pass
+
+    def get_time_step():
+        pass
+
+    def set_number_of_cycles():
+        pass
+
+    def define_displacement():
+        pass
+
+    # =============================================================================
+    # load.dat
+    # =============================================================================
+    def set_load_capacity_analysis():
+        pass
+
+    # =============================================================================
+    # stress.dat
+    # =============================================================================
+    def set_stress_capacity_analysis():
+        pass
+
+    # =============================================================================
+    # FISH output functions
+    # =============================================================================
     def blocks_output(self):
         """FISH function: get blocks data from 3DEC analysis:
 
@@ -278,52 +345,38 @@ class ThreedecConfig:
         )
         return save_contacts_output
 
-    def get_gravity_input(self, material_name):
-
-        if not self.jkn or not self.jks:
-            raise ValueError("Missing Joint Stiffness values")
-
-        if not self.damping:
-            raise ValueError("Missing damping value")
-
-        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
-        create_header = """
-model new
-model large-strain on
-program call 'geometry.dat'
-
-block contact generate-subcontacts
-block property density {0} range group 'Supports'
-block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
-block contact material-table default property stiffness-normal {1} stiffness-shear {2}
-block fix range group 'Supports'
-
-block property density {0} range group 'Blocks'
-block contact generate-subcontacts
-block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
-block contact material-table default property stiffness-normal {1} stiffness-shear {2}
-
-block mechanical damping {4}
+    # =============================================================================
+    # analysis utilities
+    # =============================================================================
+    def save_analysis(self, stage):
+        """
+        Stages:     init
+                    grav
+                    step
+        """
+        save_analysis = """
+;_______SAVE ANALYSIS_______________________________________________________
+    model save "./{}.sav" compress
+;___________________________________________________________________________
 """.format(
-            self.material[material_name]["density"],
-            self.jkn,
-            self.jks,
-            self.material[material_name]["friction_angle"],
-            self.damping,
+            stage
         )
-        main_string += create_header
-        main_string += self.blocks_output()
-        main_string += self.contacts_output()
-        main_string += self.save_blocks_output("init_state")
-        main_string += self.save_analysis("init")
-        main_string += self.restore_analysis("init")
-        main_string += "\n"
-        main_string += self.gravity_equilibrium()
-        main_string += self.save_blocks_output("grav_state")
-        main_string += self.save_contacts_output("contact_grav")
-        main_string += self.save_analysis("grav")
-        main_string += "exit()"
-        return main_string
+        return save_analysis
+
+    def restore_analysis(self, stage):
+        """
+        Stages:     init
+                    grav
+                    step
+        """
+        restore_analysis = """
+;_______RESTORE ANALYSIS____________________________________________________
+    model restore "./{}.sav"
+;___________________________________________________________________________
+""".format(
+            stage
+        )
+        return restore_analysis
 
     def _check_and_delete_gravity_files(self, current_directory):
         # Get the current working directory
@@ -347,64 +400,50 @@ block mechanical damping {4}
                 # If the file does not exist, print a message
                 print(f"{file_name} does not exist in the current directory and was not deleted")
 
-    def set_gravity_analysis(
-        self,
-        material_name,
-        steps=10,
-        keyword="ratio-local",
-        ratio=1e-06,
-        time_step=0.02,
-        final_ratio=1e-05,
-        time_final_step=1,
-    ):
 
-        self._check_and_delete_gravity_files(self.model.working_path)
+#     def get_gravity_input(self, material_name):
 
-        if not self.jkn or not self.jks:
-            raise ValueError("Missing Joint Stiffness values")
+#         if not self.jkn or not self.jks:
+#             raise ValueError("Missing Joint Stiffness values")
 
-        if not self.damping:
-            raise ValueError("Missing damping value")
+#         if not self.damping:
+#             raise ValueError("Missing damping value")
 
-        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
-        create_header = """
-model new
-model large-strain on
-program call 'geometry.dat'
+#         main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
+#         create_header = """
+# model new
+# model large-strain on
+# program call 'geometry.dat'
 
-block contact generate-subcontacts
-block property density {0} range group 'Supports'
-block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
-block contact material-table default property stiffness-normal {1} stiffness-shear {2}
-block fix range group 'Supports'
+# block contact generate-subcontacts
+# block property density {0} range group 'Supports'
+# block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
+# block contact material-table default property stiffness-normal {1} stiffness-shear {2}
+# block fix range group 'Supports'
 
-block property density {0} range group 'Blocks'
-block contact generate-subcontacts
-block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
-block contact material-table default property stiffness-normal {1} stiffness-shear {2}
+# block property density {0} range group 'Blocks'
+# block contact generate-subcontacts
+# block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
+# block contact material-table default property stiffness-normal {1} stiffness-shear {2}
 
-block mechanical damping {4}
-""".format(
-            self.material[material_name]["density"],
-            self.jkn,
-            self.jks,
-            self.material[material_name]["friction_angle"],
-            self.damping,
-        )
-        main_string += create_header
-        main_string += self.blocks_output()
-        main_string += self.contacts_output()
-        main_string += self.save_blocks_output("init_state")
-        main_string += self.save_analysis("init")
-        main_string += self.restore_analysis("init")
-        main_string += "\n"
-        main_string += self.gravity_equilibrium(steps, keyword, ratio, time_step, final_ratio, time_final_step)
-        main_string += self.save_blocks_output("grav_state")
-        main_string += self.save_contacts_output("contact_grav")
-        main_string += self.save_analysis("grav")
-        main_string += "exit()"
-        output_path = self.model.working_path
-        filename = "gravity.dat"
-        with open(os.path.join(output_path, filename), "w") as file:
-            file.write(main_string)
-        return filename
+# block mechanical damping {4}
+# """.format(
+#             self.material[material_name]["density"],
+#             self.jkn,
+#             self.jks,
+#             self.material[material_name]["friction_angle"],
+#             self.damping,
+#         )
+#         main_string += create_header
+#         main_string += self.blocks_output()
+#         main_string += self.contacts_output()
+#         main_string += self.save_blocks_output("init_state")
+#         main_string += self.save_analysis("init")
+#         main_string += self.restore_analysis("init")
+#         main_string += "\n"
+#         main_string += self.gravity_equilibrium()
+#         main_string += self.save_blocks_output("grav_state")
+#         main_string += self.save_contacts_output("contact_grav")
+#         main_string += self.save_analysis("grav")
+#         main_string += "exit()"
+#         return main_string

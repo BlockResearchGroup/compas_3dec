@@ -7,10 +7,9 @@ from compas.files import OBJ
 from compas.datastructures import Mesh
 from compas.geometry import convex_hull_xy, Transformation, transform_points, scale_vector
 from compas.geometry import Plane, Frame, Polygon, Point, Line
-from compas.geometry import sum_vectors, scale_vector, dot_vectors, cross_vectors, centroid_points, normalize_vector
 
 from compas_model.model import Model, GroupNode
-from compas_model.elements import BlockElement, InterfaceElement
+from compas_model.elements import BlockElement
 
 from compas_3dec.threedec_config import ThreedecConfig
 from compas_3dec.interactions_3dec import Interaction3dec
@@ -49,13 +48,11 @@ class Model_3dec(Model):
         self.threedec_config = ThreedecConfig(self)
         self.executable_path = executable_path
         self.working_path = working_path
-        logging.warning("Model is created" +'\n')
+        logging.warning("Model is created" + "\n")
         if not self.working_path:
             caller_frame = inspect.stack()[1]
             caller_filename = caller_frame.filename
             self.working_path = os.path.dirname(os.path.abspath(caller_filename))
-
-
 
     @classmethod
     def from_model(cls, model: Model):
@@ -108,6 +105,10 @@ class Model_3dec(Model):
             model.add_element(block, group_blocks)
         return model
 
+    @staticmethod
+    def model_from_rhino():
+        pass
+
     def _overwrite_file(self, file_path, replace_string):
         # Overwrite existing file with replace_string
 
@@ -155,6 +156,10 @@ class Model_3dec(Model):
             block_description += "block join range region " + " ".join(str_indices) + "\n"
         return block_description
 
+    # =============================================================================
+    # create geometry.dat
+    # =============================================================================
+
     def to_3dec_geometry(self):
         """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
         Assembly_3DEC object. This function recognises compounds of joined blocks (e.g.
@@ -195,10 +200,16 @@ class Model_3dec(Model):
         geometry_path = os.path.join(self.working_path, "geometry.dat")
         self._overwrite_file(geometry_path, outputs)
 
+    # =============================================================================
+    # run 3dec in the background
+    # =============================================================================
     def run(self, sequence=[]):
         args = ["cd", self.working_path, "&&", self.executable_path] + sequence
         call(" ".join(args), shell=True)
 
+    # =============================================================================
+    # get and process BLOCK data from 3dec
+    # =============================================================================
     def from_3dec_blocks(self, filename):
         blocks = {}
         with open(os.path.join(self.working_path, filename), "r") as fo:
@@ -254,71 +265,6 @@ class Model_3dec(Model):
                     continue
         return blocks
 
-    def solve_ratio_check(self, filename):
-        with open(os.path.join(self.working_path, filename), "r") as fo:
-            for line in fo:
-                line = line.strip()
-                if not line:
-                    continue
-                parts = line.split()
-                if not len(parts):
-                    continue
-                if parts[0] == "solve":
-                    solve_r = float(parts[3])
-                    if solve_r <= 1.0000e-05:
-                        print("Equilibrium reached")
-                        print("solve ratio = " + str(solve_r))
-                    else:
-                        print("Equilibrium NOT reached")
-                        print("solve ratio = " + str(solve_r))
-        return
-
-    def geometric_key(self, xyz, precision="3f", sanitize=True):
-        """Convert XYZ coordinates to a string that can be used as a dict key.
-
-        Parameters
-        ----------
-        xyz : list[float]
-            The XYZ coordinates.
-        precision : str, optional
-            A formatting option that specifies the precision of the
-            individual numbers in the string.
-            Supported values are any float precision (e.g. ``'3f'``), or decimal integer (``'d'``).
-            Default is ``None``, in which case the global precision setting will be used (:attr:`compas.PRECISION`).
-        sanitize : bool, optional
-            If True, minus signs ("-") will be removed from values that are equal to zero up to the given precision.
-
-        Returns
-        -------
-        str
-            The string representation of the given coordinates.
-
-        See also
-        --------
-        geometric_key_xy
-
-        Examples
-        --------
-        >>> from math import pi
-        >>> geometric_key([pi, pi, pi])
-        '3.142,3.142,3.142'
-
-        """
-        x, y, z = xyz
-        if not precision:
-            precision = "3f"
-        if precision == "d":
-            return "{0},{1},{2}".format(int(x), int(y), int(z))
-        if sanitize:
-            minzero = "-{0:.{1}}".format(0.0, precision)
-            if "{0:.{1}}".format(x, precision) == minzero:
-                x = 0.0
-            if "{0:.{1}}".format(y, precision) == minzero:
-                y = 0.0
-            if "{0:.{1}}".format(z, precision) == minzero:
-                z = 0.0
-        return "{0:.{3}},{1:.{3}},{2:.{3}}".format(x, y, z, precision)
-
     def mapping(self, init_dict_3dec):
         block_map = {}
         for bkey, block in init_dict_3dec.items():
@@ -344,20 +290,10 @@ class Model_3dec(Model):
                 attr["y"] = xyz[1]
                 attr["z"] = xyz[2]
 
-    def _remove_duplicate_points(self, points, tolerance=0.00001):
-        unique_points = []
-        for point in points:
-            is_unique = True
-            for existing_point in unique_points:
-                distance = sum((a - b) ** 2 for a, b in zip(point, existing_point)) ** 0.5
-                if distance < tolerance:
-                    is_unique = False
-                    break
-            if is_unique:
-                unique_points.append(point)
-        return unique_points
-
-    def from_3dec_contacts(self, filename, precision='1f'):
+    # =============================================================================
+    # get and process CONTACT data from 3dec
+    # =============================================================================
+    def from_3dec_contacts(self, filename, precision="1f"):
         contacts = {}
         with open(os.path.join(self.working_path, filename), "r") as fo:
             for line in fo:
@@ -396,8 +332,12 @@ class Model_3dec(Model):
                     shear_stress = float(parts[9])
                     area = float(parts[10])
                     contacts[id]["subcontacts"][ids]["coordinates"] = coordinates
-                    contacts[id]["subcontacts"][ids]["normal_force"] = normal_force/1000
-                    contacts[id]["subcontacts"][ids]["shear_force"] = [shear_force[0]/1000, shear_force[1]/1000, shear_force[2]/1000]
+                    contacts[id]["subcontacts"][ids]["normal_force"] = normal_force / 1000
+                    contacts[id]["subcontacts"][ids]["shear_force"] = [
+                        shear_force[0] / 1000,
+                        shear_force[1] / 1000,
+                        shear_force[2] / 1000,
+                    ]
                     contacts[id]["subcontacts"][ids]["normal_displ"] = normal_displ
                     contacts[id]["subcontacts"][ids]["shear_displ"] = shear_displ
                     contacts[id]["subcontacts"][ids]["normal_stress"] = normal_stress
@@ -452,7 +392,7 @@ class Model_3dec(Model):
                         "normal_stress": normal_stress,
                         "shear_stress": shear_stress,
                         "area": area,
-                        "is_combined" : False,
+                        "is_combined": False,
                     }
 
             points = []
@@ -467,7 +407,7 @@ class Model_3dec(Model):
                 frame = Frame.from_plane(plane)
                 transformation = Transformation.from_frame_to_frame(frame, Frame.worldXY())
                 points = transform_points(points, transformation)
-                #ToDo: to be verified based on contact conditions (hinge)
+                # ToDo: to be verified based on contact conditions (hinge)
                 points = convex_hull_xy(points)
                 points = transform_points(points, transformation.inverse())
                 contact_geometry = Polygon(points)
@@ -491,13 +431,101 @@ class Model_3dec(Model):
             self.add_interaction(self.elementlist[neighbours[0]], self.elementlist[neighbours[1]], interaction)
         return output_3dec_per_vertex, contacts
 
+    # =============================================================================
+    # analysis utilities
+    # =============================================================================
+    def solve_ratio_check(self, filename):
+        with open(os.path.join(self.working_path, filename), "r") as fo:
+            for line in fo:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split()
+                if not len(parts):
+                    continue
+                if parts[0] == "solve":
+                    solve_r = float(parts[3])
+                    if solve_r <= 1.0000e-05:
+                        print("Equilibrium reached")
+                        print("solve ratio = " + str(solve_r))
+                    else:
+                        print("Equilibrium NOT reached")
+                        print("solve ratio = " + str(solve_r))
+        return
+
+    # =============================================================================
+    # post_processing
+    # =============================================================================
+    def cracks_detection(self, cracks=True, hinges=False):
+        pass
+
+    # =============================================================================
+    # utilities
+    # =============================================================================
+    def geometric_key(self, xyz, precision="3f", sanitize=True):
+        """Convert XYZ coordinates to a string that can be used as a dict key.
+
+        Parameters
+        ----------
+        xyz : list[float]
+            The XYZ coordinates.
+        precision : str, optional
+            A formatting option that specifies the precision of the
+            individual numbers in the string.
+            Supported values are any float precision (e.g. ``'3f'``), or decimal integer (``'d'``).
+            Default is ``None``, in which case the global precision setting will be used (:attr:`compas.PRECISION`).
+        sanitize : bool, optional
+            If True, minus signs ("-") will be removed from values that are equal to zero up to the given precision.
+
+        Returns
+        -------
+        str
+            The string representation of the given coordinates.
+
+        See also
+        --------
+        geometric_key_xy
+
+        Examples
+        --------
+        >>> from math import pi
+        >>> geometric_key([pi, pi, pi])
+        '3.142,3.142,3.142'
+
+        """
+        x, y, z = xyz
+        if not precision:
+            precision = "3f"
+        if precision == "d":
+            return "{0},{1},{2}".format(int(x), int(y), int(z))
+        if sanitize:
+            minzero = "-{0:.{1}}".format(0.0, precision)
+            if "{0:.{1}}".format(x, precision) == minzero:
+                x = 0.0
+            if "{0:.{1}}".format(y, precision) == minzero:
+                y = 0.0
+            if "{0:.{1}}".format(z, precision) == minzero:
+                z = 0.0
+        return "{0:.{3}},{1:.{3}},{2:.{3}}".format(x, y, z, precision)
+
+    def _remove_duplicate_points(self, points, tolerance=0.00001):
+        unique_points = []
+        for point in points:
+            is_unique = True
+            for existing_point in unique_points:
+                distance = sum((a - b) ** 2 for a, b in zip(point, existing_point)) ** 0.5
+                if distance < tolerance:
+                    is_unique = False
+                    break
+            if is_unique:
+                unique_points.append(point)
+        return unique_points
 
     def solve(self):
         pass
 
     def result(self):
         pass
-
 
     # def from_3dec_contacts_resultant(self, filename, precision='1f'):
     #     contacts = {}
@@ -599,8 +627,6 @@ class Model_3dec(Model):
     #                     "is_combined" : False,
     #                 }
 
-
-
     #         MtorqueG = [0, 0, 0]
     #         Mtot = [0, 0, 0]
     #         Ntot = 0
@@ -645,8 +671,6 @@ class Model_3dec(Model):
     #             # resultant_points.append(po)
     #             # Mtorquepo = sum_vectors([MtorqueG, cross_vectors(sum_vectors([centroid,scale_vector(po, -1)]), Stot)])
 
-
-
     #         if len(points) > 2:
     #             normal = contact["normal"]
     #             position = contact["position"]
@@ -677,15 +701,6 @@ class Model_3dec(Model):
     #         )
     #         self.add_interaction(self.elementlist[neighbours[0]], self.elementlist[neighbours[1]], interaction)
     #     return output_3dec_per_vertex
-
-
-
-
-
-
-
-
-
 
     # def contact_forces(self, output_3dec_per_vertex, scale_factor, region, mu, Shear=False):
     #     # visualise contact forces acting on a single block in compression in only one region is given as argument
@@ -961,7 +976,6 @@ class Model_3dec(Model):
     #                         to1 = rs.AddLine(po, end_point_21)
     #                         rs.CurveArrows(to1, 1)
 
-
     #                     if Shear == True:
     #                         # pure shear visualisation
     #                         mvecs = [0,0,0]
@@ -998,16 +1012,6 @@ class Model_3dec(Model):
     #         rs.LayerVisible('Shear', False)
 
     #     return [c_forces], [points], [normals], [cc_pos]
-
-
-
-
-
-
-
-
-
-
 
 
 # =============================================================================

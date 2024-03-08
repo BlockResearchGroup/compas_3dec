@@ -22,8 +22,4 @@ def register_scene_objects():
     register(Model_3dec, ThreeModelObject, context="Notebook")
 
 
-__all__ = [
-    "ThreeBlockObject",
-    "ThreeInteractionObject",
-    "ThreeModelObject"
-]
+__all__ = ["ThreeBlockObject", "ThreeInteractionObject", "ThreeModelObject"]

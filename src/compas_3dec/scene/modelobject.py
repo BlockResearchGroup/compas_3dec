@@ -6,10 +6,10 @@ import compas.geometry  # noqa: F401
 from compas.scene import SceneObject
 
 
+from compas_3dec.interactions_3dec import Interaction3dec
 
 
 class ModelObject(SceneObject):
-
     def __init__(
         self,
         model,
@@ -17,7 +17,7 @@ class ModelObject(SceneObject):
         show_graph=False,  # type: bool
         show_elements=True,  # type: bool
         show_interactions=True,  # type: bool
-        show_element_faces=True,  # type: bool
+        show_element_faces=False,  # type: bool
         **kwargs,  # type: dict
     ):  # type: (...) -> None
         super(ModelObject, self).__init__(item=model, **kwargs)
@@ -34,10 +34,18 @@ class ModelObject(SceneObject):
             del elementkwargs["show_faces"]
 
         for element in model.elementlist:
-            self.root.add(element)
-            # print(element)
-        #     # self.add(element, show_faces=show_element_faces, **elementkwargs)
-        #     self.add(element)
+            self.add(element, show_faces=show_element_faces, **elementkwargs)
+
+        for edge, interaction in model.graph.edges(True):
+            if isinstance(interaction["interaction"], Interaction3dec):
+                self.add(
+                    interaction["interaction"],
+                    show_normal_force_lines=True,
+                    show_shear_force_lines=False,
+                    show_points=True,
+                    show_mesh_normal_stress=True,
+                    show_mesh_shear_stress=False,
+                )
 
         # for edge in model.graph.edges():
         #     interaction = model.graph.edge_attribute(edge, name="interaction")

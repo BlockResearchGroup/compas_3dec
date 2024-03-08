@@ -63,7 +63,7 @@ class BlockObject(SceneObject):
         self.vertexcolor = kwargs.get("vertexcolor")
         self.edgecolor = kwargs.get("edgecolor", self.contrastcolor)
         self.opacity = kwargs.get("opacity", 0.5)
-        
+
         self.facecolor = Color.red() if element.is_support else Color.grey()  # kwargs.get("facecolor", self.color)
         self.edgecolor = Color.red() if element.is_support else Color.grey()
         self.vertexsize = kwargs.get("vertexsize", 1.0)

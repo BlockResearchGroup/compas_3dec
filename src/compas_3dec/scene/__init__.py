@@ -16,8 +16,4 @@ def register_scene_objects():
     register(Model_3dec, ModelObject)
 
 
-__all__ = [
-    "BlockObject",
-    "InteractionObject",
-    "ModelObject"
-]
+__all__ = ["BlockObject", "InteractionObject", "ModelObject"]
