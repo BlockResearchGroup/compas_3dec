@@ -17,6 +17,7 @@ class Interaction3dec(Interaction):
         self.points = None
         self.mesh_normal_stress = None
         self.mesh_shear_stress = None
+        self.mesh_contact_geometry = contact_geometry.to_mesh()
 
     def compute_force_display(self, scale_factor=0.1):
         self.normal_force_lines = []

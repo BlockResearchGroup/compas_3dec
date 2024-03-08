@@ -1,5 +1,5 @@
 **********************************************
-* Logging started at Fri Mar 8 09:11:00 2024
+* Logging started at Fri Mar 8 17:32:02 2024
 * By 3dec Version 7.00 Release 159
 * 
 * 
@@ -351,10 +351,10 @@ vertex = (-5.43229,0.5,0.86039) 19
 vertex = (-5.43229,0,0.86039) 19
 3dec>    log off
 **********************************************
-* Logging ended at Fri Mar 8 09:11:00 2024
+* Logging ended at Fri Mar 8 17:32:02 2024
 **********************************************
 **********************************************
-* Logging started at Fri Mar 8 09:11:00 2024
+* Logging started at Fri Mar 8 17:32:02 2024
 * By 3dec Version 7.00 Release 159
 * 
 * 
@@ -362,5 +362,5 @@ vertex = (-5.43229,0,0.86039) 19
 **********************************************
 3dec>    log-file 'contact_grav.txt'
 **********************************************
-* Logging ended at Fri Mar 8 09:11:00 2024
+* Logging ended at Fri Mar 8 17:32:02 2024
 **********************************************

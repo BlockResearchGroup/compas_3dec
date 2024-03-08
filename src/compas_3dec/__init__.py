@@ -23,4 +23,5 @@ __all__ = ["HOME", "DATA", "DOCS", "TEMP"]
 __all_plugins__ = [
     "compas_3dec.scene",
     "compas_3dec.notebook.scene",
+    "compas_3dec.rhino.scene",
 ]
