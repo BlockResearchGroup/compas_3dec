@@ -9,8 +9,10 @@ from compas.scene import register
 
 from compas_3dec.blockelement3dec import BlockElement
 from compas_3dec.interactions_3dec import Interaction3dec
+from compas_3dec.model_3dec import Model_3dec
 from .blockobject import RhinoBlockObject
 from .interactionobject import RhinoInteractionObject
+from .modelobject import RhinoModelObject
 
 
 
@@ -18,9 +20,10 @@ from .interactionobject import RhinoInteractionObject
 def register_scene_objects():
     register(BlockElement, RhinoBlockObject, context="Rhino")
     register(Interaction3dec, RhinoInteractionObject, context="Rhino")
-
+    register(Model_3dec, RhinoModelObject, context="Rhino")
 
 __all__ = [
     "RhinoBlockObject",
     "RhinoInteractionObject",
+    "RhinoModelObject",
 ]

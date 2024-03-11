@@ -63,7 +63,9 @@ model.run([gravity_dat])
 init_dict = model.from_3dec_blocks("init_state.txt")
 mapping_dict = model.mapping(init_dict)
 grav_dict = model.from_3dec_blocks("grav_state.txt")
-model.update_blocks(grav_dict,mapping_dict)
+model_gravity = model.update_blocks(grav_dict,mapping_dict)
+
+
 
 output_3dec_per_vertex = model.from_3dec_contacts("contact_grav.txt")
 
@@ -74,20 +76,20 @@ scene = Scene()
 scene.clear()
 # viewer = Viewer()
 # viewer.scene.context = "Rhino"
-for edge, attr in model.graph.edges(True):
-    if isinstance(attr["interaction"], Interaction3dec):
-        scene.add(attr["interaction"],
-        show_normal_force_lines=True,
-        show_shear_force_lines=False,
-        show_points = True,
-        show_mesh_normal_stress = True,
-        show_mesh_shear_stress = False,
-        )
+# for edge, attr in model.graph.edges(True):
+#     if isinstance(attr["interaction"], Interaction3dec):
+#         scene.add(attr["interaction"],
+#         show_normal_force_lines=True,
+#         show_shear_force_lines=False,
+#         show_points = True,
+#         show_mesh_normal_stress = True,
+#         show_mesh_shear_stress = False,
+#         )
 
 
-for e in model.elementlist:
-    scene.add(e)
-
+# for e in model.elementlist:
+#     scene.add(e)
+scene.add(model)
 scene.draw()
 # scene = Scene(context= "Notebook")
 # for e in model.elementlist:
