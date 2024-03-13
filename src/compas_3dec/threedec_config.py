@@ -1,6 +1,7 @@
 import time
 from enum import Enum
 import os
+from compas.geometry import normalize_vector, scale_vector
 
 
 class Damping(Enum):
@@ -142,7 +143,7 @@ class ThreedecConfig:
         time_step=0.02,
         final_ratio=1e-05,
         time_final_step=1,
-    ):
+        ):
 
         self._check_and_delete_gravity_files(self.model.working_path)
         if not self.jkn or not self.jks:
@@ -197,8 +198,194 @@ class ThreedecConfig:
     # =============================================================================
     # displacement.dat
     # =============================================================================
-    def set_displacement_capacity_analysis():
-        pass
+
+    def check_and_exit(self,solve_ratio):
+
+        check_and_exit = """
+;___________________________________________________________________________
+fish define check_and_exit
+    local ratio = mech.solve('ratio-local')
+    if ratio > {} then
+        system.command('exit')
+    endif
+end
+@check_and_exit
+;___________________________________________________________________________
+    """.format(solve_ratio)
+        return check_and_exit
+
+
+    def get_model_timestep(self):
+        with open(os.path.join(self.model.working_path, "grav_state.txt"), "r") as fo:
+            for line in fo:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split()
+                if not len(parts):
+                    continue
+                if parts[0] == "timestep":
+                    timestep = float(parts[2])
+        return timestep
+
+
+    def set_block_displacement(self, region = 0, displacement_direction = [0,0,-1], displ_magnitude_per_step=0.001):
+        displacement_direction = normalize_vector(displacement_direction)
+        single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
+        header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + str(region) + "\n"
+        header += "block apply velocity-y " + str(single_displacement_vector[1]) + " range region " + str(region) + "\n"
+        header += "block apply velocity-z " + str(single_displacement_vector[2]) + " range region " + str(region) + "\n"
+
+        equilibrium = "block apply velocity-x 0.0 range region " + str(region) + "\n"
+        equilibrium += "block apply velocity-y 0.0 range region " + str(region) + "\n"
+        equilibrium += "block apply velocity-z 0.0 range region " + str(region) + "\n"
+
+        displacement_data = [header, equilibrium]
+        return displacement_data
+
+
+    def set_blocks_displacement(self, regions, displacement_direction = [0,0,-1], displ_magnitude_per_step=0.001):
+        displacement_direction = normalize_vector(displacement_direction)
+        single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
+        regions_str = ' '.join(str(r) for r in regions)
+        header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + regions_str + "\n"
+        header += "block apply velocity-y " + str(single_displacement_vector[1]) + " range region " + regions_str + "\n"
+        header += "block apply velocity-z " + str(single_displacement_vector[2]) + " range region " + regions_str + "\n"
+
+        equilibrium = "block apply velocity-x 0.0 range region " + regions_str + "\n"
+        equilibrium += "block apply velocity-y 0.0 range region " + regions_str + "\n"
+        equilibrium += "block apply velocity-z 0.0 range region " + regions_str + "\n"
+
+        displacement_data = [header, equilibrium]
+        return displacement_data
+
+
+    def set_displacement_analysis(self, displacements_list, total_displacement = 0.0, displ_magnitude_per_step=0.001, solver_time = 3, displacement_capacity = False):
+        #get the model timestep calculated by 3DEC from the gravity file
+        timestep = self.get_model_timestep()
+        #number of solver cycles to reach the total displacement
+        number_of_cycles = int(displ_magnitude_per_step/(displ_magnitude_per_step * timestep))
+
+        if not os.path.join(self.model.working_path, "grav_state.txt"):
+            raise ValueError("Missing gravity file: compute gravity first")
+
+        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
+        main_string += 2 * "\n"
+        main_string += self.restore_analysis("grav")
+        main_string += "block mechanical damping local"
+        main_string += 2 * "\n"
+        main_string += self.blocks_output()
+        main_string += self.contacts_output() + "\n"
+
+        displacement_steps = int(total_displacement / displ_magnitude_per_step)
+        for step in range(displacement_steps):
+            step_name =  "Displacement_step" + "_" + str(step+1) + "_distance_" + str((step+1)*displ_magnitude_per_step) + "m"
+            main_string += ";"+ str(step_name) +  "\n"
+            for displacement in displacements_list:
+                main_string += displacement[0]
+            main_string += "model cycle " + str(number_of_cycles) + "\n"
+            main_string += "\n"
+            main_string += ";Equilibrium calculation" +  "\n"
+            for displacement in displacements_list:
+                main_string += displacement[1]
+            solving_ratio = 0.00001
+            main_string += "model solve unbalanced-maximum {} time".format(solving_ratio) + " " + str(solver_time) + "\n"
+            main_string += self.save_blocks_output(step_name)
+            step_name_contact = step_name + "_contacts"
+            main_string += self.save_contacts_output(step_name_contact)
+            main_string += self.save_analysis(step_name)
+            main_string += self.check_and_exit(solving_ratio)
+            main_string += "\n"
+
+            output_path = self.model.working_path
+            filename = "displacement.dat"
+            with open(os.path.join(output_path, filename), "w") as file:
+                file.write(main_string)
+        return filename
+
+
+
+
+        # return main_string
+
+    #     create_header = """
+    #     model new
+    #     model large-strain on
+    #     program call 'geometry.dat'
+    #     """
+
+
+
+
+
+
+
+
+    #     def set_gravity_analysis(
+    #     self,
+    #     material_name,
+    #     steps=10,
+    #     keyword="ratio-local",
+    #     ratio=1e-06,
+    #     time_step=0.02,
+    #     final_ratio=1e-05,
+    #     time_final_step=1,
+    # ):
+
+    #     self._check_and_delete_gravity_files(self.model.working_path)
+    #     if not self.jkn or not self.jks:
+    #         raise ValueError("Missing Joint Stiffness values")
+
+    #     if not self.damping:
+    #         raise ValueError("Missing damping value")
+
+    #     main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
+    #     create_header = """
+    # model new
+    # model large-strain on
+    # program call 'geometry.dat'
+
+    # block contact generate-subcontacts
+    # block property density {0} range group 'Supports'
+    # block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
+    # block contact material-table default property stiffness-normal {1} stiffness-shear {2}
+    # block fix range group 'Supports'
+
+    # block property density {0} range group 'Blocks'
+    # block contact generate-subcontacts
+    # block contact property stiffness-normal {1} stiffness-shear {2} friction {3}
+    # block contact material-table default property stiffness-normal {1} stiffness-shear {2}
+
+    # block mechanical damping {4}
+    # """.format(
+    #         self.material[material_name]["density"],
+    #         self.jkn,
+    #         self.jks,
+    #         self.material[material_name]["friction_angle"],
+    #         self.damping,
+    #     )
+    #     main_string += create_header
+    #     main_string += self.blocks_output()
+    #     main_string += self.contacts_output()
+    #     main_string += self.save_blocks_output("init_state")
+    #     main_string += self.save_analysis("init")
+    #     main_string += self.restore_analysis("init")
+    #     main_string += "\n"
+    #     main_string += self.gravity_equilibrium(steps, keyword, ratio, time_step, final_ratio, time_final_step)
+    #     main_string += self.save_blocks_output("grav_state")
+    #     main_string += self.save_contacts_output("contact_grav")
+    #     main_string += self.save_analysis("grav")
+    #     main_string += "exit()"
+    #     output_path = self.model.working_path
+    #     filename = "gravity.dat"
+    #     with open(os.path.join(output_path, filename), "w") as file:
+    #         file.write(main_string)
+    #     return filename
+
+
+
+
+    #     pass
 
     def get_time_step():
         pass
@@ -293,12 +480,12 @@ class ThreedecConfig:
 
     def save_blocks_output(self, state):
         save_blocks_output = """
-    ;___________________________________________________________________________
-    log on
-    log-file '{}.txt'
-    @blocks_output
-    log off
-    ;___________________________________________________________________________
+;___________________________________________________________________________
+log on
+log-file '{}.txt'
+@blocks_output
+log off
+;___________________________________________________________________________
     """.format(
             state
         )
@@ -334,12 +521,12 @@ class ThreedecConfig:
 
     def save_contacts_output(self, state):
         save_contacts_output = """
-    ;___________________________________________________________________________
-    log on
-    log-file '{}.txt'
-    @contacts_output
-    log off
-    ;___________________________________________________________________________
+;___________________________________________________________________________
+log on
+log-file '{}.txt'
+@contacts_output
+log off
+;___________________________________________________________________________
     """.format(
             state
         )

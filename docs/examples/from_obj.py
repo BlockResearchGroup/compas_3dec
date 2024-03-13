@@ -46,13 +46,21 @@ model.run([gravity_dat])
 # =============================================================================
 # read results
 # =============================================================================
-init_dict = model.from_3dec_blocks("init_state.txt")
-mapping_dict = model.mapping(init_dict)
-grav_dict = model.from_3dec_blocks("grav_state.txt")
-model.update_blocks(grav_dict,mapping_dict)
+# print(model.threedec_config.get_model_timestep())
+# displacement0 = model.threedec_config.set_blocks_displacement([0,4,7,9], displacement_direction = [0,0,10], displ_magnitude_per_step=0.001)
+displacement1 = model.threedec_config.set_block_displacement(0, displacement_direction = [0,2,5], displ_magnitude_per_step=0.001)
 
-output_3dec_per_vertex = model.from_3dec_contacts_resultant("contact_grav.txt")
-# print(output_3dec_per_vertex)
+
+
+model.threedec_config.set_displacement_analysis([displacement1], total_displacement = 0.003, displ_magnitude_per_step=0.001, solver_time = 3, displacement_capacity = False)
+
+# init_dict = model.from_3dec_blocks("init_state.txt")
+# mapping_dict = model.mapping(init_dict)
+# grav_dict = model.from_3dec_blocks("grav_state.txt")
+# model.update_blocks(grav_dict,mapping_dict)
+
+# output_3dec_per_vertex = model.from_3dec_contacts_resultant("contact_grav.txt")
+
 
 
 
@@ -74,20 +82,20 @@ output_3dec_per_vertex = model.from_3dec_contacts_resultant("contact_grav.txt")
 # =============================================================================
 # Viewer
 # =============================================================================
-from compas_viewer import Viewer
-viewer = Viewer()
-for m in model.elementlist:
-    me = m.geometry
-    viewer.add(me, opacity=0.5)
-for edge,interaction in model.graph.edges(True):
-    viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
-    normal, shear, points, mesh_normal_stress, mesh_shear_stress, resultant_force = interaction["interaction"].vector_force_display(0.1)
-    viewer.add(normal,lineswidth=5, linescolor=Color.red())
-    viewer.add(shear, lineswidth=5, linescolor=Color.blue())
-    viewer.add(resultant_force,lineswidth=5, linescolor=Color.green())
+# from compas_viewer import Viewer
+# viewer = Viewer()
+# for m in model.elementlist:
+#     me = m.geometry
+#     viewer.add(me, opacity=0.5)
+# for edge,interaction in model.graph.edges(True):
+#     viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
+#     normal, shear, points, mesh_normal_stress, mesh_shear_stress, resultant_force = interaction["interaction"].vector_force_display(0.1)
+#     viewer.add(normal,lineswidth=5, linescolor=Color.red())
+#     viewer.add(shear, lineswidth=5, linescolor=Color.blue())
+#     viewer.add(resultant_force,lineswidth=5, linescolor=Color.green())
 
-    # viewer.add(polygon)
-viewer.show()
+#     # viewer.add(polygon)
+# viewer.show()
 
 #viewer = Viewer()
 #for index, block_element in enumerate(model.elements_list):
@@ -97,7 +105,6 @@ viewer.show()
 #    else:
 #        viewer.add(block_element.geometry)
 #viewer.show()
-
 
 
 

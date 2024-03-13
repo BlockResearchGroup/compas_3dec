@@ -1,22 +1,12 @@
-;11/03/2024 13:57:32
-    model new
-    model large-strain on
-    program call 'geometry.dat'
+;13/03/2024 14:12:05
 
-    block contact generate-subcontacts
-    block property density 2200 range group 'Supports'
-    block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
-    block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
-    block fix range group 'Supports'
 
-    block property density 2200 range group 'Blocks'
-    block contact generate-subcontacts
-    block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
-    block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
+;_______RESTORE ANALYSIS____________________________________________________
+    model restore "./grav.sav"
+;___________________________________________________________________________
+block mechanical damping local
 
-    block mechanical damping global
-    
-    plot create
+
 
     ;___________________________________________________________________________
     fish define blocks_output
@@ -72,70 +62,53 @@
     end
     ;___________________________________________________________________________
     
-    ;___________________________________________________________________________
-    log on
-    log-file 'init_state.txt'
-    @blocks_output
-    log off
-    ;___________________________________________________________________________
-    
-;_______SAVE ANALYSIS_______________________________________________________
-    model save "./init.sav" compress
-;___________________________________________________________________________
+;Displacement_step_1_distance_0.001m
 
-;_______RESTORE ANALYSIS____________________________________________________
-    model restore "./init.sav"
-;___________________________________________________________________________
+block apply velocity-x 0.0 range region 0 
+block apply velocity-y 0.0 range region 0 
+block apply velocity-z 0.001 range region 0  
 
-;GRAVITY APPLIED IN 10 STEPS 
-;^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-;_____GRAVITY_____ step 1
-model gravity 0 0 -0.981
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 2
-model gravity 0 0 -1.962
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 3
-model gravity 0 0 -2.943
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 4
-model gravity 0 0 -3.924
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 5
-model gravity 0 0 -4.905
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 6
-model gravity 0 0 -5.886
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 7
-model gravity 0 0 -6.867
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 8
-model gravity 0 0 -7.848
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 9
-model gravity 0 0 -8.829
-model solve ratio-local 1e-06 time 0.02
-;_____GRAVITY_____ step 10
-model gravity 0 0 -9.81
-model solve ratio-local 1e-06 time 0.02
-model solve ratio-local 1e-05 time 1
-;^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+model cycle 522
 
-    ;___________________________________________________________________________
-    log on
-    log-file 'grav_state.txt'
-    @blocks_output
-    log off
-    ;___________________________________________________________________________
-    
-    ;___________________________________________________________________________
-    log on
-    log-file 'contact_grav.txt'
-    @contacts_output
-    log off
-    ;___________________________________________________________________________
-    
-;_______SAVE ANALYSIS_______________________________________________________
-    model save "./grav.sav" compress
+;Equilibrium calculation
+block apply velocity-x 0.0 range region 0 
+block apply velocity-y 0.0 range region 0 
+block apply velocity-z 0.0 range region 0 
+model solve unbalanced-maximum 0.00001 time 3
+
+
 ;___________________________________________________________________________
+log on
+log-file 'Displacement_step_1_distance_0.001m.txt'
+@blocks_output
+log off
+;___________________________________________________________________________
+    
+;___________________________________________________________________________
+log on
+log-file 'Displacement_step_1_distance_0.001m_contacts.txt'
+@contacts_output
+log off
+;___________________________________________________________________________
+fish define check_and_exit
+    local ratio = mech.solve('ratio-local')
+    if ratio < 0.001 then
+        system.command('exit')
+    endif
+end
+
+@check_and_exit
+
+;[if mech.solve('ratio-local')<0.001 then system.command('exit()')]
+
+;fish define unbalanced
+;    if mech.solve('ratio-local')<0.001
+;        ii = io.out('EXIT()')
+;    
+;;    ii = io.out('solve ratio = '+' '+string(mech.solve('ratio-local')))
+;;    ii = io.out(mech.solve('ratio-local'))
+;end
+;
+;@unbalanced
+    
+    
