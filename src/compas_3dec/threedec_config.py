@@ -305,7 +305,7 @@ end
         displacement_steps = int(total_displacement / displ_magnitude_per_step)
         if displacement_capacity:
             displacement_steps = 10000
-        for step in range(displacement_steps):
+        for step in range(displacement_steps+1):
             step_name =  "Displacement_step" + "_" + str(step+1) + "_distance_" + str((step+1)*displ_magnitude_per_step) + "m"
             main_string += ";==========================================================================="+ "\n"
             main_string += "; "+ str(step_name) +  "\n"
@@ -337,7 +337,7 @@ end
     # =============================================================================
     # load.dat
     # =============================================================================
-    def load_box(self, point,precision):
+    def _load_box(self, point,precision):
         """Create a bounding box range around a point 3D adding +/- the precision
             which can be used after the command 'boundary load' in 3DEC.
         point: xyz
@@ -355,39 +355,69 @@ end
         pl = 'range x '+ str(x1)+' ,'+ str(x2)+' y ' +str(y1)+' ,' +str(y2) +' z ' +str(z1)+' ,' +str(z2)
         return pl
 
-    def load_along_direction(self, pt1, pt2, load):
+    def _load_along_direction(self, pt1, pt2, load):
         vec = Vector.from_start_end(pt1,pt2)
         vec = normalize_vector(vec)
         load_components = ('xload ' + str(vec[0]*load)+' yload '+ str(vec[1]*load)+' zload '+ str(vec[2]*load))
         return load_components
 
-    # def load_sphere(self,load_value,radius):
-    #     pts = utilities.select_points()
-    #     pt_n = len(pts)
-    #     load = load_value/(pt_n*2)
-    #     pts_c = []
-    #     for p in pts:
-    #         pt = RhinoPoint.from_guid(p)
-    #         pt = pt.to_compas()
-    #         pts_c.append(pt)
 
-    #     for poi in pts_c:
-    #         print ('boundary zload ' + str(load)+' range sphere c '+ str(poi[0])+ ' '+ str(poi[1]) + ' '+ str(poi[2])+' r '+ str(radius))
-
-
-    def set_point_load(self, application_point, direction_point, load_magnitude, radius):
+    def set_point_load(self, application_point, direction_point, load_magnitude, radius, subcontacts_per_point):
+        magnitude_per_point = load_magnitude / subcontacts_per_point
         load_vector = Vector.from_start_end(direction_point, application_point)
         load_vector = normalize_vector(load_vector)
-        load_vector = scale_vector(load_vector, load_magnitude)
+        load_vector = scale_vector(load_vector, magnitude_per_point)
         string = "block gridpoint force-x " + str(load_vector[0]) + " range sphere c " + str(application_point[0]) + " " + str(application_point[1]) + " " + str(application_point[2]) + " r " + str(radius) + "\n"
         string += "block gridpoint force-y " + str(load_vector[1]) + " range sphere c " + str(application_point[0]) + " " + str(application_point[1]) + " " + str(application_point[2]) + " r " + str(radius) + "\n"
         string += "block gridpoint force-z " + str(load_vector[2]) + " range sphere c " + str(application_point[0]) + " " + str(application_point[1]) + " " + str(application_point[2]) + " r " + str(radius) + "\n"
         return string
 
+    def set_points_load(self, points_list, load_magnitude, load_vector, radius, subcontacts_per_point):
+        magnitude_per_point = load_magnitude / subcontacts_per_point
+        for point in points_list:
+            load_direction = normalize_vector(load_vector)
+            load = scale_vector(load_direction, magnitude_per_point)
+            string = "block gridpoint force-x " + str(load[0]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
+            string += "block gridpoint force-y " + str(load[1]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
+            string += "block gridpoint force-z " + str(load[2]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
+        return string
 
+    def set_load_analysis(self, load_string, total_load, load_magnitude_per_step, number_of_cycles = 35000, load_capacity = False, solver_ratio = 0.00001):
 
-    def set_load_capacity_analysis():
-        pass
+        if not os.path.join(self.model.working_path, "grav_state.txt"):
+            raise ValueError("Missing gravity file: compute gravity first")
+
+        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
+        main_string += 2 * "\n"
+        main_string += self.restore_analysis("grav")
+        main_string += self.set_damping_global()
+        main_string += 2 * "\n"
+        main_string += self.blocks_output()
+        main_string += self.contacts_output() + "\n"
+
+        load_steps = int(total_load / load_magnitude_per_step)
+        if load_capacity:
+            load_steps = 10000
+        for step in range(load_steps+1):
+            step_name =  "Load_step" + "_" + str(step+1) + "_load_magnitude_" + str((step+1)*load_magnitude_per_step) + "m"
+            main_string += ";==========================================================================="+ "\n"
+            main_string += "; "+ str(step_name) +  "\n"
+            main_string += ";==========================================================================="+ "\n"
+            main_string += load_string
+            main_string += "model cycle " + str(number_of_cycles) + "\n"
+            main_string += "\n"
+            main_string += self.save_blocks_output(step_name)
+            step_name_contact = step_name + "_contacts"
+            main_string += self.save_contacts_output(step_name_contact)
+            main_string += self.save_analysis(step_name)
+            main_string += self.check_and_exit(solver_ratio)
+            main_string += "\n"
+            output_path = self.model.working_path
+            filename = "load.dat"
+            with open(os.path.join(output_path, filename), "w") as file:
+                file.write(main_string)
+        return filename
+
 
     # =============================================================================
     # stress.dat
