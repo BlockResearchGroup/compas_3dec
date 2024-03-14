@@ -172,13 +172,6 @@ log off
     model save "./Displacement_step_3_distance_0.003m.sav" compress
 ;___________________________________________________________________________
 
-;___________________________________________________________________________
-fish define check_and_exit
-    local ratio = mech.solve('ratio-local')
-    if ratio > 1e-05 then
-        system.command('exit')
-    endif
-end
-@check_and_exit
-;___________________________________________________________________________
+boundary zload -250 range sphere c 1.05338 1.5 1.10016 r 0.035
+cycle 35000
     

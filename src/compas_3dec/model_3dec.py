@@ -50,7 +50,7 @@ class Model_3dec(Model):
         self.working_path = working_path
         logging.warning("Model is created" + "\n")
         if not self.working_path:
-            caller_frame = inspect.stack()[1]
+            caller_frame = inspect.stack()[-1]
             caller_filename = caller_frame.filename
             self.working_path = os.path.dirname(os.path.abspath(caller_filename))
 

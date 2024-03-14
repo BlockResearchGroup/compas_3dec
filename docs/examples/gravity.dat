@@ -1,4 +1,4 @@
-;11/03/2024 13:57:32
+;14/03/2024 15:49:56
     model new
     model large-strain on
     program call 'geometry.dat'
@@ -13,82 +13,87 @@
     block contact generate-subcontacts
     block contact property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886 friction 35
     block contact material-table default property stiffness-normal 50000000.0 stiffness-shear 13888888.888888886
-
-    block mechanical damping global
+    block mech damping global
     
-    plot create
 
-    ;___________________________________________________________________________
-    fish define blocks_output
-        ii = io.out('solve ratio = '+' '+string(mech.solve('ratio-local')))
-        ii = io.out('timestep = '+' '+string(mech.timestep))
-        ii=io.out(' centr - result - veloc')
-        ic = block.contact.head
-        loop foreach ib block.list
-            bid = block.id(ib)
-            br=block.region(ib)
-        ii=io.out('block '+string(bid))
-        ii=io.out('region '+string(br))
-        ii=io.out('centroid'+' '+'='+' '+string(block.pos.x(ib))+','+string(block.pos.y(ib))+','+string(block.pos.z(ib))+' '+string(br))
-        ii=io.out('mass '+' '+string(block.mass(ib)))
-        ii=io.out('volume '+' '+string(block.vol(ib)))
-        vel=block.vel(ib)
-        rx=block.force.unbal.x(ib)
-        ry=block.force.unbal.y(ib)
-        rz=block.force.unbal.z(ib)
-        lx=block.force.app.x(ib)
-        ly=block.force.app.y(ib)
-        lz=block.force.app.z(ib)
-        ; if there is gravity, the block weight should be added
-        rz=block.force.unbal.z(ib)+block.mass(ib)*global.gravity.z
-        ii=io.out('forces'+' '+'='+' '+string(rx)+','+string(ry)+','+string(rz)+' '+string(br))
-        ii=io.out('moment'+' '+'='+' '+string(block.moment.x(ib))+','+string(block.moment.y(ib))+','+string(block.moment.z(ib))+' '+string(br))
-        ii=io.out('loads'+' '+'='+' '+string(lx)+','+string(ly)+','+string(lz)+' '+string(br))
-        ii=io.out('velocity'+' '+'='+' '+string(vel)+' '+string(br))
-        loop foreach vi block.gplist(ib)
-            ii = io.out('vertex'+' '+'='+' '+string(block.gp.pos(vi))+' '+string(block.region(block.gp.hostblock(vi))))
-            vi = block.gp.next(vi)
-        endloop
-        ib = block.next(ib)
-        endloop
-    end
-    ;___________________________________________________________________________
-    
-    ;___________________________________________________________________________
-    fish define contacts_output
-    loop foreach ic block.contact.list()
-    ii=io.out('contact'+' '+'='+' '+string(ic)+' '+string(block.contact.type(ic))+' '+string(block.region(block.contact.b1(ic)))+' '+string(block.region(block.contact.b2(ic)))+' '+string(block.contact.pos(ic))+' '+string(block.contact.normal(ic)))
-        loop foreach si block.contact.subcontactlist(ic)
-            ii=io.out('subcontact'+' '+'='+' '+string(block.subcontact.pos(si))+' '+string(block.subcontact.force.norm(si))+' '+string(block.subcontact.force.shear(si))+' '+string(si)+' '+string(block.subcontact.disp.norm(si))+' '+string(block.subcontact.disp.shear(si))+' '+string(block.subcontact.stress.norm(si))+' '+string(block.subcontact.stress.shear(si))+' '+string(block.subcontact.area(si)))
-            fi = block.subcontact.face(si)
-            if fi then
-                fo = block.face.bface(fi)
-                ii = io.out('face centroid'+' '+'='+' '+string(block.face.pos(fo)))
-            endif
-            si = block.subcontact.next(si)
-        endloop
-    ic = block.contact.next(ic)
+;===========================================================================
+; get blocks data
+;===========================================================================
+fish define blocks_output
+    ii = io.out('solve ratio = '+' '+string(mech.solve('ratio-local')))
+    ii = io.out('timestep = '+' '+string(mech.timestep))
+    ii=io.out(' centr - result - veloc')
+    ic = block.contact.head
+    loop foreach ib block.list
+        bid = block.id(ib)
+        br=block.region(ib)
+    ii=io.out('block '+string(bid))
+    ii=io.out('region '+string(br))
+    ii=io.out('centroid'+' '+'='+' '+string(block.pos.x(ib))+','+string(block.pos.y(ib))+','+string(block.pos.z(ib))+' '+string(br))
+    ii=io.out('mass '+' '+string(block.mass(ib)))
+    ii=io.out('volume '+' '+string(block.vol(ib)))
+    vel=block.vel(ib)
+    rx=block.force.unbal.x(ib)
+    ry=block.force.unbal.y(ib)
+    rz=block.force.unbal.z(ib)
+    lx=block.force.app.x(ib)
+    ly=block.force.app.y(ib)
+    lz=block.force.app.z(ib)
+    ; if there is gravity, the block weight should be added
+    rz=block.force.unbal.z(ib)+block.mass(ib)*global.gravity.z
+    ii=io.out('forces'+' '+'='+' '+string(rx)+','+string(ry)+','+string(rz)+' '+string(br))
+    ii=io.out('moment'+' '+'='+' '+string(block.moment.x(ib))+','+string(block.moment.y(ib))+','+string(block.moment.z(ib))+' '+string(br))
+    ii=io.out('loads'+' '+'='+' '+string(lx)+','+string(ly)+','+string(lz)+' '+string(br))
+    ii=io.out('velocity'+' '+'='+' '+string(vel)+' '+string(br))
+    loop foreach vi block.gplist(ib)
+        ii = io.out('vertex'+' '+'='+' '+string(block.gp.pos(vi))+' '+string(block.region(block.gp.hostblock(vi))))
+        vi = block.gp.next(vi)
     endloop
-    end
-    ;___________________________________________________________________________
+    ib = block.next(ib)
+    endloop
+end
     
-    ;___________________________________________________________________________
-    log on
-    log-file 'init_state.txt'
-    @blocks_output
-    log off
-    ;___________________________________________________________________________
+;===========================================================================
+; get contacts data
+;===========================================================================
+fish define contacts_output
+loop foreach ic block.contact.list()
+ii=io.out('contact'+' '+'='+' '+string(ic)+' '+string(block.contact.type(ic))+' '+string(block.region(block.contact.b1(ic)))+' '+string(block.region(block.contact.b2(ic)))+' '+string(block.contact.pos(ic))+' '+string(block.contact.normal(ic)))
+    loop foreach si block.contact.subcontactlist(ic)
+        ii=io.out('subcontact'+' '+'='+' '+string(block.subcontact.pos(si))+' '+string(block.subcontact.force.norm(si))+' '+string(block.subcontact.force.shear(si))+' '+string(si)+' '+string(block.subcontact.disp.norm(si))+' '+string(block.subcontact.disp.shear(si))+' '+string(block.subcontact.stress.norm(si))+' '+string(block.subcontact.stress.shear(si))+' '+string(block.subcontact.area(si)))
+        fi = block.subcontact.face(si)
+        if fi then
+            fo = block.face.bface(fi)
+            ii = io.out('face centroid'+' '+'='+' '+string(block.face.pos(fo)))
+        endif
+        si = block.subcontact.next(si)
+    endloop
+ic = block.contact.next(ic)
+endloop
+end
+
     
-;_______SAVE ANALYSIS_______________________________________________________
-    model save "./init.sav" compress
-;___________________________________________________________________________
+;===========================================================================
+; save blocks output
+;===========================================================================
+log on
+log-file 'init_state.txt'
+@blocks_output
+log off
+    
+;===========================================================================
+; save analysis
+;===========================================================================
+model save "./init.sav" compress
 
-;_______RESTORE ANALYSIS____________________________________________________
-    model restore "./init.sav"
-;___________________________________________________________________________
+;===========================================================================
+; restore analysis
+;===========================================================================
+model restore "./init.sav"
 
+;===========================================================================
 ;GRAVITY APPLIED IN 10 STEPS 
-;^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+;===========================================================================
 ;_____GRAVITY_____ step 1
 model gravity 0 0 -0.981
 model solve ratio-local 1e-06 time 0.02
@@ -120,22 +125,25 @@ model solve ratio-local 1e-06 time 0.02
 model gravity 0 0 -9.81
 model solve ratio-local 1e-06 time 0.02
 model solve ratio-local 1e-05 time 1
-;^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    ;___________________________________________________________________________
-    log on
-    log-file 'grav_state.txt'
-    @blocks_output
-    log off
-    ;___________________________________________________________________________
+;===========================================================================
+; save blocks output
+;===========================================================================
+log on
+log-file 'grav_state.txt'
+@blocks_output
+log off
     
-    ;___________________________________________________________________________
-    log on
-    log-file 'contact_grav.txt'
-    @contacts_output
-    log off
-    ;___________________________________________________________________________
+;===========================================================================
+; save contacts output
+;===========================================================================
+log on
+log-file 'contact_grav.txt'
+@contacts_output
+log off
     
-;_______SAVE ANALYSIS_______________________________________________________
-    model save "./grav.sav" compress
-;___________________________________________________________________________
+;===========================================================================
+; save analysis
+;===========================================================================
+model save "./grav.sav" compress
+exit()

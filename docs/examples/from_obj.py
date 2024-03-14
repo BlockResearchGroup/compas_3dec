@@ -5,7 +5,7 @@ from compas.geometry import Rotation
 
 #from compas_viewer import Viewer
 #from compas.scene import Scene
-# from compas_notebook.viewer import Viewer
+# from compas_notebook.viewer import Viewercls
 
 # =============================================================================
 # input geometry from obj
@@ -15,7 +15,7 @@ path_b = r"C:\Users\adellend\Code2\compas_3dec\src\compas_3dec\data\block.obj"
 
 
 model = Model_3dec.model_from_obj(path_s, path_b)
-
+print(model.working_path)
 # for element in model.elementlist:
 #     element.transform(Rotation.from_axis_and_angle([0,1,0],0.1,[0,0,0]))
 
@@ -49,9 +49,6 @@ model.run([gravity_dat])
 # print(model.threedec_config.get_model_timestep())
 # displacement0 = model.threedec_config.set_blocks_displacement([0,4,7,9], displacement_direction = [0,0,10], displ_magnitude_per_step=0.001)
 displacement1 = model.threedec_config.set_block_displacement(0, displacement_direction = [0,2,5], displ_magnitude_per_step=0.001)
-
-
-
 model.threedec_config.set_displacement_analysis([displacement1], total_displacement = 0.003, displ_magnitude_per_step=0.001, solver_time = 3, displacement_capacity = False)
 
 # init_dict = model.from_3dec_blocks("init_state.txt")
