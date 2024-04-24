@@ -5,24 +5,57 @@ from compas.datastructures import Mesh
 
 
 class Interaction3dec(Interaction):
-    def __init__(self, name=None, type=None, normal=None, contact_geometry=None, forces_per_vertices=None):
-        # type: (str | None, str | None, Vector | list | None, Polygon | Line | Point | None, dict | None) -> None
+    def __init__(self, name=None, type=None, normal=None, contact_geometry=None, forces_per_vertices=None, forces_per_contact=None):
+        # type: (str | None, str | None, Vector | list | None, Polygon | Line | Point | None, dict | None, dict | None) -> None
         super().__init__(name)
         self.type = type
         self.normal = normal
         self.contact_geometry = contact_geometry
         self.forces_per_vertices = forces_per_vertices
+        self.forces_per_contact = forces_per_contact
         self.normal_force_lines = None
         self.shear_force_lines = None
         self.points = None
         self.mesh_normal_stress = None
         self.mesh_shear_stress = None
         self.mesh_contact_geometry = contact_geometry.to_mesh()
+        self.resultant_point = None
+        self.resultant_force = None
 
-    def compute_force_display(self, scale_factor=0.1):
+    def compute_force_display(self, scale_factor=0.01):
         self.normal_force_lines = []
         self.shear_force_lines = []
         self.points = []
+        self.resultant_force = []
+        self.resultant_point = []
+        self.resultant_point_shear = []
+        self.resultant_shear = []
+        self.resultant_normal = []
+        self.resultant_torque = []
+        self.resultant_shear_transported = []
+
+
+        resultant_point_application = Point(self.forces_per_contact["resultant_point"][0],self.forces_per_contact["resultant_point"][1],self.forces_per_contact["resultant_point"][2])
+        self.resultant_point.append(resultant_point_application)
+
+        resultant_point_application_shear = Point(self.forces_per_contact["resultant_point_shear"][0],self.forces_per_contact["resultant_point_shear"][1],self.forces_per_contact["resultant_point_shear"][2])
+        self.resultant_point_shear.append(resultant_point_application_shear)
+
+        self.resultant_force.append(Line.from_point_and_vector(resultant_point_application, Vector(*self.forces_per_contact["resultant_force"])*scale_factor))
+        self.resultant_force.append(Line.from_point_and_vector(resultant_point_application, -Vector(*self.forces_per_contact["resultant_force"])*scale_factor))
+
+        self.resultant_shear.append(Line.from_point_and_vector(resultant_point_application_shear, Vector(*self.forces_per_contact["resultant_shear"])*scale_factor))
+        self.resultant_shear.append(Line.from_point_and_vector(resultant_point_application_shear, -Vector(*self.forces_per_contact["resultant_shear"])*scale_factor))
+
+        self.resultant_normal.append(Line.from_point_and_vector(resultant_point_application, Vector(*self.forces_per_contact["resultant_normal"])*scale_factor))
+        self.resultant_normal.append(Line.from_point_and_vector(resultant_point_application, -Vector(*self.forces_per_contact["resultant_normal"])*scale_factor))
+
+        self.resultant_torque.append(Line.from_point_and_vector(resultant_point_application, Vector(*self.forces_per_contact["resultant_torque"])*scale_factor))
+        self.resultant_torque.append(Line.from_point_and_vector(resultant_point_application, -Vector(*self.forces_per_contact["resultant_torque"])*scale_factor))
+
+        self.resultant_shear_transported.append(Line.from_point_and_vector(resultant_point_application, Vector(*self.forces_per_contact["resultant_shear"])*scale_factor))
+        self.resultant_shear_transported.append(Line.from_point_and_vector(resultant_point_application, -Vector(*self.forces_per_contact["resultant_shear"])*scale_factor))
+
 
         cmap = ColorMap.from_two_colors(Color.white(), Color.red())
         max_normal_stress = 0

@@ -1,4 +1,6 @@
 #! python3
+import time
+start = time.time()
 from compas.scene import Scene
 from compas.datastructures import Mesh
 from compas_3dec.blockelement3dec import BlockElement
@@ -42,14 +44,14 @@ model.to_3dec_geometry_interactions()
 # input material
 # =============================================================================
 # to be moved to compas_model
-model.threedec_config.add_material("concrete", 2200, 35, 5000000, 0.8)
+model.threedec_config.add_material("concrete", 2200, 35, 10000000, 0.8)
 
 # =============================================================================
 # create analysis.dat files
 # =============================================================================
 # calculate joint stiffness from material and geometric input
 # to be changed considering the Material class from compas_model
-model.threedec_config.get_joint_stiffness_one_material("concrete", 1, 0.1)
+model.threedec_config.get_joint_stiffness_one_material("concrete", 1, 0.05)
 gravity_dat = model.threedec_config.set_gravity_analysis("concrete")
 
 # =============================================================================
@@ -64,16 +66,18 @@ init_dict = model.from_3dec_blocks("init_state.txt")
 mapping_dict = model.mapping(init_dict)
 grav_dict = model.from_3dec_blocks("grav_state.txt")
 model_gravity = model.update_blocks(grav_dict,mapping_dict)
-
-
-
-output_3dec_per_vertex = model.from_3dec_contacts("contact_grav.txt")
+# output_3dec_per_vertex = model.from_3dec_contacts("contact_grav.txt")
+output_3dec_per_vertex = model.from_3dec_contacts_resultant("contact_grav.txt")
 
 
 
 # from compas_notebook.viewer import Viewer
+
+#____________________________
 scene = Scene()
 scene.clear()
+#____________________________
+
 # viewer = Viewer()
 # viewer.scene.context = "Rhino"
 # for edge, attr in model.graph.edges(True):
@@ -89,8 +93,18 @@ scene.clear()
 
 # for e in model.elementlist:
 #     scene.add(e)
+
+
+
+#____________________________
 scene.add(model)
 scene.draw()
+#____________________________
+end = time.time()
+print("analysis_3dec time", end - start)
+
+
+
 # scene = Scene(context= "Notebook")
 # for e in model.elementlist:
 #     viewer.scene.add(e)

@@ -254,4 +254,12 @@ class ThreeInteractionObject(ThreeSceneObject, InteractionObject):
             guids = self.draw_mesh(self.interaction.mesh_shear_stress)
             self._guids.extend(guids)
 
+        if self.show_resultant_force:
+            guids = self.draw_lines(self.interaction.resultant_force, self.color_resultant_force)
+            self._guids.extend(guids)
+
+        if self.show_resultant_point:
+            guids = self.draw_points(self.interaction.resultant_point, self.color_points)
+            self._guids.extend(guids)
+
         return self.guids

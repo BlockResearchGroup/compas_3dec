@@ -74,6 +74,35 @@ class RhinoInteractionObject(RhinoSceneObject, InteractionObject):
         if self.show_mesh_shear_stress:
             self._guids.extend(self.draw_mesh(self.interaction.mesh_shear_stress))
 
+        if self.show_resultant_force:
+            guids = self.draw_lines(self.interaction.resultant_force, self.color_resultant_force)
+            self._guids.extend(guids)
+
+        if self.show_resultant_point:
+            guids = self.draw_points(self.interaction.resultant_point, self.color_points)
+            self._guids.extend(guids)
+
+        if self.show_resultant_point_shear:
+            guids = self.draw_points(self.interaction.resultant_point_shear, self.color_points)
+            self._guids.extend(guids)
+
+        if self.show_resultant_force_shear:
+            guids = self.draw_lines(self.interaction.resultant_shear, self.color_resultant_force_shear)
+            self._guids.extend(guids)
+
+        if self.show_resultant_force_normal:
+            guids = self.draw_lines(self.interaction.resultant_normal, self.color_resultant_force_normal)
+            self._guids.extend(guids)
+
+        if self.show_resultant_torque:
+            guids = self.draw_lines(self.interaction.resultant_torque, self.color_resultant_torque)
+            self._guids.extend(guids)
+
+        if self.show_resultant_shear_transported:
+            guids = self.draw_lines(self.interaction.resultant_shear_transported, self.color_resultant_shear_transported)
+            self._guids.extend(guids)
+
+
         return self._guids
 
 # from __future__ import absolute_import

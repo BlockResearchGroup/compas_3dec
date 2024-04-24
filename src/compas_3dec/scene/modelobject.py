@@ -40,11 +40,19 @@ class ModelObject(SceneObject):
             if isinstance(interaction["interaction"], Interaction3dec):
                 self.add(
                     interaction["interaction"],
-                    show_normal_force_lines=True,
-                    show_shear_force_lines=False,
-                    show_points=True,
-                    show_mesh_normal_stress=True,
+                    show_normal_force_lines=False,
+                    show_shear_force_lines=True,
+                    show_points=False,
+                    show_mesh_normal_stress=False,
                     show_mesh_shear_stress=False,
+                    show_resultant_force=True,
+                    show_resultant_point=True,
+                    show_resultant_point_shear=True,
+                    show_resultant_force_shear=True,
+                    show_resultant_force_normal=True,
+                    show_resultant_torque=True,
+                    show_resultant_shear_transported=True,
+
                 )
 
         # for edge in model.graph.edges():

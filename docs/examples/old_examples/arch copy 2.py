@@ -90,14 +90,14 @@ viewer = Viewer()
 for m in model.elementlist:
     me = m.geometry
     # viewer.add(me, opacity=0.5)
-for edge,interaction in model.graph.edges(True):
-    # viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
-    normal, shear, points, mesh_normal_stress, mesh_shear_stress = interaction["interaction"].vector_force_display(0.05)
-    viewer.add(normal,lineswidth=3, linescolor=Color.red())
-    viewer.add(shear, lineswidth=3, linescolor=Color.blue())
-    viewer.add(points, show_points=True, pointssize=10)
-    viewer.add(mesh_normal_stress, use_vertexcolors=True)
-    # viewer.add(mesh_shear_stress, use_vertexcolors=True)
+# for edge,interaction in model.graph.edges(True):
+#     # viewer.add(interaction["interaction"].contact_geometry, facescolor=Color.azure())
+#     normal, shear, points, mesh_normal_stress, mesh_shear_stress = interaction["interaction"].vector_force_display(0.05)
+#     viewer.add(normal,lineswidth=3, linescolor=Color.red())
+#     viewer.add(shear, lineswidth=3, linescolor=Color.blue())
+#     viewer.add(points, show_points=True, pointssize=10)
+#     viewer.add(mesh_normal_stress, use_vertexcolors=True)
+#     # viewer.add(mesh_shear_stress, use_vertexcolors=True)
 
     # viewer.add(polygon)
 viewer.show()

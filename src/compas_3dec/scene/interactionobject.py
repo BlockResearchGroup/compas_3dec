@@ -60,7 +60,7 @@ class InteractionObject(SceneObject):
         super(InteractionObject, self).__init__(item=interaction, **kwargs)
 
         self._interaction = interaction
-        self.interaction.compute_force_display()
+        self.interaction.compute_force_display(scale_factor=0.008)
         self.vertexcolor = kwargs.get("vertexcolor")
         self.edgecolor = kwargs.get("edgecolor", self.contrastcolor)
         self.opacity = kwargs.get("opacity", 0.5)
@@ -71,7 +71,7 @@ class InteractionObject(SceneObject):
         self.show_vertices = kwargs.get("show_vertices", False)
         self.show_edges = kwargs.get("show_edges", True)
         self.show_faces = kwargs.get("show_faces", True)
-        self.show_normal_force_lines = kwargs.get("show_normal_force_lines", True)
+        self.show_normal_force_lines = kwargs.get("show_normal_force_lines", False)
         self.show_shear_force_lines = kwargs.get("show_shear_force_lines", False)
         self.show_points = kwargs.get("show_points", False)
         self.show_mesh_normal_stress = kwargs.get("show_mesh_normal_stress", False)
@@ -80,6 +80,19 @@ class InteractionObject(SceneObject):
         self.color_shear_force_lines = kwargs.get("color_shear_force_lines", Color.blue())
         self.color_points = kwargs.get("color_points", Color.black())
         self.thickness_lines = kwargs.get("thickness_lines", 2.0)
+        self.show_resultant_force = kwargs.get("show_resultant_force", True)
+        self.show_resultant_point = kwargs.get("show_resultant_point", True)
+        self.show_resultant_point_shear = kwargs.get("show_resultant_point_shear", True)
+        self.show_resultant_force_shear = kwargs.get("show_resultant_force_shear", True)
+        self.show_resultant_force_normal = kwargs.get("show_resultant_force_normal", True)
+        self.color_resultant_force = kwargs.get("color_resultant_force", Color.from_rgb255(0,153,0))
+        self.color_resultant_force_shear = kwargs.get("color_resultant_force_shear", Color.from_rgb255(0,0,155))
+        self.color_resultant_force_normal = kwargs.get("color_resultant_force_normal", Color.from_rgb255(155,0,0))
+        self.show_resultant_torque = kwargs.get("show_resultant_torque", True)
+        self.color_resultant_torque = kwargs.get("color_resultant_torque", Color.from_rgb255(155,155,0))
+        self.show_resultant_shear_transported = kwargs.get("show_resultant_shear_transported", True)
+        self.color_resultant_shear_transported = kwargs.get("color_resultant_shear_transported", Color.from_rgb255(0,0,155))
+
 
     @property
     def interaction(self):
