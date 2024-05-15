@@ -131,7 +131,7 @@ class Model_3dec(Model):
             with open(file_path, "a+") as f:
                 f.write(replace_string)
 
-    def _threedec7_mesh_description(self, meshes, indices, group=None, precision=10):
+    def _threedec7_mesh_description(self, meshes, indices, group=None, precision=3):
         # create blocks
         # ***************************************************************************
         unit_scale = 1.0
@@ -187,7 +187,7 @@ class Model_3dec(Model):
                 else:
                     meshes.append(subnode.element.geometry)
                     indices.append(subnode.element.graph_node)
-                outputs += self._threedec7_mesh_description(meshes, indices, node.name, precision=10)
+                outputs += self._threedec7_mesh_description(meshes, indices, node.name, precision=3)
         geometry_path = os.path.join(self.working_path, "geometry.dat")
         self._overwrite_file(geometry_path, outputs)
 
@@ -204,7 +204,7 @@ class Model_3dec(Model):
             meshes = []
             for index in indices:
                 meshes.append(self.elementlist[index].geometry)
-            outputs += self._threedec7_mesh_description(meshes, indices, name, precision=10)
+            outputs += self._threedec7_mesh_description(meshes, indices, name, precision=3)
         geometry_path = os.path.join(self.working_path, "geometry.dat")
         self._overwrite_file(geometry_path, outputs)
 
@@ -301,7 +301,7 @@ class Model_3dec(Model):
     # =============================================================================
     # get and process CONTACT data from 3dec
     # =============================================================================
-    def from_3dec_contacts(self, filename, precision="1f"):
+    def from_3dec_contacts(self, filename, precision="3f"):
         contacts = {}
         with open(os.path.join(self.working_path, filename), "r") as fo:
             for line in fo:
@@ -440,7 +440,7 @@ class Model_3dec(Model):
         return output_3dec_per_vertex, contacts
 
 
-    def from_3dec_contacts_resultant(self, filename, precision='1f'):
+    def from_3dec_contacts_resultant(self, filename, precision='3f'):
             contacts = {}
             with open(os.path.join(self.working_path, filename), "r") as fo:
                 for line in fo:
@@ -495,6 +495,7 @@ class Model_3dec(Model):
             for key, contact in contacts.items():
                 neighbours = contact["neighbours"]
                 contact_normal = normalize_vector(contact["normal"])
+
 
                 # get list of subcontacts coordinates
                 output_3dec_per_vertex = {}
@@ -551,7 +552,8 @@ class Model_3dec(Model):
 
                 output_list = []
                 points = [value["position"] for value in output_3dec_per_vertex.values()]
-                centroid = centroid_points(points)
+                if points:
+                    centroid = centroid_points(points)
 
                 output_3dec_per_contact = {}
                 first_iteration = True
@@ -571,6 +573,7 @@ class Model_3dec(Model):
                     Mtorque_i = cross_vectors(ri, Si)
                     Mtorque_tot = sum_vectors([Mtorque_tot, Mtorque_i])
 
+                # if Ntot:
                 if Ntot:
                     Ftot = sum_vectors([Stot, scale_vector(contact_normal, Ntot)])
                     NN = scale_vector(contact_normal, Ntot)
@@ -578,10 +581,17 @@ class Model_3dec(Model):
                     b2 = dot_vectors(Mtot, e1_plane) / Ntot
                     #point of application of the resultant normal force
                     po = sum_vectors([centroid,scale_vector(e1_plane,b1),scale_vector(e2_plane,b2)])
-                    s1 = -1 * dot_vectors(Mtorque_tot, e2_plane) / norm_vector(Stot)
-                    s2 = dot_vectors(Mtorque_tot, e1_plane) / norm_vector(Stot)
+                    norm_Stot = norm_vector(Stot)
+                    if norm_Stot != 0:
+                        s1 = -1 * dot_vectors(Mtorque_tot, e2_plane) / norm_Stot
+                        s2 = dot_vectors(Mtorque_tot, e1_plane) / norm_vector(Stot)
+                        ps = sum_vectors([centroid, scale_vector(e1_plane, s1), scale_vector(e2_plane, s2)])
+                    else:
+                        s1 = 0  # or some other value that makes sense in this context
+                    # s1 = -1 * dot_vectors(Mtorque_tot, e2_plane) / norm_vector(Stot)
+                    # s2 = dot_vectors(Mtorque_tot, e1_plane) / norm_vector(Stot)
                     # one point along the line of action of the resultant shear force
-                    ps = sum_vectors([centroid, scale_vector(e1_plane, s1), scale_vector(e2_plane, s2)])
+                    # ps = sum_vectors([centroid, scale_vector(e1_plane, s1), scale_vector(e2_plane, s2)])
                     # Calculate the vector from po to the centroid
                     r_po_centroid = sum_vectors([centroid, scale_vector(po, -1)])
                     # Calculate the moment generated by the total shear force at a distance from po
@@ -605,15 +615,16 @@ class Model_3dec(Model):
                     points = convex_hull_xy(points)
                     points = transform_points(points, transformation.inverse())
                     contact_geometry = Polygon(points)
-                    for point in points:
-                        gkey = self.geometric_key(point, precision)
-                        output_list.append(output_3dec_per_vertex[gkey])
+                    # for point in points:
+                    #     gkey = self.geometric_key(point, precision)
+                    #     output_list.append(output_3dec_per_vertex[gkey])
 
                 elif len(points) == 2:
                     contact_geometry = Line(points[0], points[1])
                     output_list = output_3dec_per_vertex.values()
                 else:
-                    contact_geometry = Point(points[0])
+                    # contact_geometry = Point(points[0])
+                    # contact_geometry = "no contact"
                     output_list = output_3dec_per_vertex.values()
 
                 interaction = Interaction3dec(

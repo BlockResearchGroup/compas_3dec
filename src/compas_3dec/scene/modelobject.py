@@ -47,10 +47,10 @@ class ModelObject(SceneObject):
                     show_mesh_shear_stress=False,
                     show_resultant_force=True,
                     show_resultant_point=True,
-                    show_resultant_point_shear=True,
-                    show_resultant_force_shear=True,
+                    show_resultant_point_shear=False,
+                    show_resultant_force_shear=False,
                     show_resultant_force_normal=True,
-                    show_resultant_torque=True,
+                    show_resultant_torque=False,
                     show_resultant_shear_transported=True,
 
                 )

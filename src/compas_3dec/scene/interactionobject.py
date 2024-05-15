@@ -60,7 +60,7 @@ class InteractionObject(SceneObject):
         super(InteractionObject, self).__init__(item=interaction, **kwargs)
 
         self._interaction = interaction
-        self.interaction.compute_force_display(scale_factor=0.008)
+        self.interaction.compute_force_display(scale_factor=0.001)
         self.vertexcolor = kwargs.get("vertexcolor")
         self.edgecolor = kwargs.get("edgecolor", self.contrastcolor)
         self.opacity = kwargs.get("opacity", 0.5)

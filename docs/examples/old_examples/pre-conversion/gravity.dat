@@ -14,7 +14,8 @@
     block contact property stiffness-normal 200000000.0 stiffness-shear 55555555.555555545 friction 35
     block contact material-table default property stiffness-normal 200000000.0 stiffness-shear 55555555.555555545
     block mech damping global
-    plot item model
+    plot item create block
+    plot add block colorby block
 
 ;===========================================================================
 ; get blocks data
@@ -146,3 +147,4 @@ log off
 ; save analysis
 ;===========================================================================
 model save "./grav.sav" compress
+exit()

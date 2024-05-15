@@ -527,10 +527,10 @@ ii=io.out('contact'+' '+'='+' '+string(ic)+' '+string(block.contact.type(ic))+' 
     loop foreach si block.contact.subcontactlist(ic)
         ii=io.out('subcontact'+' '+'='+' '+string(block.subcontact.pos(si))+' '+string(block.subcontact.force.norm(si))+' '+string(block.subcontact.force.shear(si))+' '+string(si)+' '+string(block.subcontact.disp.norm(si))+' '+string(block.subcontact.disp.shear(si))+' '+string(block.subcontact.stress.norm(si))+' '+string(block.subcontact.stress.shear(si))+' '+string(block.subcontact.area(si)))
         fi = block.subcontact.face(si)
-        if fi then
-            fo = block.face.bface(fi)
-            ii = io.out('face centroid'+' '+'='+' '+string(block.face.pos(fo)))
-        endif
+;        if fi then
+;            fo = block.face.bface(fi)
+;            ii = io.out('face centroid'+' '+'='+' '+string(block.face.pos(fo)))
+;        endif
         si = block.subcontact.next(si)
     endloop
 ic = block.contact.next(ic)
@@ -591,7 +591,7 @@ model restore "./{}.sav"
 
     def _check_and_delete_gravity_files(self, current_directory):
         # Get the current working directory
-        # current_directory = os.getcwd()
+        current_directory = os.getcwd()
         print(f"Checking in the current directory: {current_directory}")
 
         # List of files to check and potentially delete
