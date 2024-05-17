@@ -1,5 +1,5 @@
 # from compas.scene import Scene
-from compas_model.model import Model
+from compas_model.models import Model
 from compas_model.elements import BlockElement
 from compas.datastructures import Mesh
 
@@ -8,12 +8,11 @@ import os
 
 # from compas_viewer import Viewer
 from compas.colors import Color
-from compas_3dec.interactions_3dec import Interaction3dec
-from compas_3dec.rigid_interaction import RigidInteraction
 from compas_3dec.problem import Problem
-from compas_model.materials import ElasticIsotropic
+# from compas_model.materials import ElasticIsotropic
 from compas_3dec.problem3dec import Problem3dec
-
+from compas_model.materials import Concrete
+from compas_model.interactions import Interaction
 
 # =============================================================================
 # Input
@@ -27,38 +26,46 @@ meshes = arch.blocks()
 model = Model()
 
 # =============================================================================
-# materials
-# =============================================================================
-model.add_material(ElasticIsotropic(name="3DCP", rho = 2500, E=300000, v=0.2))
-# model.add_material(ElasticIsotropic(name="Neoprene", rho = 1500, E=300000, v=0.2))
-
-# =============================================================================
 # assign elements and materials to the model
 # =============================================================================
 for m in meshes:
     model.add_element(BlockElement(m))
 
-# add other methods for supports selection
-model.elementlist[0].is_support = True
-model.elementlist[-1].is_support = True
+# =============================================================================
+# materials
+# =============================================================================
+concrete = Concrete(fck=30, name="3DCP", density=2500, Ecm=300000, poisson=0.2)
+model.add_material(concrete)
 
-for element in model.elementlist:
-    model.assign_material(element, "3DCP")
+# Uncomment with the new model PR
+# neoprene = Plastic(fck=7.5, fctm = 3.0, name="Neoprene", density=1230, Ecm=300000, poisson=0.49)
+# model.add_material(neoprene)
 
-rigidinteraction = RigidInteraction()
-model.add_interaction(model.elementlist[1], model.elementlist[2], rigidinteraction)
-model.add_interaction(model.elementlist[2], model.elementlist[3], interaction=RigidInteraction())
-model.add_interaction(model.elementlist[-2], model.elementlist[-3], interaction=RigidInteraction())
-model.add_interaction(model.elementlist[-3], model.elementlist[-4], interaction=RigidInteraction())
-model.add_interaction(model.elementlist[-5], model.elementlist[-6], interaction=RigidInteraction())
+# =============================================================================
+# sort elements by z-coordinate and select the first two elements for boundaries
+# =============================================================================
+
+elements = list(model.elements())
+elements[0].is_support = True
+elements[-1].is_support = True
+
+for element in model.elements():
+    model.assign_material(concrete, element)
+
+model.add_interaction(elements[1], elements[2], interaction=Interaction(name="Rigid"))
+model.add_interaction(elements[2], elements[3], interaction=Interaction(name="Rigid"))
+model.add_interaction(elements[-2], elements[-3], interaction=Interaction(name="Rigid"))
+model.add_interaction(elements[-3], elements[-4], interaction=Interaction(name="Rigid"))
+model.add_interaction(elements[-5], elements[-6], interaction=Interaction(name="Rigid"))
 
 # =============================================================================
 # problems
 # =============================================================================
+
 problem = Problem("3dec", model)
 
-problem.setup_3dec_one_material(block_material="3DCP", support_material = "3DCP", block_height=0.5, reduction_factor=1, friction_angle=35)
-# problem.setup_3dec_two_materials(block_material="3DCP",support_material = "3DCP", interface_material="Neoprene", block_height=0.5, interface_thickness = 0.01, reduction_factor=1, friction_angle=35)
+# problem.setup_3dec_one_material(block_material="3DCP", support_material = "3DCP", block_height=0.5, reduction_factor=1, friction_angle=35)
+# # problem.setup_3dec_two_materials(block_material="3DCP",support_material = "3DCP", interface_material="Neoprene", block_height=0.5, interface_thickness = 0.01, reduction_factor=1, friction_angle=35)
 
 
 
