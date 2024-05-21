@@ -16,19 +16,31 @@ class Problem3dec(Problem):
         # self.support_material = None
         self.interface_material = None
 
+        self.from_model()
+
+    def from_model(self):
+        self.meshes = []
+        self.supports = []
+        self.rigid_interaction = []
+        self.materials = []
+
+    def to_model(self):
+
     def to_geometry_3dec(self):
         """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
         Assembly_3DEC object. This function recognises compounds of joined blocks (e.g.
         a group of 3D convex meshes joined together forming a concave shape) enabling
         the creation of Master/Slave compounds in 3DEC.
         """
+        elements = list(self.model.elements())
         outputs = ""
         for indices in self.model.graph.connected_nodes():
-            name = "Supports" if self.model.elementlist[indices[0]].is_support else "Blocks"
+            
+            name = "Supports" if elements[indices[0]].is_support else "Blocks"
             outputs += ";__create " + str(name) + "__" + "\n"
             meshes = []
             for index in indices:
-                meshes.append(self.model.elementlist[index].geometry)
+                meshes.append(elements[index].geometry)
             outputs += self._to_mesh_string_3dec(meshes, indices, name, precision=10)
         geometry_path = os.path.join(self.working_path, "geometry.dat")
         self._overwrite_file(geometry_path, outputs)
@@ -127,9 +139,7 @@ class Problem3dec(Problem):
         self.support_material = support_material if support_material else block_material
         self._set_joint_stiffness_one_material(block_height, reduction_factor, block_length)
 
-
-
-    def setup_3dec_two_materials(self,*, block_material, support_material, interface_material, block_height, interface_thickness, reduction_factor, friction_angle):
+    def setup_3dec_two_materials(self, *, block_material, support_material, interface_material, block_height, interface_thickness, reduction_factor, friction_angle):
         """Setup the joint stiffness values and the friction angle for a model with two joints materials.
 
         Parameters

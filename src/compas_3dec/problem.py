@@ -8,6 +8,7 @@ class Problem(Data):
             from compas_3dec.problem3dec import Problem3dec
             return object.__new__(Problem3dec)
         return object.__new__(cls, backend=backend, model=model, working_path=working_path)
+    
     def __init__(self, backend, model, working_path=None):
         self.backend = backend
         self.model = model
@@ -16,6 +17,9 @@ class Problem(Data):
             caller_frame = inspect.stack()[-1]
             caller_filename = caller_frame.filename
             self.working_path = os.path.dirname(os.path.abspath(caller_filename))
+    
+    def conversion(self):
+        pass
 
 
 
