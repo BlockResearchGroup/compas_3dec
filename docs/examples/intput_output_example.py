@@ -10,10 +10,12 @@ import os
 from compas.colors import Color
 from compas_3dec.problem import Problem
 # from compas_model.materials import ElasticIsotropic
-from compas_3dec.problem3dec import Problem3dec
 from compas_model.materials import Concrete
-from compas_model.interactions import Interaction
+from compas_model.interactions import Interaction, ContactInterface
 from compas_3dec.datastructures.input import Material, Input
+from compas_3dec.datastructures.problem3dec import Problem3dec, ContactProperty
+from compas_3dec.datastructures.problem3dec import MohrCoulomb
+from compas_3dec.datastructures.conversion import from_model
 
 # =============================================================================
 # Input
@@ -30,8 +32,6 @@ for m in meshes:
     model.add_element(BlockElement(m))
 
 elements = list(model.elements())
-
-
 
 # =============================================================================
 # User Interface
@@ -60,7 +60,7 @@ for support in supports:
 # Rigid Interactions
 # =============================================================================
 for i in rigid_interaction_indices:
-    model.add_interaction(elements[i[0]], elements[i[1]], interaction=Interaction(name="Rigid"))
+    model.add_interaction(elements[i[0]], elements[i[1]], Interaction())
 
 # =============================================================================
 # materials
@@ -76,16 +76,46 @@ for element in model.elements():
     model.assign_material(concrete, element)
 
 # =============================================================================
-# problems
+# convert model to problem
+# =============================================================================
+input = from_model(model)
+print(input)
+problem = Problem3dec(input)
+
+# =============================================================================
+# Viewer
 # =============================================================================
 
-print(str(concrete))
-# problem = Problem.from_model("3dec", model)
-# problem = Problem.from_obj("3dec", model, materials)
-# problem = Problem.from_meshes("3dec", model, materials)
+# =============================================================================
+# set contact property/ies
+# =============================================================================
+stiffness = problem.set_joint_stiffness_one_material(
+    block_height=0.5,
+    reduction_factor=1,
+    block_length=None,
+    material_name="3DCP")
 
-# problem.setup_3dec_one_material(block_material="3DCP", support_material="3DCP", block_height=0.5, reduction_factor=1, friction_angle=35)
-# # problem.setup_3dec_two_materials(block_material="3DCP",support_material = "3DCP", interface_material="Neoprene", block_height=0.5, interface_thickness = 0.01, reduction_factor=1, friction_angle=35)
+stiffness = problem.set_joint_stiffness_two_materials(
+    block_height=0.5,
+    interface_thickness=1,
+    reduction_factor=1,
+    material0_name="3DCP",
+    material1_name="3DCP")
+
+failure_criteria = MohrCoulomb(friction=35)
+
+contact_property = ContactProperty(stiffness, failure_criteria)
+
+# =============================================================================
+# 3DEC geometry generation
+# =============================================================================
+problem.to_geometry_3dec()
+
+# =============================================================================
+# Run Different Analyses
+# =============================================================================
+
+
 
 # problem.run_gravity(blokcs = "3DCP", supports = "3DCP")
 
@@ -99,3 +129,7 @@ print(str(concrete))
 # displacement
 
 # load
+
+# =============================================================================
+# convert Problem to Model for Vizualization
+# =============================================================================
