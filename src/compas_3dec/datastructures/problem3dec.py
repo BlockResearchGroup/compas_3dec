@@ -31,7 +31,7 @@ class Problem3dec(object):
         self.executable_path = executable_path
 
         self.working_path = working_path
-        
+
         if not self.working_path:
             caller_frame = inspect.stack()[-1]
             caller_filename = caller_frame.filename
@@ -50,6 +50,20 @@ class Problem3dec(object):
         input = from_model(model)
         return Problem3dec(input)
 
+    def assign_group_to_meshes(self, indices, group_name):
+        """_summary_
+
+        Parameters
+        ----------
+        indices : _type_
+            _description_
+        group_name : _type_
+            _description_
+        """
+        for index in indices:
+            if not self.input.blocks[index].is_support:
+                self.input.blocks[index].group = group_name
+
     def to_geometry_3dec(self):
         """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
         Assembly_3DEC object. This function recognises compounds of joined blocks (e.g.
@@ -59,27 +73,55 @@ class Problem3dec(object):
 
         outputs = ""
         for indices in self.input.compounds:
-            name = "Supports" if self.input.blocks[indices[0]].is_support else "Blocks"
-            outputs += ";__create " + str(name) + "__" + "\n"
+            if self.input.blocks[indices[0]].is_support:
+                group = "Supports"
+            elif self.input.blocks[indices[0]].group is None:
+                group = "Blocks"
+            else:
+                group = self.input.blocks[indices[0]].group
+            outputs += ";__create " + str(group) + "__" + "\n"
 
             meshes = []
             for index in indices:
                 meshes.append(self.input.blocks[index].mesh)
+            outputs += self._to_mesh_string_3dec(meshes, indices, group, precision=3)
 
-            outputs += self._to_mesh_string_3dec(meshes, indices, name, precision=10)
-
-        # elements = list(self.model.elements())
-        # outputs = ""
-        # for indices in self.model.graph.connected_nodes():
-            
-        #     name = "Supports" if elements[indices[0]].is_support else "Blocks"
-        #     outputs += ";__create " + str(name) + "__" + "\n"
-        #     meshes = []
-        #     for index in indices:
-        #         meshes.append(elements[index].geometry)
-        #     outputs += self._to_mesh_string_3dec(meshes, indices, name, precision=10)
         geometry_path = os.path.join(self.working_path, "geometry.dat")
         self._overwrite_file(geometry_path, outputs)
+
+
+
+
+    # def to_geometry_3dec(self):
+    #     """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
+    #     Assembly_3DEC object. This function recognises compounds of joined blocks (e.g.
+    #     a group of 3D convex meshes joined together forming a concave shape) enabling
+    #     the creation of Master/Slave compounds in 3DEC.
+    #     """
+
+    #     outputs = ""
+    #     for indices in self.input.compounds:
+    #         name = "Supports" if self.input.blocks[indices[0]].is_support else "Blocks"
+    #         outputs += ";__create " + str(name) + "__" + "\n"
+
+    #         meshes = []
+    #         for index in indices:
+    #             meshes.append(self.input.blocks[index].mesh)
+
+    #         outputs += self._to_mesh_string_3dec(meshes, indices, name, precision=10)
+
+    #     # elements = list(self.model.elements())
+    #     # outputs = ""
+    #     # for indices in self.model.graph.connected_nodes():
+
+    #     #     name = "Supports" if elements[indices[0]].is_support else "Blocks"
+    #     #     outputs += ";__create " + str(name) + "__" + "\n"
+    #     #     meshes = []
+    #     #     for index in indices:
+    #     #         meshes.append(elements[index].geometry)
+    #     #     outputs += self._to_mesh_string_3dec(meshes, indices, name, precision=10)
+    #     geometry_path = os.path.join(self.working_path, "geometry.dat")
+    #     self._overwrite_file(geometry_path, outputs)
 
     def _to_mesh_string_3dec(self, meshes, indices, group, precision=10):
         """Convert compas meshes to string readable by 3dec.
@@ -149,7 +191,7 @@ class Problem3dec(object):
     # =============================================================================
     # setup 3dec analysis
     # =============================================================================
-     
+
     def set_joint_stiffness_one_material(self, block_height, reduction_factor,  block_length=None, material_name=None):
         """Compute the joint stiffness values for a model with one joint material (dry assembled).
 
@@ -298,7 +340,7 @@ class Problem3dec(object):
     block contact material-table default property stiffness-normal {1} stiffness-shear {2}
     {4}
     """.format(
-            self.model.materials[material_name].density,
+            self.input.materials[material_name].density,
             self.jkn,
             self.jks,
             self.friction_angle,
@@ -321,6 +363,8 @@ class Problem3dec(object):
         with open(os.path.join(output_path, filename), "w") as file:
             file.write(main_string)
         return filename
+
+
 
     def _check_and_delete_gravity_files(self, current_directory):
         # Get the current working directory
