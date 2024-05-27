@@ -1,15 +1,13 @@
-from compas_3dec.datastructures.input import Material, Input
+from compas_3dec.datastructures.input import Material, Input, Block
 
 
 def from_model(model):
 
     # convert model to input data-structure for 3DEC
-    meshes = []
-    is_support = []
+    blocks = []
     for element in model.elements():
-        meshes.append(element.shape)
-        is_support.append(element.is_support)
-    
+        blocks.append(Block(element.shape, element.is_support))
+
     materials = {}
     for material in model.materials():
         materials[material.name] = (Material(name=material.name, E=material.Ecm, poisson=material.poisson, rho=material.rho))
@@ -20,11 +18,9 @@ def from_model(model):
 
     # main input data-structure for 3DEC
     input = Input(
-        meshes=meshes,
-        is_support=is_support,
+        blocks=blocks,
         compounds=compounds,
-        materials=materials,
-        contact_properties=None)
+        materials=materials)
 
     print(input)
     return input

@@ -59,12 +59,12 @@ class Problem3dec(object):
 
         outputs = ""
         for indices in self.input.compounds:
-            name = "Supports" if self.input.is_support[indices[0]] else "Blocks"
+            name = "Supports" if self.input.blocks[indices[0]].is_support else "Blocks"
             outputs += ";__create " + str(name) + "__" + "\n"
 
             meshes = []
             for index in indices:
-                meshes.append(self.input.meshes[index])
+                meshes.append(self.input.blocks[index].mesh)
 
             outputs += self._to_mesh_string_3dec(meshes, indices, name, precision=10)
 

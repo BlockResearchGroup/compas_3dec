@@ -10,7 +10,7 @@ import os
 from compas.colors import Color
 from compas_3dec.problem import Problem
 # from compas_model.materials import ElasticIsotropic
-from compas_3dec.problem3dec import Problem3dec
+from compas_3dec.problem3dec_old import Problem3dec
 from compas_model.materials import Concrete
 from compas_model.interactions import Interaction
 from compas_3dec.datastructures.input import Material, Input
