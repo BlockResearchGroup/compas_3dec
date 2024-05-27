@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RhinoUI guid="574526bf-a929-42e4-9a79-29d79faaff6b" plug_in_guid="574526bf-a929-42e4-9a79-29d79faaff6b" major_ver="8" minor_ver="0" localize="False" default_language_id="1033">
+  <extend_rhino_menus />
+  <menus />
+  <tool_bar_groups>
+    <tool_bar_group guid="574526bf-a929-42e4-9a79-29d79faaff6b" dock_bar_guid32="574526bf-a929-42e4-9a79-29d79faaff6b" dock_bar_guid64="574526bf-a929-42e4-9a79-29d79faaff6b"
+                                                active_tool_bar_group="574526bf-a929-42e4-9a79-29d79faaff6b" single_file="False" hide_single_tab="True">
+      <text>
+        <locale_1033>compas_3dec</locale_1033>
+      </text>
+      <dock_bar_info visible="True"  floating="True" />
+      <tool_bar_group_item guid="574526bf-a929-42e4-9a79-29d79faaff6b" major_version="1" minor_version="1">
+        <text>
+          <locale_1033>compas_3dec</locale_1033>
+        </text>
+        <tool_bar_id>574526bf-a929-42e4-9a79-29d79faaff6b</tool_bar_id>
+      </tool_bar_group_item>
+    </tool_bar_group>
+  </tool_bar_groups>
+  <tool_bars>
+    <tool_bar guid="574526bf-a929-42e4-9a79-29d79faaff6b" bitmap_id="574526bf-a929-42e4-9a79-29d79faaff6b" item_display_style="control_only">
+      <text>
+        <locale_1033>compas_3dec</locale_1033>
+      </text>
+              <tool_bar_item guid="de172756-286d-43d5-8c1f-5143e7bdff62"
+            button_display_mode="control_only"
+            button_style="normal">
+            <text>
+                <locale_1033>select_blocks</locale_1033>
+            </text>
+            <left_macro_id>de172756-286d-43d5-8c1f-5143e7bdff62</left_macro_id>
+        </tool_bar_item>
+
+    </tool_bar>
+  </tool_bars>
+  <macros>
+          <macro_item guid="de172756-286d-43d5-8c1f-5143e7bdff62" bitmap_id="de172756-286d-43d5-8c1f-5143e7bdff62">
+        <text>
+          <locale_1033>Macro.select_blocks</locale_1033>
+        </text>
+        <tooltip>
+          <locale_1033>select_blocks</locale_1033>
+        </tooltip>
+        <help_text>
+          <locale_1033>select_blocks</locale_1033>
+        </help_text>
+        <button_text>
+          <locale_1033>select_blocks</locale_1033>
+        </button_text>
+        <menu_text>
+          <locale_1033>select_blocks</locale_1033>
+        </menu_text>
+        <script>! _select_blocks</script>
+      </macro_item>
+
+  </macros>
+  <icons>
+          <icon guid="de172756-286d-43d5-8c1f-5143e7bdff62">
+        <light><svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><style>.cls-1{fill:#5c8d6b;}.cls-1,.cls-2{stroke:#fff;stroke-linecap:round;stroke-linejoin:round;}.cls-2{fill:#f4f4f5;}</style></defs><g id="POLYLINE"><polygon class="cls-1" points="4.46 35.68 14.36 46.52 31.32 40.19 31.32 32.37 44.75 27.35 44.75 12.25 34.84 1.41 17.89 7.75 17.89 15.57 4.46 20.59 4.46 35.68"/></g><g id="SPLINE"><path class="cls-2" d="M4.46,35.68l9.9,10.84"/></g><g id="SPLINE-2" data-name="SPLINE"><path class="cls-2" d="M4.46,20.59l9.9,10.84"/></g><g id="SPLINE-3" data-name="SPLINE"><path class="cls-2" d="M4.46,35.68V20.59"/></g><g id="SPLINE-4" data-name="SPLINE"><path class="cls-2" d="M14.36,46.52l17-6.33"/></g><g id="SPLINE-5" data-name="SPLINE"><path class="cls-2" d="M31.32,40.19V32.37"/></g><g id="SPLINE-6" data-name="SPLINE"><path class="cls-2" d="M14.36,46.52V31.43"/></g><g id="SPLINE-7" data-name="SPLINE"><path class="cls-2" d="M14.36,31.43l8.48-3.17"/></g><g id="SPLINE-8" data-name="SPLINE"><path class="cls-2" d="M17.89,7.75l9.9,10.84"/></g><g id="SPLINE-9" data-name="SPLINE"><path class="cls-2" d="M44.75,27.35V12.25"/></g><g id="SPLINE-10" data-name="SPLINE"><path class="cls-2" d="M34.84,1.41l-17,6.34"/></g><g id="SPLINE-11" data-name="SPLINE"><path class="cls-2" d="M27.79,18.59l17-6.34"/></g><g id="SPLINE-12" data-name="SPLINE"><path class="cls-2" d="M17.89,15.57l-13.43,5"/></g><g id="SPLINE-13" data-name="SPLINE"><path class="cls-2" d="M17.89,22.84l9.9,10.84"/></g><g id="SPLINE-14" data-name="SPLINE"><path class="cls-2" d="M27.79,33.68V18.59"/></g><g id="SPLINE-15" data-name="SPLINE"><path class="cls-2" d="M17.89,22.84V7.75"/></g><g id="SPLINE-16" data-name="SPLINE"><path class="cls-2" d="M27.79,33.68l17-6.33"/></g></svg></light>
+        <dark></dark>
+      </icon>
+
+  </icons>
+  <bitmaps />
+</RhinoUI>
