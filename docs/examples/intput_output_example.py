@@ -104,7 +104,9 @@ stiffness = problem.set_joint_stiffness_two_materials(
 
 failure_criteria = MohrCoulomb(friction=35)
 
-contact_property = ContactProperty(stiffness, failure_criteria)
+contact_property_supports = ContactProperty(stiffness, failure_criteria, "Supports")
+
+problem.assign_group_to_meshes([3,4],"Test")
 
 # =============================================================================
 # 3DEC geometry generation

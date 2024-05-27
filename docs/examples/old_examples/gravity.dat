@@ -13,6 +13,7 @@
     block contact generate-subcontacts
     block contact property stiffness-normal 200000000.0 stiffness-shear 55555555.555555545 friction 35
     block contact material-table default property stiffness-normal 200000000.0 stiffness-shear 55555555.555555545
+
     block mech damping global
     plot item model
 
@@ -52,7 +53,7 @@ fish define blocks_output
     ib = block.next(ib)
     endloop
 end
-    
+
 ;===========================================================================
 ; get contacts data
 ;===========================================================================
@@ -72,7 +73,7 @@ ic = block.contact.next(ic)
 endloop
 end
 
-    
+
 ;===========================================================================
 ; save blocks output
 ;===========================================================================
@@ -80,7 +81,7 @@ log on
 log-file 'init_state.txt'
 @blocks_output
 log off
-    
+
 ;===========================================================================
 ; save analysis
 ;===========================================================================
@@ -92,7 +93,7 @@ model save "./init.sav" compress
 model restore "./init.sav"
 
 ;===========================================================================
-;GRAVITY APPLIED IN 10 STEPS 
+;GRAVITY APPLIED IN 10 STEPS
 ;===========================================================================
 ;_____GRAVITY_____ step 1
 model gravity 0 0 -0.981
@@ -133,7 +134,7 @@ log on
 log-file 'grav_state.txt'
 @blocks_output
 log off
-    
+
 ;===========================================================================
 ; save contacts output
 ;===========================================================================
@@ -141,7 +142,7 @@ log on
 log-file 'contact_grav.txt'
 @contacts_output
 log off
-    
+
 ;===========================================================================
 ; save analysis
 ;===========================================================================
