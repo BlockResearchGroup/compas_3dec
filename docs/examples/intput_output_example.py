@@ -13,7 +13,7 @@ from compas_3dec.problem import Problem
 from compas_model.materials import Concrete
 from compas_model.interactions import Interaction, ContactInterface
 from compas_3dec.datastructures.input import Material, Input
-from compas_3dec.datastructures.problem3dec import Problem3dec, ContactProperty
+from compas_3dec.datastructures.problem3dec import Problem3dec, ContactProperty, Group
 from compas_3dec.datastructures.problem3dec import MohrCoulomb
 from compas_3dec.datastructures.conversion import from_model
 
@@ -82,20 +82,25 @@ input = from_model(model)
 print(input)
 problem = Problem3dec(input)
 
+
 # =============================================================================
 # Viewer
 # =============================================================================
 
 # =============================================================================
+# Groups
+# =============================================================================
+# problem.assign_group_to_meshes([3,4],"Test")
+# =============================================================================
 # set contact property/ies
 # =============================================================================
-stiffness = problem.set_joint_stiffness_one_material(
+stiffness_1 = problem.set_joint_stiffness_one_material(
     block_height=0.5,
     reduction_factor=1,
     block_length=None,
     material_name="3DCP")
 
-stiffness = problem.set_joint_stiffness_two_materials(
+stiffness_2 = problem.set_joint_stiffness_two_materials(
     block_height=0.5,
     interface_thickness=1,
     reduction_factor=1,
@@ -104,19 +109,33 @@ stiffness = problem.set_joint_stiffness_two_materials(
 
 failure_criteria = MohrCoulomb(friction=35)
 
-contact_property_supports = ContactProperty(stiffness, failure_criteria, "Supports")
+contact_property_supports = ContactProperty(stiffness_1, failure_criteria)
+contact_property_blocks = ContactProperty(stiffness_1, failure_criteria)
+contact_property_test = ContactProperty(stiffness_2, failure_criteria)
 
-problem.assign_group_to_meshes([3,4],"Test")
+add_group("Blocks", [3,4,5])
+add_material("3DCP", 20000, 0.2, 2400, "Blocks")
+add_contact_property(stiffness, failure_criteria, "Blocks")
+
+group_1 = Group("Blocks", concrete, contact_property_supports)
+group_2 = Group("Supports", concrete, contact_property_blocks)
+group_3 = Group("Tests", neoprene, contact_property_test)
 
 # =============================================================================
 # 3DEC geometry generation
 # =============================================================================
 problem.to_geometry_3dec()
 
-# =============================================================================
-# Run Different Analyses
-# =============================================================================
 
+
+
+problem.add_group("Blocks", concrete, contact_property_supports)
+
+
+# # =============================================================================
+# # Run Different Analyses
+# # =============================================================================
+# problem.run_gravity()
 
 
 # problem.run_gravity(blokcs = "3DCP", supports = "3DCP")

@@ -7,6 +7,7 @@ class Problem(Data):
     def __new__(cls, backend, input, working_path=None):
         if backend == "3dec" and cls is Problem:
             from compas_3dec.problem3dec_old import Problem3dec
+
             return object.__new__(Problem3dec)
         return object.__new__(cls)
 

@@ -15,12 +15,12 @@ from .interactionobject import RhinoInteractionObject
 from .modelobject import RhinoModelObject
 
 
-
 @plugin(category="factories", requires=["Rhino"])
 def register_scene_objects():
     register(BlockElement, RhinoBlockObject, context="Rhino")
     register(Interaction3dec, RhinoInteractionObject, context="Rhino")
     register(Model_3dec, RhinoModelObject, context="Rhino")
+
 
 __all__ = [
     "RhinoBlockObject",

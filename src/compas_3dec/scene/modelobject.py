@@ -52,7 +52,6 @@ class ModelObject(SceneObject):
                     show_resultant_force_normal=True,
                     show_resultant_torque=False,
                     show_resultant_shear_transported=True,
-
                 )
 
         # for edge in model.graph.edges():

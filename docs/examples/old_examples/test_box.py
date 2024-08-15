@@ -10,7 +10,7 @@
 # print(model.threedec_config.set_point_load([0,0,0], [0,0,-1], 500, 0.01))
 
 # vec = 0.000141801,-4.47605e-09,0.000348811
-vec = 0.000141801,-4.47281e-09,0.000348811
+vec = 0.0217209, 8.43998e-08, -0.00384262
 
 from compas.geometry import norm_vector
 

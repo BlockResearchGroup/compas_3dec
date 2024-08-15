@@ -32,16 +32,21 @@ elif user_choice == "from_library":
         arch_option_names = ["Rise", "Span", "Thickness", "Depth", "Blocks_number"]
         arch_option_values = [2, 5, 0.3, 0.3, 20]
         collected_values = adjust_options(message, arch_option_names, arch_option_values)
-        arch = Arch(rise=int(collected_values[0]), span=int(collected_values[1]), thickness=collected_values[2], depth=collected_values[3], n=int(collected_values[4]))
+        arch = Arch(
+            rise=int(collected_values[0]),
+            span=int(collected_values[1]),
+            thickness=collected_values[2],
+            depth=collected_values[3],
+            n=int(collected_values[4]),
+        )
         # arch = Arch(rise=5, span=10, thickness=0.5, depth=0.5, n=20)
         meshes = arch.blocks()
-        model = Model_3dec(working_path = os.path.dirname(__file__))
-        print (os.path.dirname(__file__))
+        model = Model_3dec(working_path=os.path.dirname(__file__))
+        print(os.path.dirname(__file__))
         for m in meshes:
             model.add_element(BlockElement(m))
 
         # sc.sticky["model"] = model
-
 
     elif geometry_name == "Dome":
         # compas_rhino.rs.sticky["model"] = Model_3dec.from_library("dome")

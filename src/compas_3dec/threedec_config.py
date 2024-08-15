@@ -11,7 +11,6 @@ class ThreedecConfig:
         self.jks = None
         self.model = model
 
-
     def add_material(self, name, density, friction_angle, young_modulus, poisson_ratio):
         self.material[name] = {
             "density": density,
@@ -74,14 +73,12 @@ class ThreedecConfig:
             header = "block mech damping global" + " " + str(fac) + " " + str(f1) + " " + str(f2)
         return header
 
-
-    def set_damping_local(self,  custom = False, f=None):
+    def set_damping_local(self, custom=False, f=None):
         header = "block mech damping local"
 
         if custom:
             header = "block mech damping local" + " " + str(f)
         return header
-
 
     def set_damping_contact(self, damping_value):
         pass
@@ -104,7 +101,6 @@ class ThreedecConfig:
         """
         header = "block mech damping rayleigh" + " " + str(f1) + " " + str(f2) + " " + str(keyword)
         return header
-
 
     # =============================================================================
     # gravity.dat
@@ -170,7 +166,7 @@ class ThreedecConfig:
         time_step=0.02,
         final_ratio=1e-05,
         time_final_step=1,
-        ):
+    ):
 
         self._check_and_delete_gravity_files(self.model.working_path)
         if not self.jkn or not self.jks:
@@ -222,7 +218,7 @@ class ThreedecConfig:
     # displacement.dat
     # =============================================================================
 
-    def check_and_exit(self,solve_ratio):
+    def check_and_exit(self, solve_ratio):
 
         check_and_exit = """
 ;===========================================================================
@@ -235,9 +231,10 @@ fish define check_and_exit
     endif
 end
 @check_and_exit
-    """.format(solve_ratio)
+    """.format(
+            solve_ratio
+        )
         return check_and_exit
-
 
     def get_model_timestep(self):
         with open(os.path.join(self.model.working_path, "grav_state.txt"), "r") as fo:
@@ -252,9 +249,7 @@ end
                     timestep = float(parts[2])
         return timestep
 
-
-
-    def set_block_displacement(self, region = 0, displacement_direction = [0,0,-1], displ_magnitude_per_step=0.001):
+    def set_block_displacement(self, region=0, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
         displacement_direction = normalize_vector(displacement_direction)
         single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
         header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + str(region) + "\n"
@@ -268,11 +263,10 @@ end
         displacement_data = [header, equilibrium]
         return displacement_data
 
-
-    def set_blocks_displacement(self, regions, displacement_direction = [0,0,-1], displ_magnitude_per_step=0.001):
+    def set_blocks_displacement(self, regions, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
         displacement_direction = normalize_vector(displacement_direction)
         single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
-        regions_str = ' '.join(str(r) for r in regions)
+        regions_str = " ".join(str(r) for r in regions)
         header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + regions_str + "\n"
         header += "block apply velocity-y " + str(single_displacement_vector[1]) + " range region " + regions_str + "\n"
         header += "block apply velocity-z " + str(single_displacement_vector[2]) + " range region " + regions_str + "\n"
@@ -284,12 +278,19 @@ end
         displacement_data = [header, equilibrium]
         return displacement_data
 
-
-    def set_displacement_analysis(self, displacements_list, total_displacement = 0.0, displ_magnitude_per_step=0.001, solver_ratio = 0.00001, solver_time = 3, displacement_capacity = False):
-        #get the model timestep calculated by 3DEC from the gravity file
+    def set_displacement_analysis(
+        self,
+        displacements_list,
+        total_displacement=0.0,
+        displ_magnitude_per_step=0.001,
+        solver_ratio=0.00001,
+        solver_time=3,
+        displacement_capacity=False,
+    ):
+        # get the model timestep calculated by 3DEC from the gravity file
         timestep = self.get_model_timestep()
-        #number of solver cycles to reach the total displacement
-        number_of_cycles = int(displ_magnitude_per_step/(displ_magnitude_per_step * timestep))
+        # number of solver cycles to reach the total displacement
+        number_of_cycles = int(displ_magnitude_per_step / (displ_magnitude_per_step * timestep))
 
         if not os.path.join(self.model.working_path, "grav_state.txt"):
             raise ValueError("Missing gravity file: compute gravity first")
@@ -305,18 +306,25 @@ end
         displacement_steps = int(total_displacement / displ_magnitude_per_step)
         if displacement_capacity:
             displacement_steps = 10000
-        for step in range(displacement_steps+1):
-            step_name =  "Displacement_step" + "_" + str(step+1) + "_distance_" + str((step+1)*displ_magnitude_per_step) + "m"
-            main_string += ";==========================================================================="+ "\n"
-            main_string += "; "+ str(step_name) +  "\n"
-            main_string += ";==========================================================================="+ "\n"
+        for step in range(displacement_steps + 1):
+            step_name = (
+                "Displacement_step"
+                + "_"
+                + str(step + 1)
+                + "_distance_"
+                + str((step + 1) * displ_magnitude_per_step)
+                + "m"
+            )
+            main_string += ";===========================================================================" + "\n"
+            main_string += "; " + str(step_name) + "\n"
+            main_string += ";===========================================================================" + "\n"
             for displacement in displacements_list:
                 main_string += displacement[0]
             main_string += "model cycle " + str(number_of_cycles) + "\n"
             main_string += "\n"
-            main_string += ";==========================================================================="+ "\n"
-            main_string += "; Equilibrium calculation" +  "\n"
-            main_string += ";==========================================================================="+ "\n"
+            main_string += ";===========================================================================" + "\n"
+            main_string += "; Equilibrium calculation" + "\n"
+            main_string += ";===========================================================================" + "\n"
             for displacement in displacements_list:
                 main_string += displacement[1]
             main_string += "model solve unbalanced-maximum {} time".format(solver_ratio) + " " + str(solver_time) + "\n"
@@ -333,11 +341,10 @@ end
                 file.write(main_string)
         return filename
 
-
     # =============================================================================
     # load.dat
     # =============================================================================
-    def _load_box(self, point,precision):
+    def _load_box(self, point, precision):
         """Create a bounding box range around a point 3D adding +/- the precision
             which can be used after the command 'boundary load' in 3DEC.
         point: xyz
@@ -346,30 +353,67 @@ end
             dimension to add and subtract in x,y,z direction to the point 3D
             to create the box.
         """
-        x1 = point[0]-precision
-        x2 = point[0]+precision
-        y1 = point[1]-precision
-        y2 = point[1]+precision
-        z1 = point[2]-precision
-        z2 = point[2]+precision
-        pl = 'range x '+ str(x1)+' ,'+ str(x2)+' y ' +str(y1)+' ,' +str(y2) +' z ' +str(z1)+' ,' +str(z2)
+        x1 = point[0] - precision
+        x2 = point[0] + precision
+        y1 = point[1] - precision
+        y2 = point[1] + precision
+        z1 = point[2] - precision
+        z2 = point[2] + precision
+        pl = "range x " + str(x1) + " ," + str(x2) + " y " + str(y1) + " ," + str(y2) + " z " + str(z1) + " ," + str(z2)
         return pl
 
     def _load_along_direction(self, pt1, pt2, load):
-        vec = Vector.from_start_end(pt1,pt2)
+        vec = Vector.from_start_end(pt1, pt2)
         vec = normalize_vector(vec)
-        load_components = ('xload ' + str(vec[0]*load)+' yload '+ str(vec[1]*load)+' zload '+ str(vec[2]*load))
+        load_components = (
+            "xload " + str(vec[0] * load) + " yload " + str(vec[1] * load) + " zload " + str(vec[2] * load)
+        )
         return load_components
-
 
     def set_point_load(self, application_point, direction_point, load_magnitude, radius, subcontacts_per_point):
         magnitude_per_point = load_magnitude / subcontacts_per_point
         load_vector = Vector.from_start_end(direction_point, application_point)
         load_vector = normalize_vector(load_vector)
         load_vector = scale_vector(load_vector, magnitude_per_point)
-        string = "block gridpoint force-x " + str(load_vector[0]) + " range sphere c " + str(application_point[0]) + " " + str(application_point[1]) + " " + str(application_point[2]) + " r " + str(radius) + "\n"
-        string += "block gridpoint force-y " + str(load_vector[1]) + " range sphere c " + str(application_point[0]) + " " + str(application_point[1]) + " " + str(application_point[2]) + " r " + str(radius) + "\n"
-        string += "block gridpoint force-z " + str(load_vector[2]) + " range sphere c " + str(application_point[0]) + " " + str(application_point[1]) + " " + str(application_point[2]) + " r " + str(radius) + "\n"
+        string = (
+            "block gridpoint force-x "
+            + str(load_vector[0])
+            + " range sphere c "
+            + str(application_point[0])
+            + " "
+            + str(application_point[1])
+            + " "
+            + str(application_point[2])
+            + " r "
+            + str(radius)
+            + "\n"
+        )
+        string += (
+            "block gridpoint force-y "
+            + str(load_vector[1])
+            + " range sphere c "
+            + str(application_point[0])
+            + " "
+            + str(application_point[1])
+            + " "
+            + str(application_point[2])
+            + " r "
+            + str(radius)
+            + "\n"
+        )
+        string += (
+            "block gridpoint force-z "
+            + str(load_vector[2])
+            + " range sphere c "
+            + str(application_point[0])
+            + " "
+            + str(application_point[1])
+            + " "
+            + str(application_point[2])
+            + " r "
+            + str(radius)
+            + "\n"
+        )
         return string
 
     def set_points_load(self, points_list, load_magnitude, load_vector, radius, subcontacts_per_point):
@@ -377,12 +421,56 @@ end
         for point in points_list:
             load_direction = normalize_vector(load_vector)
             load = scale_vector(load_direction, magnitude_per_point)
-            string = "block gridpoint force-x " + str(load[0]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
-            string += "block gridpoint force-y " + str(load[1]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
-            string += "block gridpoint force-z " + str(load[2]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
+            string = (
+                "block gridpoint force-x "
+                + str(load[0])
+                + " range sphere c "
+                + str(point[0])
+                + " "
+                + str(point[1])
+                + " "
+                + str(point[2])
+                + " r "
+                + str(radius)
+                + "\n"
+            )
+            string += (
+                "block gridpoint force-y "
+                + str(load[1])
+                + " range sphere c "
+                + str(point[0])
+                + " "
+                + str(point[1])
+                + " "
+                + str(point[2])
+                + " r "
+                + str(radius)
+                + "\n"
+            )
+            string += (
+                "block gridpoint force-z "
+                + str(load[2])
+                + " range sphere c "
+                + str(point[0])
+                + " "
+                + str(point[1])
+                + " "
+                + str(point[2])
+                + " r "
+                + str(radius)
+                + "\n"
+            )
         return string
 
-    def set_load_analysis(self, load_string, total_load, load_magnitude_per_step, number_of_cycles = 35000, load_capacity = False, solver_ratio = 0.00001):
+    def set_load_analysis(
+        self,
+        load_string,
+        total_load,
+        load_magnitude_per_step,
+        number_of_cycles=35000,
+        load_capacity=False,
+        solver_ratio=0.00001,
+    ):
 
         if not os.path.join(self.model.working_path, "grav_state.txt"):
             raise ValueError("Missing gravity file: compute gravity first")
@@ -398,11 +486,13 @@ end
         load_steps = int(total_load / load_magnitude_per_step)
         if load_capacity:
             load_steps = 10000
-        for step in range(load_steps+1):
-            step_name =  "Load_step" + "_" + str(step+1) + "_load_magnitude_" + str((step+1)*load_magnitude_per_step) + "m"
-            main_string += ";==========================================================================="+ "\n"
-            main_string += "; "+ str(step_name) +  "\n"
-            main_string += ";==========================================================================="+ "\n"
+        for step in range(load_steps + 1):
+            step_name = (
+                "Load_step" + "_" + str(step + 1) + "_load_magnitude_" + str((step + 1) * load_magnitude_per_step) + "m"
+            )
+            main_string += ";===========================================================================" + "\n"
+            main_string += "; " + str(step_name) + "\n"
+            main_string += ";===========================================================================" + "\n"
             main_string += load_string
             main_string += "model cycle " + str(number_of_cycles) + "\n"
             main_string += "\n"
@@ -417,7 +507,6 @@ end
             with open(os.path.join(output_path, filename), "w") as file:
                 file.write(main_string)
         return filename
-
 
     # =============================================================================
     # stress.dat
@@ -610,4 +699,3 @@ model restore "./{}.sav"
             else:
                 # If the file does not exist, print a message
                 print(f"{file_name} does not exist in the current directory and was not deleted")
-

@@ -1,7 +1,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{574526bf-a929-42e4-9a79-29d79faaff6b}") = "compas_3dec", "compas_3dec\compas_3dec.csproj", "{72b924bb-f846-4931-8389-6c2d7bff7d36}"
+Project("{574526bf-a929-42e4-9a79-29d79faaff6b}") = "compas_3dec", "compas_3dec\compas_3dec.csproj", "{93d8559a-e5ec-4df6-a1e5-4a62db7bd90f}"
 EndProject
 
 Global
@@ -10,8 +10,8 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{72b924bb-f846-4931-8389-6c2d7bff7d36}.Debug|Any CPU.Build.0 = Debug|Any CPU
-{72b924bb-f846-4931-8389-6c2d7bff7d36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93d8559a-e5ec-4df6-a1e5-4a62db7bd90f}.Debug|Any CPU.Build.0 = Debug|Any CPU
+{93d8559a-e5ec-4df6-a1e5-4a62db7bd90f}.Release|Any CPU.Build.0 = Release|Any CPU
 
 	EndGlobalSection
 EndGlobal

@@ -4,19 +4,18 @@ from compas_3dec.problem import Problem
 
 
 class ContactProperty(object):
-
     def __init__(self, stiffness=(0, 0)):
         self.stiffness = None  # type: tuple[float, float]
 
 
 class MohrCoulomb(ContactProperty):
-
-    def __init__(self,
-                 friction=None,  # type: float
-                 cohesion=0,  # type: float
-                 dilation=0,  # type: float
-                 tension=0,  # type: float
-                 ):
+    def __init__(
+        self,
+        friction=None,  # type: float
+        cohesion=0,  # type: float
+        dilation=0,  # type: float
+        tension=0,  # type: float
+    ):
 
         self.friction = friction
         self.cohesion = cohesion
@@ -24,10 +23,14 @@ class MohrCoulomb(ContactProperty):
         self.tension = tension
 
 
-
-
 class Problem3dec(Problem):
-    def __init__(self, backend, model, working_path=None, executable_path='"C:\\Program Files\\Itasca\\3DEC700\\exe64\\3dec700_console.exe"'):
+    def __init__(
+        self,
+        backend,
+        model,
+        working_path=None,
+        executable_path='"C:\\Program Files\\Itasca\\3DEC700\\exe64\\3dec700_console.exe"',
+    ):
         super().__init__(backend, model, working_path)
         self.executable_path = executable_path
         # self.jkn = None
@@ -58,7 +61,7 @@ class Problem3dec(Problem):
         # elements = list(self.model.elements())
         # outputs = ""
         # for indices in self.model.graph.connected_nodes():
-            
+
         #     name = "Supports" if elements[indices[0]].is_support else "Blocks"
         #     outputs += ";__create " + str(name) + "__" + "\n"
         #     meshes = []
@@ -137,8 +140,9 @@ class Problem3dec(Problem):
     # setup 3dec analysis
     # =============================================================================
 
-    
-    def setup_3dec_one_material(self, *, block_material, support_material, block_height, reduction_factor, friction_angle, block_length=None):
+    def setup_3dec_one_material(
+        self, *, block_material, support_material, block_height, reduction_factor, friction_angle, block_length=None
+    ):
         """Setup the joint stiffness values and the friction angle for a model with one joint material.
 
         Parameters
@@ -163,7 +167,17 @@ class Problem3dec(Problem):
         self.support_material = support_material if support_material else block_material
         self.set_joint_stiffness_one_material(block_height, reduction_factor, block_length)
 
-    def setup_3dec_two_materials(self, *, block_material, support_material, interface_material, block_height, interface_thickness, reduction_factor, friction_angle):
+    def setup_3dec_two_materials(
+        self,
+        *,
+        block_material,
+        support_material,
+        interface_material,
+        block_height,
+        interface_thickness,
+        reduction_factor,
+        friction_angle,
+    ):
         """Setup the joint stiffness values and the friction angle for a model with two joints materials.
 
         Parameters
@@ -184,7 +198,6 @@ class Problem3dec(Problem):
             Friction angle.
         """
 
-
         self.friction_angle = friction_angle
         self.to_geometry_3dec()
         self.block_material = block_material
@@ -192,7 +205,7 @@ class Problem3dec(Problem):
         self.interface_material = interface_material
         self.set_joint_stiffness_two_materials(block_height, interface_thickness, reduction_factor)
 
-    def set_joint_stiffness_one_material(self, block_height, reduction_factor,  block_length=None, material_name=None):
+    def set_joint_stiffness_one_material(self, block_height, reduction_factor, block_length=None, material_name=None):
         """Compute the joint stiffness values for a model with one joint material (dry assembled).
 
         Parameters
@@ -222,7 +235,8 @@ class Problem3dec(Problem):
 
         return ContactProperty(stiffness=(jkn, jks))
 
-    def set_joint_stiffness_two_materials(self, block_height, interface_thickness, reduction_factor, material0_name=None, material1_name=None
+    def set_joint_stiffness_two_materials(
+        self, block_height, interface_thickness, reduction_factor, material0_name=None, material1_name=None
     ):
         """Compute the joint stiffness values for a model with two joints materials (i.e. stone and mortar).
 
@@ -257,56 +271,56 @@ class Problem3dec(Problem):
     # gravity
     # =============================================================================
     def gravity_equilibrium(
-            self, steps=10, keyword="ratio-local", ratio=1e-06, time=0.02, final_ratio=1e-06, time_final_step=1
-        ):
-            """_summary_
+        self, steps=10, keyword="ratio-local", ratio=1e-06, time=0.02, final_ratio=1e-06, time_final_step=1
+    ):
+        """_summary_
 
-            Parameters
-            ----------
-            steps : _type_
-                _description_
-            keyword : _type_
-                _description_
-            ratio : _type_
-                _description_
-            time : _type_
-                _description_
-            final_ratio : _type_
-                _description_
-            time_final_step : _type_
-                _description_
+        Parameters
+        ----------
+        steps : _type_
+            _description_
+        keyword : _type_
+            _description_
+        ratio : _type_
+            _description_
+        time : _type_
+            _description_
+        final_ratio : _type_
+            _description_
+        time_final_step : _type_
+            _description_
 
-            Returns
-            -------
-            _type_
-                _description_
-            """
+        Returns
+        -------
+        _type_
+            _description_
+        """
 
-            g = -9.806 / steps
-            g = round(g, 3)
-            text = ";===========================================================================" + "\n"
-            text += ";GRAVITY APPLIED IN" + " " + str(steps) + " " + "STEPS " + "\n"
-            text += ";===========================================================================" + "\n"
-            for i in range(steps):
-                gr = g * (i + 1)
-                # header = ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
-                header = ";_____GRAVITY_____" + " " + "step" + " " + str(i + 1) + "\n"
-                header += "model gravity" + " " + "0" + " " + "0" + " " + str(gr) + "\n"
-                header += "model solve" + " " + str(keyword) + " " + str(ratio) + " " + "time" + " " + str(time) + "\n"
-                text += header
-            text += (
-                "model solve"
-                + " "
-                + str(keyword)
-                + " "
-                + str(final_ratio)
-                + " "
-                + "time"
-                + " "
-                + str(time_final_step)
-                + "\n"
-            )
-            return text
+        g = -9.806 / steps
+        g = round(g, 3)
+        text = ";===========================================================================" + "\n"
+        text += ";GRAVITY APPLIED IN" + " " + str(steps) + " " + "STEPS " + "\n"
+        text += ";===========================================================================" + "\n"
+        for i in range(steps):
+            gr = g * (i + 1)
+            # header = ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
+            header = ";_____GRAVITY_____" + " " + "step" + " " + str(i + 1) + "\n"
+            header += "model gravity" + " " + "0" + " " + "0" + " " + str(gr) + "\n"
+            header += "model solve" + " " + str(keyword) + " " + str(ratio) + " " + "time" + " " + str(time) + "\n"
+            text += header
+        text += (
+            "model solve"
+            + " "
+            + str(keyword)
+            + " "
+            + str(final_ratio)
+            + " "
+            + "time"
+            + " "
+            + str(time_final_step)
+            + "\n"
+        )
+        return text
 
     def run_gravity(
         self,
@@ -316,7 +330,7 @@ class Problem3dec(Problem):
         time_step=0.02,
         final_ratio=1e-05,
         time_final_step=1,
-        ):
+    ):
 
         self._check_and_delete_gravity_files(self.working_path)
         if not self.jkn or not self.jks:
@@ -399,14 +413,12 @@ class Problem3dec(Problem):
             header = "block mech damping global" + " " + str(fac) + " " + str(f1) + " " + str(f2)
         return header
 
-
-    def set_damping_local(self,  custom = False, f=None):
+    def set_damping_local(self, custom=False, f=None):
         header = "block mech damping local"
 
         if custom:
             header = "block mech damping local" + " " + str(f)
         return header
-
 
     def set_damping_contact(self, damping_value):
         pass

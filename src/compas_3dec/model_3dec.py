@@ -8,7 +8,16 @@ from compas.datastructures import Mesh
 from compas.geometry import convex_hull_xy, Transformation, transform_points, scale_vector
 from compas.geometry import Plane, Frame, Polygon, Point, Line
 
-from compas.geometry import scale_vector, cross_vectors, centroid_points, normalize_vector, transform_points, convex_hull_xy, sum_vectors, dot_vectors
+from compas.geometry import (
+    scale_vector,
+    cross_vectors,
+    centroid_points,
+    normalize_vector,
+    transform_points,
+    convex_hull_xy,
+    sum_vectors,
+    dot_vectors,
+)
 
 
 from compas_model.model import Model, GroupNode
@@ -17,6 +26,7 @@ from compas_model.elements import BlockElement
 from compas_3dec.threedec_config import ThreedecConfig
 from compas_3dec.interactions_3dec import Interaction3dec
 from compas.geometry import normalize_vector, norm_vector
+
 
 class Model_3dec(Model):
     """Class representing a general model of hierarchically organised elements, with interactions.
@@ -439,203 +449,201 @@ class Model_3dec(Model):
             self.add_interaction(self.elementlist[neighbours[0]], self.elementlist[neighbours[1]], interaction)
         return output_3dec_per_vertex, contacts
 
+    def from_3dec_contacts_resultant(self, filename, precision="3f"):
+        contacts = {}
+        with open(os.path.join(self.working_path, filename), "r") as fo:
+            for line in fo:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split()
+                if not len(parts):
+                    continue
+                if parts[0] == "contact" and (
+                    (int(parts[3]) == 1)
+                    or (int(parts[3]) == 3)
+                    or (int(parts[3]) == 5)
+                    or (int(parts[3]) == 4)
+                    or (int(parts[3]) == 2)
+                    or (int(parts[3]) == 0)
+                ):
+                    id = int(parts[2])
+                    contacts[id] = {
+                        "type": int(parts[3]),
+                        "neighbours": [int(parts[4]), int(parts[5])],
+                        "position": [float(c) for c in parts[6][1:-1].split(",")],
+                        "normal": [float(c) for c in parts[7][1:-1].split(",")],
+                        "subcontacts": {},
+                    }
+                    continue
+                if parts[0] == "subcontact":
+                    ids = int(parts[5])
+                    contacts[id]["subcontacts"][ids] = {}
+                    coordinates = [float(c) for c in parts[2][1:-1].split(",")]
+                    normal_force = float(parts[3])
+                    shear_force = [float(c) for c in parts[4][1:-1].split(",")]
+                    normal_displ = float(parts[6])
+                    shear_displ = [float(c) for c in parts[7][1:-1].split(",")]
+                    normal_stress = float(parts[8])
+                    shear_stress = float(parts[9])
+                    area = float(parts[10])
+                    contacts[id]["subcontacts"][ids]["coordinates"] = coordinates
+                    contacts[id]["subcontacts"][ids]["normal_force"] = normal_force / 1000
+                    contacts[id]["subcontacts"][ids]["shear_force"] = [
+                        shear_force[0] / 1000,
+                        shear_force[1] / 1000,
+                        shear_force[2] / 1000,
+                    ]
+                    contacts[id]["subcontacts"][ids]["normal_displ"] = normal_displ
+                    contacts[id]["subcontacts"][ids]["shear_displ"] = shear_displ
+                    contacts[id]["subcontacts"][ids]["normal_stress"] = normal_stress
+                    contacts[id]["subcontacts"][ids]["shear_stress"] = shear_stress
+                    contacts[id]["subcontacts"][ids]["area"] = area
+                    continue
 
-    def from_3dec_contacts_resultant(self, filename, precision='3f'):
-            contacts = {}
-            with open(os.path.join(self.working_path, filename), "r") as fo:
-                for line in fo:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    parts = line.split()
-                    if not len(parts):
-                        continue
-                    if parts[0] == "contact" and (
-                        (int(parts[3]) == 1)
-                        or (int(parts[3]) == 3)
-                        or (int(parts[3]) == 5)
-                        or (int(parts[3]) == 4)
-                        or (int(parts[3]) == 2)
-                        or (int(parts[3]) == 0)
-                    ):
-                        id = int(parts[2])
-                        contacts[id] = {
-                            "type": int(parts[3]),
-                            "neighbours": [int(parts[4]), int(parts[5])],
-                            "position": [float(c) for c in parts[6][1:-1].split(",")],
-                            "normal": [float(c) for c in parts[7][1:-1].split(",")],
-                            "subcontacts": {},
-                        }
-                        continue
-                    if parts[0] == "subcontact":
-                        ids = int(parts[5])
-                        contacts[id]["subcontacts"][ids] = {}
-                        coordinates = [float(c) for c in parts[2][1:-1].split(",")]
-                        normal_force = float(parts[3])
-                        shear_force = [float(c) for c in parts[4][1:-1].split(",")]
-                        normal_displ = float(parts[6])
-                        shear_displ = [float(c) for c in parts[7][1:-1].split(",")]
-                        normal_stress = float(parts[8])
-                        shear_stress = float(parts[9])
-                        area = float(parts[10])
-                        contacts[id]["subcontacts"][ids]["coordinates"] = coordinates
-                        contacts[id]["subcontacts"][ids]["normal_force"] = normal_force/1000
-                        contacts[id]["subcontacts"][ids]["shear_force"] = [
-                            shear_force[0] / 1000,
-                            shear_force[1] / 1000,
-                            shear_force[2] / 1000,
-                        ]
-                        contacts[id]["subcontacts"][ids]["normal_displ"] = normal_displ
-                        contacts[id]["subcontacts"][ids]["shear_displ"] = shear_displ
-                        contacts[id]["subcontacts"][ids]["normal_stress"] = normal_stress
-                        contacts[id]["subcontacts"][ids]["shear_stress"] = shear_stress
-                        contacts[id]["subcontacts"][ids]["area"] = area
-                        continue
+        for key, contact in contacts.items():
+            neighbours = contact["neighbours"]
+            contact_normal = normalize_vector(contact["normal"])
 
-            for key, contact in contacts.items():
-                neighbours = contact["neighbours"]
-                contact_normal = normalize_vector(contact["normal"])
+            # get list of subcontacts coordinates
+            output_3dec_per_vertex = {}
 
+            for key, subcontact in contact["subcontacts"].items():
+                point = subcontact["coordinates"]
+                position = self.geometric_key(point, precision)
+                normal_force = scale_vector(contact_normal, subcontact["normal_force"])
+                shear_force = subcontact["shear_force"]
+                normal_displacement = scale_vector(contact_normal, subcontact["normal_displ"])
+                shear_displacement = subcontact["shear_displ"]
+                normal_stress = subcontact["normal_stress"]
+                shear_stress = subcontact["shear_stress"]
+                area = subcontact["area"]
 
-                # get list of subcontacts coordinates
-                output_3dec_per_vertex = {}
+                if position in output_3dec_per_vertex:
+                    # Correctly access and update the dictionary for the existing key
+                    output_3dec_per_vertex[position]["normal_force"] = [
+                        x + y for x, y in zip(output_3dec_per_vertex[position]["normal_force"], normal_force)
+                    ]
+                    output_3dec_per_vertex[position]["shear_force"] = [
+                        x + y for x, y in zip(output_3dec_per_vertex[position]["shear_force"], shear_force)
+                    ]
+                    output_3dec_per_vertex[position]["normal_displacement"] = [
+                        x + y
+                        for x, y in zip(output_3dec_per_vertex[position]["normal_displacement"], normal_displacement)
+                    ]
+                    output_3dec_per_vertex[position]["shear_displacement"] = [
+                        x + y
+                        for x, y in zip(output_3dec_per_vertex[position]["shear_displacement"], shear_displacement)
+                    ]
+                    output_3dec_per_vertex[position]["normal_stress"] += normal_stress
+                    output_3dec_per_vertex[position]["shear_stress"] += shear_stress
+                    output_3dec_per_vertex[position]["area"] += area
+                    output_3dec_per_vertex[position]["is_combined"] = True
 
-                for key, subcontact in contact["subcontacts"].items():
-                    point = subcontact["coordinates"]
-                    position = self.geometric_key(point, precision)
-                    normal_force = scale_vector(contact_normal, subcontact["normal_force"])
-                    shear_force = subcontact["shear_force"]
-                    normal_displacement = scale_vector(contact_normal, subcontact["normal_displ"])
-                    shear_displacement = subcontact["shear_displ"]
-                    normal_stress = subcontact["normal_stress"]
-                    shear_stress = subcontact["shear_stress"]
-                    area = subcontact["area"]
-
-                    if position in output_3dec_per_vertex:
-                        # Correctly access and update the dictionary for the existing key
-                        output_3dec_per_vertex[position]["normal_force"] = [
-                            x + y for x, y in zip(output_3dec_per_vertex[position]["normal_force"], normal_force)
-                        ]
-                        output_3dec_per_vertex[position]["shear_force"] = [
-                            x + y for x, y in zip(output_3dec_per_vertex[position]["shear_force"], shear_force)
-                        ]
-                        output_3dec_per_vertex[position]["normal_displacement"] = [
-                            x + y
-                            for x, y in zip(output_3dec_per_vertex[position]["normal_displacement"], normal_displacement)
-                        ]
-                        output_3dec_per_vertex[position]["shear_displacement"] = [
-                            x + y
-                            for x, y in zip(output_3dec_per_vertex[position]["shear_displacement"], shear_displacement)
-                        ]
-                        output_3dec_per_vertex[position]["normal_stress"] += normal_stress
-                        output_3dec_per_vertex[position]["shear_stress"] += shear_stress
-                        output_3dec_per_vertex[position]["area"] += area
-                        output_3dec_per_vertex[position]["is_combined"] = True
-
-                    else:
-                        output_3dec_per_vertex[position] = {
-                            "position": point,
-                            "normal_force": normal_force,
-                            "shear_force": shear_force,
-                            "normal_displacement": normal_displacement,
-                            "shear_displacement": shear_displacement,
-                            "normal_stress": normal_stress,
-                            "shear_stress": shear_stress,
-                            "area": area,
-                            "is_combined" : False,
-                        }
-                #post-processing
-                Mtorque_tot = [0, 0, 0]
-                Mtot = [0, 0, 0]
-                Ntot = 0
-                Stot = [0, 0, 0]
-
-                output_list = []
-                points = [value["position"] for value in output_3dec_per_vertex.values()]
-                if points:
-                    centroid = centroid_points(points)
-
-                output_3dec_per_contact = {}
-                first_iteration = True
-                for key, value in output_3dec_per_vertex.items():
-                    vertex = value["position"]
-                    ri = [vertex[0] - centroid[0], vertex[1] - centroid[1], vertex[2] - centroid[2]]
-                    if first_iteration:
-                        e1_plane = normalize_vector(ri)
-                        e2_plane = cross_vectors(contact_normal, e1_plane)
-                        first_iteration = False
-                    Ni = norm_vector(value["normal_force"])
-                    Mi = cross_vectors(ri, value["normal_force"])
-                    Mtot = sum_vectors([Mtot, Mi])
-                    Ntot = Ntot + Ni
-                    Si = value["shear_force"]
-                    Stot = (sum_vectors([Stot, Si]))
-                    Mtorque_i = cross_vectors(ri, Si)
-                    Mtorque_tot = sum_vectors([Mtorque_tot, Mtorque_i])
-
-                # if Ntot:
-                if Ntot:
-                    Ftot = sum_vectors([Stot, scale_vector(contact_normal, Ntot)])
-                    NN = scale_vector(contact_normal, Ntot)
-                    b1 = -1 * dot_vectors(Mtot, e2_plane) / Ntot
-                    b2 = dot_vectors(Mtot, e1_plane) / Ntot
-                    #point of application of the resultant normal force
-                    po = sum_vectors([centroid,scale_vector(e1_plane,b1),scale_vector(e2_plane,b2)])
-                    norm_Stot = norm_vector(Stot)
-                    if norm_Stot != 0:
-                        s1 = -1 * dot_vectors(Mtorque_tot, e2_plane) / norm_Stot
-                        s2 = dot_vectors(Mtorque_tot, e1_plane) / norm_vector(Stot)
-                        ps = sum_vectors([centroid, scale_vector(e1_plane, s1), scale_vector(e2_plane, s2)])
-                    else:
-                        s1 = 0  # or some other value that makes sense in this context
-                    # s1 = -1 * dot_vectors(Mtorque_tot, e2_plane) / norm_vector(Stot)
-                    # s2 = dot_vectors(Mtorque_tot, e1_plane) / norm_vector(Stot)
-                    # one point along the line of action of the resultant shear force
-                    # ps = sum_vectors([centroid, scale_vector(e1_plane, s1), scale_vector(e2_plane, s2)])
-                    # Calculate the vector from po to the centroid
-                    r_po_centroid = sum_vectors([centroid, scale_vector(po, -1)])
-                    # Calculate the moment generated by the total shear force at a distance from po
-                    M_shear_po = cross_vectors(r_po_centroid, Stot)
-
-                    output_3dec_per_contact["resultant_force"] = Ftot
-                    output_3dec_per_contact["resultant_point"] = po
-                    output_3dec_per_contact["resultant_point_shear"] = ps
-                    output_3dec_per_contact["resultant_normal"] = NN
-                    output_3dec_per_contact["resultant_shear"] = Stot
-                    output_3dec_per_contact["resultant_torque"] = M_shear_po
-
-                if len(points) > 2:
-                    normal = contact["normal"]
-                    position = contact["position"]
-                    plane = Plane(position, normal)
-                    frame = Frame.from_plane(plane)
-                    transformation = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-                    points = transform_points(points, transformation)
-                    #ToDo: to be verified based on contact conditions (hinge)
-                    points = convex_hull_xy(points)
-                    points = transform_points(points, transformation.inverse())
-                    contact_geometry = Polygon(points)
-                    # for point in points:
-                    #     gkey = self.geometric_key(point, precision)
-                    #     output_list.append(output_3dec_per_vertex[gkey])
-
-                elif len(points) == 2:
-                    contact_geometry = Line(points[0], points[1])
-                    output_list = output_3dec_per_vertex.values()
                 else:
-                    # contact_geometry = Point(points[0])
-                    # contact_geometry = "no contact"
-                    output_list = output_3dec_per_vertex.values()
+                    output_3dec_per_vertex[position] = {
+                        "position": point,
+                        "normal_force": normal_force,
+                        "shear_force": shear_force,
+                        "normal_displacement": normal_displacement,
+                        "shear_displacement": shear_displacement,
+                        "normal_stress": normal_stress,
+                        "shear_stress": shear_stress,
+                        "area": area,
+                        "is_combined": False,
+                    }
+            # post-processing
+            Mtorque_tot = [0, 0, 0]
+            Mtot = [0, 0, 0]
+            Ntot = 0
+            Stot = [0, 0, 0]
 
-                interaction = Interaction3dec(
-                    type=contact["type"],
-                    normal=contact_normal,
-                    contact_geometry=contact_geometry,
-                    forces_per_vertices=output_list,
-                    forces_per_contact=output_3dec_per_contact,
-                )
-                self.add_interaction(self.elementlist[neighbours[0]], self.elementlist[neighbours[1]], interaction)
-            return output_3dec_per_vertex
+            output_list = []
+            points = [value["position"] for value in output_3dec_per_vertex.values()]
+            if points:
+                centroid = centroid_points(points)
+
+            output_3dec_per_contact = {}
+            first_iteration = True
+            for key, value in output_3dec_per_vertex.items():
+                vertex = value["position"]
+                ri = [vertex[0] - centroid[0], vertex[1] - centroid[1], vertex[2] - centroid[2]]
+                if first_iteration:
+                    e1_plane = normalize_vector(ri)
+                    e2_plane = cross_vectors(contact_normal, e1_plane)
+                    first_iteration = False
+                Ni = norm_vector(value["normal_force"])
+                Mi = cross_vectors(ri, value["normal_force"])
+                Mtot = sum_vectors([Mtot, Mi])
+                Ntot = Ntot + Ni
+                Si = value["shear_force"]
+                Stot = sum_vectors([Stot, Si])
+                Mtorque_i = cross_vectors(ri, Si)
+                Mtorque_tot = sum_vectors([Mtorque_tot, Mtorque_i])
+
+            # if Ntot:
+            if Ntot:
+                Ftot = sum_vectors([Stot, scale_vector(contact_normal, Ntot)])
+                NN = scale_vector(contact_normal, Ntot)
+                b1 = -1 * dot_vectors(Mtot, e2_plane) / Ntot
+                b2 = dot_vectors(Mtot, e1_plane) / Ntot
+                # point of application of the resultant normal force
+                po = sum_vectors([centroid, scale_vector(e1_plane, b1), scale_vector(e2_plane, b2)])
+                norm_Stot = norm_vector(Stot)
+                if norm_Stot != 0:
+                    s1 = -1 * dot_vectors(Mtorque_tot, e2_plane) / norm_Stot
+                    s2 = dot_vectors(Mtorque_tot, e1_plane) / norm_vector(Stot)
+                    ps = sum_vectors([centroid, scale_vector(e1_plane, s1), scale_vector(e2_plane, s2)])
+                else:
+                    s1 = 0  # or some other value that makes sense in this context
+                # s1 = -1 * dot_vectors(Mtorque_tot, e2_plane) / norm_vector(Stot)
+                # s2 = dot_vectors(Mtorque_tot, e1_plane) / norm_vector(Stot)
+                # one point along the line of action of the resultant shear force
+                # ps = sum_vectors([centroid, scale_vector(e1_plane, s1), scale_vector(e2_plane, s2)])
+                # Calculate the vector from po to the centroid
+                r_po_centroid = sum_vectors([centroid, scale_vector(po, -1)])
+                # Calculate the moment generated by the total shear force at a distance from po
+                M_shear_po = cross_vectors(r_po_centroid, Stot)
+
+                output_3dec_per_contact["resultant_force"] = Ftot
+                output_3dec_per_contact["resultant_point"] = po
+                output_3dec_per_contact["resultant_point_shear"] = ps
+                output_3dec_per_contact["resultant_normal"] = NN
+                output_3dec_per_contact["resultant_shear"] = Stot
+                output_3dec_per_contact["resultant_torque"] = M_shear_po
+
+            if len(points) > 2:
+                normal = contact["normal"]
+                position = contact["position"]
+                plane = Plane(position, normal)
+                frame = Frame.from_plane(plane)
+                transformation = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+                points = transform_points(points, transformation)
+                # ToDo: to be verified based on contact conditions (hinge)
+                points = convex_hull_xy(points)
+                points = transform_points(points, transformation.inverse())
+                contact_geometry = Polygon(points)
+                # for point in points:
+                #     gkey = self.geometric_key(point, precision)
+                #     output_list.append(output_3dec_per_vertex[gkey])
+
+            elif len(points) == 2:
+                contact_geometry = Line(points[0], points[1])
+                output_list = output_3dec_per_vertex.values()
+            else:
+                # contact_geometry = Point(points[0])
+                # contact_geometry = "no contact"
+                output_list = output_3dec_per_vertex.values()
+
+            interaction = Interaction3dec(
+                type=contact["type"],
+                normal=contact_normal,
+                contact_geometry=contact_geometry,
+                forces_per_vertices=output_list,
+                forces_per_contact=output_3dec_per_contact,
+            )
+            self.add_interaction(self.elementlist[neighbours[0]], self.elementlist[neighbours[1]], interaction)
+        return output_3dec_per_vertex
 
     # =============================================================================
     # analysis utilities
@@ -732,8 +740,6 @@ class Model_3dec(Model):
 
     def result(self):
         pass
-
-
 
     # def contact_forces(self, output_3dec_per_vertex, scale_factor, region, mu, Shear=False):
     #     # visualise contact forces acting on a single block in compression in only one region is given as argument

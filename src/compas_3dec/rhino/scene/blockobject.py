@@ -5,6 +5,7 @@ from compas_rhino.conversions import transformation_to_rhino
 
 from compas_3dec.scene import BlockObject
 
+
 class RhinoBlockObject(RhinoSceneObject, BlockObject):
     def __init__(self, element, **kwargs):
         super().__init__(element=element, **kwargs)
@@ -17,4 +18,3 @@ class RhinoBlockObject(RhinoSceneObject, BlockObject):
         guid = sc.doc.Objects.AddMesh(geometry, attr)
         self._guids.append(guid)
         return self._guids
-

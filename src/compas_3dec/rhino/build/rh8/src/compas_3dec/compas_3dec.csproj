@@ -3,7 +3,7 @@
     <TargetFramework>net48</TargetFramework>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <AssemblyName>compas_3dec</AssemblyName>
-    <AssemblyVersion>0.1.29095.8914</AssemblyVersion>
+    <AssemblyVersion>0.1.29929.8914</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
