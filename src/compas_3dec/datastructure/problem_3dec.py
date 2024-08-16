@@ -719,7 +719,7 @@ class Problem3dec(Data):
     # get and process CONTACT data from 3dec
     # =============================================================================
     def from_3dec_contacts(self, filename, precision="3f"):
-        from compas_3dec.datas.interaction_3dec import Interaction3dec
+        from compas_3dec.datastructure.interaction_3dec import Interaction3dec
 
         contacts = {}
         with open(os.path.join(self.working_path, filename), "r") as fo:
@@ -797,14 +797,14 @@ class Problem3dec(Data):
                     output_3dec_per_vertex[position]["shear_force"] = [
                         x + y for x, y in zip(output_3dec_per_vertex[position]["shear_force"], shear_force)
                     ]
-                    output_3dec_per_vertex[position]["normal_displacement"] = [
-                        x + y
-                        for x, y in zip(output_3dec_per_vertex[position]["normal_displacement"], normal_displacement)
-                    ]
-                    output_3dec_per_vertex[position]["shear_displacement"] = [
-                        x + y
-                        for x, y in zip(output_3dec_per_vertex[position]["shear_displacement"], shear_displacement)
-                    ]
+                    # output_3dec_per_vertex[position]["normal_displacement"] = [
+                    #     x + y
+                    #     for x, y in zip(output_3dec_per_vertex[position]["normal_displacement"], normal_displacement)
+                    # ]
+                    # output_3dec_per_vertex[position]["shear_displacement"] = [
+                    #     x + y
+                    #     for x, y in zip(output_3dec_per_vertex[position]["shear_displacement"], shear_displacement)
+                    # ]
                     output_3dec_per_vertex[position]["normal_stress"] += normal_stress
                     output_3dec_per_vertex[position]["shear_stress"] += shear_stress
                     output_3dec_per_vertex[position]["area"] += area
@@ -893,9 +893,9 @@ class Problem3dec(Data):
                 points = convex_hull_xy(points)
                 points = transform_points(points, transformation.inverse())
                 contact_geometry = Polygon(points)
-                # for point in points:
-                #     gkey = self.geometric_key(point, precision)
-                #     output_list.append(output_3dec_per_vertex[gkey])
+                for point in points:
+                    gkey = self.geometric_key(point, precision)
+                    output_list.append(output_3dec_per_vertex[gkey])
 
             elif len(points) == 2:
                 contact_geometry = Line(points[0], points[1])
@@ -989,12 +989,121 @@ class Problem3dec(Data):
 
         return polygons, resultant_points, points_out, points_not_polygon
 
-    # =============================================================================
-    # utilities
-    # =============================================================================
+
 
     # =============================================================================
     # displacement.dat
+    # =============================================================================
+
+    def get_model_timestep(self):
+        with open(os.path.join(self.working_path, "grav_state.txt"), "r") as fo:
+            for line in fo:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split()
+                if not len(parts):
+                    continue
+                if parts[0] == "timestep":
+                    timestep = float(parts[2])
+        return timestep
+
+    def set_block_displacement(self, region=0, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
+        displacement_direction = normalize_vector(displacement_direction)
+        single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
+        header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + str(region) + "\n"
+        header += "block apply velocity-y " + str(single_displacement_vector[1]) + " range region " + str(region) + "\n"
+        header += "block apply velocity-z " + str(single_displacement_vector[2]) + " range region " + str(region) + "\n"
+
+        equilibrium = "block apply velocity-x 0.0 range region " + str(region) + "\n"
+        equilibrium += "block apply velocity-y 0.0 range region " + str(region) + "\n"
+        equilibrium += "block apply velocity-z 0.0 range region " + str(region) + "\n"
+
+        displacement_data = [header, equilibrium]
+        return [displacement_data]
+
+    def set_blocks_displacement(self, regions, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
+        displacement_direction = normalize_vector(displacement_direction)
+        single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
+        regions_str = " ".join(str(r) for r in regions)
+        header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + regions_str + "\n"
+        header += "block apply velocity-y " + str(single_displacement_vector[1]) + " range region " + regions_str + "\n"
+        header += "block apply velocity-z " + str(single_displacement_vector[2]) + " range region " + regions_str + "\n"
+
+        equilibrium = "block apply velocity-x 0.0 range region " + regions_str + "\n"
+        equilibrium += "block apply velocity-y 0.0 range region " + regions_str + "\n"
+        equilibrium += "block apply velocity-z 0.0 range region " + regions_str + "\n"
+
+        displacement_data = [header, equilibrium]
+        return displacement_data
+
+    def set_displacement_analysis(
+        self,
+        displacements_list,
+        total_displacement=0.0,
+        displ_magnitude_per_step=0.001,
+        solver_ratio=0.00001,
+        solver_time=3,
+        displacement_capacity=False,
+    ):
+        # get the model timestep calculated by 3DEC from the gravity file
+        timestep = self.get_model_timestep()
+        # number of solver cycles to reach the total displacement
+        number_of_cycles = int(displ_magnitude_per_step / (displ_magnitude_per_step * timestep))
+
+        if not os.path.join(self.working_path, "grav_state.txt"):
+            raise ValueError("Missing gravity file: compute gravity first")
+
+        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
+        main_string += 2 * "\n"
+        main_string += self.restore_analysis("grav")
+        main_string += self.set_damping_local()
+        main_string += 2 * "\n"
+        main_string += self.blocks_output()
+        main_string += self.contacts_output() + "\n"
+
+        displacement_steps = int(total_displacement / displ_magnitude_per_step)
+        if displacement_capacity:
+            displacement_steps = 10000
+        for step in range(displacement_steps):
+            step_name = (
+                "Displacement_step"
+                + "_"
+                + str(step + 1)
+                + "_distance_"
+                + str((step + 1) * displ_magnitude_per_step)
+                + "m"
+            )
+            main_string += ";===========================================================================" + "\n"
+            main_string += "; " + str(step_name) + "\n"
+            main_string += ";===========================================================================" + "\n"
+
+            for displacement in displacements_list:
+                main_string += displacement[0]
+            main_string += "model cycle " + str(number_of_cycles) + "\n"
+            main_string += "\n"
+            main_string += ";===========================================================================" + "\n"
+            main_string += "; Equilibrium calculation" + "\n"
+            main_string += ";===========================================================================" + "\n"
+            for displacement in displacements_list:
+                main_string += displacement[1]
+            main_string += "model solve unbalanced-maximum {} time".format(solver_ratio) + " " + str(solver_time) + "\n"
+            main_string += self.save_blocks_output(step_name)
+            step_name_contact = step_name + "_contacts"
+            main_string += self.save_contacts_output(step_name_contact)
+            main_string += self.save_analysis(step_name)
+            main_string += self.check_and_exit(solver_ratio)
+            main_string += "\n"
+            main_string += "exit()"
+
+            output_path = self.working_path
+            filename = "displacement.dat"
+            with open(os.path.join(output_path, filename), "w") as file:
+                file.write(main_string)
+        return filename
+
+    # =============================================================================
+    # utilities
     # =============================================================================
 
     def check_and_exit(self, solve_ratio):
