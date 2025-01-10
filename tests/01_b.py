@@ -1,5 +1,4 @@
 import time
-
 start = time.time()
 import compas
 import os

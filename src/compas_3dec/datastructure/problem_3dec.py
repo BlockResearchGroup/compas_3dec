@@ -30,7 +30,9 @@ class Problem3dec(Data):
         contact_properties=None,
         working_path=None,
         interactions=None,
+        boundary_conditions=None,
         executable_path='"C:\\Program Files\\Itasca\\3DEC700\\exe64\\3dec700_console.exe"',
+        block_map=None,
         name=None,
     ):
         super().__init__(name)
@@ -44,6 +46,8 @@ class Problem3dec(Data):
         self.materials = materials if materials is not None else []
         self.contact_properties = contact_properties if contact_properties is not None else []
         self.interactions = interactions if interactions is not None else []
+        self.boundary_conditions = boundary_conditions if boundary_conditions is not None else []
+        self.block_map = block_map if block_map is not None else {}
         self.name = name
 
         if not self.working_path:
@@ -70,6 +74,8 @@ class Problem3dec(Data):
             "materials": [material.__data__ for material in self.materials],
             "contact_properties": [contact_property.__data__ for contact_property in self.contact_properties],
             "interactions": [interaction.__data__ for interaction in self.interactions],
+            "boundary_conditions": [boundary_condition.__data__ for boundary_condition in self.boundary_conditions],
+            "block_map": self.block_map,
             "name": self.name,
         }
 
@@ -81,6 +87,7 @@ class Problem3dec(Data):
         from .material import Material
         from .contact_property import ContactProperty
         from .interaction_3dec import Interaction3dec
+        from .boundary_condition import BoundaryCondition
 
         problem = cls(
             input=data.get("input"),
@@ -94,9 +101,14 @@ class Problem3dec(Data):
             ],
             blocks=[Block.__from_data__(block) for block in data["blocks"]],
             interactions=[Interaction3dec.__from_data__(interaction) for interaction in data["interactions"]],
+            boundary_conditions=[
+                BoundaryCondition.__from_data__(boundary_condition)
+                for boundary_condition in data["boundary_conditions"]
+            ],
             working_path=data["working_path"],
             executable_path=data["executable_path"],
             name=data["name"],
+            block_map=data["block_map"],
             compounds=data["compounds"],
         )
         return problem
@@ -104,7 +116,8 @@ class Problem3dec(Data):
     def __str__(self):
         blocks_str = "\n".join(str(block) for block in self.blocks)
         groups_str = "\n".join(str(group) for group in self.groups)
-        materials_str = "\n".join(str(material) for material in self.materials.values())
+        materials_str = "\n".join(str(material) for material in self.materials)
+        # materials_str = "\n".join(str(material) for material in self.materials.values())
         interactions_str = "\n".join(str(interaction) for interaction in self.interactions)
         return f"Blocks:\n{blocks_str}\nGroups:\n{groups_str}\nMaterials:\n{materials_str}\nInteractions:\n{interactions_str}"
 
@@ -158,24 +171,54 @@ class Problem3dec(Data):
                         g.contact_property = contact_property
         return contact_property
 
+    # def add_rigid_interactions(self, block_lists):
+    #     for blocks in block_lists:
+    #         self.rigid_interactions.append(blocks)
+
     def add_rigid_interactions(self, block_lists):
-        for blocks in block_lists:
-            self.rigid_interactions.append(blocks)
+        from .rigid_interaction import RigidInteraction
+
+        rigid = RigidInteraction(block_lists)
+        self.rigid_interactions.append(rigid)
 
     def add_interaction(self, interaction_data):
         self.interactions.append(interaction_data)
 
     def make_compounds(self):
         if self.rigid_interactions:
-            self.compounds.extend(self.rigid_interactions)
+            # Extend compounds with the compounds from each RigidInteraction
+            for interaction in self.rigid_interactions:
+                self.compounds.extend(interaction.compounds)
+
+            # Add blocks that are not part of any interaction
             for block in self.blocks:
-                if not any(block.index in interaction for interaction in self.rigid_interactions):
+                if not any(
+                    block.index in compound
+                    for interaction in self.rigid_interactions
+                    for compound in interaction.compounds
+                ):
                     self.compounds.append([block.index])
+
+            # Sort compounds
             self.compounds = sorted(self.compounds, key=lambda x: x[0])
         else:
+            # If no rigid interactions, add each block as a separate compound
             for block in self.blocks:
                 self.compounds.append([block.index])
+
         return self.compounds
+
+    # def make_compounds(self):
+    #     if self.rigid_interactions:
+    #         self.compounds.extend(self.rigid_interactions)
+    #         for block in self.blocks:
+    #             if not any(block.index in interaction for interaction in self.rigid_interactions):
+    #                 self.compounds.append([block.index])
+    #         self.compounds = sorted(self.compounds, key=lambda x: x[0])
+    #     else:
+    #         for block in self.blocks:
+    #             self.compounds.append([block.index])
+    #     return self.compounds
 
     def to_geometry_3dec(self):
         """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
@@ -677,13 +720,17 @@ class Problem3dec(Data):
             for index, xyz in enumerate(block["vertices"]):
                 gkey = self.geometric_key(xyz)
                 block_gkey_index[gkey] = index
-            block_map[region] = {}
+
+            block_map[int(region)] = {}
+            # block_map[region] = {}
             for vkey in self.blocks[region].mesh.vertices():
                 # for vkey in self.elementlist[region].geometry.vertices():
                 xyz = self.blocks[region].mesh.vertex_coordinates(vkey)
                 gkey = self.geometric_key(xyz)
                 v_index = block_gkey_index[gkey]
-                block_map[region][vkey] = v_index
+                block_map[int(region)][int(vkey)] = int(v_index)
+                # block_map[region][vkey] = v_index
+        self.block_map = block_map
         return block_map
 
     def update_blocks(self, step_dict, mapping_dict):
@@ -719,6 +766,8 @@ class Problem3dec(Data):
     # get and process CONTACT data from 3dec
     # =============================================================================
     def from_3dec_contacts(self, filename, precision="3f"):
+        if self.interactions:
+            self.interactions = []
         from compas_3dec.datastructure.interaction_3dec import Interaction3dec
 
         contacts = {}
@@ -899,11 +948,11 @@ class Problem3dec(Data):
 
             elif len(points) == 2:
                 contact_geometry = Line(points[0], points[1])
-                output_list = output_3dec_per_vertex.values()
+                # output_list = output_3dec_per_vertex.values() if output_3dec_per_vertex else None
             else:
-                # contact_geometry = Point(points[0])
+                contact_geometry = points if points else None
                 # contact_geometry = "no contact"
-                output_list = output_3dec_per_vertex.values()
+                # output_list = output_3dec_per_vertex.values() if output_3dec_per_vertex else None
 
             contact_type = contact["type"]
             if contact_type == 0:
@@ -947,6 +996,7 @@ class Problem3dec(Data):
                 for interaction in self.interactions:
                     if id in interaction.neighbours:
                         resultant_force = Vector(*interaction.forces_per_contact["resultant_force"])
+                        # print("Resultant force: ", resultant_force, id)
                         scaled = scale_vector(resultant_force, scale_factor)
                         resultant_point = Vector(*interaction.forces_per_contact["resultant_point"])
                         resultant = Vector.sum_vectors([resultant_point, scaled])
@@ -989,8 +1039,6 @@ class Problem3dec(Data):
 
         return polygons, resultant_points, points_out, points_not_polygon
 
-
-
     # =============================================================================
     # displacement.dat
     # =============================================================================
@@ -1009,6 +1057,7 @@ class Problem3dec(Data):
         return timestep
 
     def set_block_displacement(self, region=0, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
+
         displacement_direction = normalize_vector(displacement_direction)
         single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
         header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + str(region) + "\n"
@@ -1018,8 +1067,17 @@ class Problem3dec(Data):
         equilibrium = "block apply velocity-x 0.0 range region " + str(region) + "\n"
         equilibrium += "block apply velocity-y 0.0 range region " + str(region) + "\n"
         equilibrium += "block apply velocity-z 0.0 range region " + str(region) + "\n"
+        from compas_3dec.datastructure.boundary_condition import BoundaryCondition
+
+        boundary = BoundaryCondition()
+        boundary.region = region
+        boundary.type = "displacement"
+        boundary.direction = displacement_direction
+        boundary.magnitude = displ_magnitude_per_step
+        self.boundary_conditions.append(boundary)
 
         displacement_data = [header, equilibrium]
+
         return [displacement_data]
 
     def set_blocks_displacement(self, regions, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
@@ -1071,7 +1129,7 @@ class Problem3dec(Data):
                 + "_"
                 + str(step + 1)
                 + "_distance_"
-                + str((step + 1) * displ_magnitude_per_step)
+                + "{:.4f}".format((step + 1) * displ_magnitude_per_step)
                 + "m"
             )
             main_string += ";===========================================================================" + "\n"
@@ -1094,13 +1152,12 @@ class Problem3dec(Data):
             main_string += self.save_analysis(step_name)
             main_string += self.check_and_exit(solver_ratio)
             main_string += "\n"
-            main_string += "exit()"
 
             output_path = self.working_path
             filename = "displacement.dat"
             with open(os.path.join(output_path, filename), "w") as file:
                 file.write(main_string)
-        return filename
+        return filename, displacement_steps, displ_magnitude_per_step
 
     # =============================================================================
     # utilities
@@ -1416,3 +1473,7 @@ model restore "./{}.sav"
         """
         header = "block mech damping rayleigh" + " " + str(f1) + " " + str(f2) + " " + str(keyword)
         return header
+
+    # =============================================================================
+    # View
+    # =============================================================================

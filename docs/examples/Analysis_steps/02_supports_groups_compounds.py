@@ -3,7 +3,7 @@ import time
 start = time.time()
 import compas
 from compas.scene import Scene
-from compas_3dec.datastructures.problem3dec import MohrCoulomb
+from compas_3dec.datastructure import MohrCoulomb
 
 # =============================================================================
 # Input

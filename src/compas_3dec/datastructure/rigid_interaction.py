@@ -4,10 +4,11 @@ from compas.data import Data
 class RigidInteraction(Data):
     def __init__(
         self,
-        compounds=[],  # type: list
+        # compounds=[],  # type: list
+        compounds=None,
     ):
         super().__init__()
-        self.compounds = compounds
+        self.compounds = compounds if compounds is not None else []
 
     @property
     def __data__(self):

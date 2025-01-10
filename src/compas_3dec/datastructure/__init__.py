@@ -6,6 +6,7 @@ from .failure_criteria import MohrCoulomb
 from .interaction_3dec import Interaction3dec
 from .rigid_interaction import RigidInteraction
 from .problem_3dec import Problem3dec
+from .boundary_condition import BoundaryCondition
 
 
 all = [
@@ -17,4 +18,5 @@ all = [
     "Interaction3dec",
     "RigidInteraction",
     "Problem3dec",
+    "BoundaryCondition",
 ]

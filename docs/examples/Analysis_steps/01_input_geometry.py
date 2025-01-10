@@ -4,7 +4,7 @@ start = time.time()
 import compas
 from compas.scene import Scene
 from compas_3dec.data.arch import Arch
-from compas_3dec.datastructures.problem3dec import Problem3dec, Group, MohrCoulomb, Interaction3dec
+from compas_3dec.datastructure import Problem3dec
 
 # =============================================================================
 # Input geometry
