@@ -19,6 +19,44 @@ from compas.colors import Color, ColorMap
 
 
 class Problem3dec(Data):
+    """Class representing a 3DEC problem encapsulating hierarchically organized elements and interactions.
+
+    Attributes
+    ----------
+    input : str, optional
+        Input data for the problem.
+    groups : list
+        Groups of elements in the model.
+    blocks : list
+        Blocks representing geometry.
+    rigid_interactions : list
+        Rigid interactions between blocks.
+    compounds : list
+        Compound structures derived from rigid interactions.
+    materials : list
+        Materials assigned to the model.
+    contact_properties : list
+        Properties defining contact behavior.
+    working_path : str
+        Path to working directory.
+    interactions : list
+        Interactions between elements.
+    boundary_conditions : list
+        Boundary conditions of the model.
+    executable_path : str
+        Path to the 3DEC executable.
+    block_map : dict
+        Mapping of blocks.
+    name : str
+        Name of the problem.
+
+    Notes
+    -----
+    - Model elements are structured in groups, blocks, and compounds.
+    - Interactions and hierarchical relationships are independent.
+    - The interactions define contact mechanics, while hierarchy defines organization.
+    """
+
     def __init__(
         self,
         input=None,
@@ -35,6 +73,38 @@ class Problem3dec(Data):
         block_map=None,
         name=None,
     ):
+        """
+        Initializes a Problem3dec object.
+
+        Parameters
+        ----------
+        input : str, optional
+            Input data for the problem.
+        groups : list, optional
+            List of groups.
+        blocks : list, optional
+            List of blocks.
+        rigid_interactions : list, optional
+            List of rigid interactions.
+        compounds : list, optional
+            List of compounds.
+        materials : list, optional
+            List of materials.
+        contact_properties : list, optional
+            List of contact properties.
+        working_path : str, optional
+            Working directory path.
+        interactions : list, optional
+            List of interactions.
+        boundary_conditions : list, optional
+            List of boundary conditions.
+        executable_path : str, optional
+            Path to the 3DEC executable.
+        block_map : dict, optional
+            Mapping of blocks.
+        name : str, optional
+            Name of the problem.
+        """
         super().__init__(name)
         self.input = input
         self.groups = groups if groups is not None else []
