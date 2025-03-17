@@ -2,8 +2,11 @@
 compas_3dec
 ********************************************************************************
 
+
 .. currentmodule:: compas_3dec
 
 
 .. toctree::
     :maxdepth: 1
+     
+     compas_3dec.datastructure

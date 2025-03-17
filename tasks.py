@@ -8,6 +8,7 @@ from compas_invocations import style
 from compas_invocations import tests
 from invoke import Collection
 
+
 ns = Collection(
     docs.help,
     style.check,
@@ -31,3 +32,4 @@ ns.configure(
         },
     }
 )
+

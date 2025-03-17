@@ -1,10 +1,15 @@
 ********************************************************************************
-API Reference
+datastructure
 ********************************************************************************
 
-.. toctree::
-    :maxdepth: 1
-    :titlesonly:
 
-    api/compas_3dec.datastructure
+.. currentmodule:: compas_3dec.datastructure
 
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    Problem3dec

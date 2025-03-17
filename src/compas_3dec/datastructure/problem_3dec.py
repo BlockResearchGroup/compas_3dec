@@ -1014,7 +1014,7 @@ class Problem3dec(Data):
                 contact_geometry = Polygon(points)
                 for point in points:
                     gkey = self.geometric_key(point, precision)
-                    output_list.append(output_3dec_per_vertex[gkey])
+                    # output_list.append(output_3dec_per_vertex[gkey])
 
             elif len(points) == 2:
                 contact_geometry = Line(points[0], points[1])
