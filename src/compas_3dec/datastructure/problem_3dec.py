@@ -215,7 +215,7 @@ class Problem3dec(Data):
         from .block import Block
 
         for i, mesh in enumerate(meshes):
-            self.blocks.append(Block(i, mesh))
+            self.blocks.append(Block(i, mesh, name = mesh.name))
 
     def add_material(self, name, E, poisson, rho, group=None):
         from .material import Material

@@ -13,6 +13,7 @@ class Block(Data):
         unbalanced_force_ratio=None,  # type: float
         color_equilibrium=None,  # type: Color
         color=None,  # type: Color
+        name=None,  # type: str | None
     ):
         super().__init__()
         self.index = index
@@ -22,6 +23,7 @@ class Block(Data):
         self.unbalanced_force_ratio = unbalanced_force_ratio
         self.color_equilibrium = color_equilibrium
         self.color = color
+        self.name = name
 
     @property
     def __data__(self):
@@ -33,6 +35,7 @@ class Block(Data):
             "unbalanced_force_ratio": self.unbalanced_force_ratio,
             "color_equilibrium": self.color_equilibrium,
             "color": self.color,
+            "name": self.name,
         }
 
     @classmethod
@@ -48,6 +51,7 @@ class Block(Data):
             color=color,
             unbalanced_force_ratio=data["unbalanced_force_ratio"],
             color_equilibrium=color_equilibrium,
+            name=data["name"],
         )
 
     def __str__(self):

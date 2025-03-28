@@ -19,22 +19,22 @@ HERE = os.path.dirname(__file__)
 # =============================================================================
 # Input from class
 # =============================================================================
-# from compas_3dec.data.arch import Arch
-# arch = Arch(rise=5, span=10, thickness=0.5, depth=0.5, n=20)
-# geometry = arch.blocks()
+from compas_3dec.data.arch import Arch
+arch = Arch(rise=5, span=10, thickness=0.5, depth=0.5, n=20)
+geometry = arch.blocks()
 
 # =============================================================================
 # Input meshes from Rhino
 # =============================================================================
-import compas_rhino
-import compas_rhino.objects
-import compas_rhino.conversions
+# import compas_rhino
+# import compas_rhino.objects
+# import compas_rhino.conversions
 
-guids = compas_rhino.objects.select_meshes('Select blocks')
-geometry = []
-for guid in guids:
-    mesh = compas_rhino.conversions.meshobject_to_compas(guid)
-    geometry.append(mesh)
+# guids = compas_rhino.objects.select_meshes('Select blocks')
+# geometry = []
+# for guid in guids:
+#     mesh = compas_rhino.conversions.meshobject_to_compas(guid)
+#     geometry.append(mesh)
 
 # =============================================================================
 # Save meshes to json
