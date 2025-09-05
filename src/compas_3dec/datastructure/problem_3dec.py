@@ -318,11 +318,40 @@ class Problem3dec(Data):
             support_names = ["Supports"]
 
         for i, mesh in enumerate(meshes):
-            block_index = len(self.blocks) + i
+            block_index = i  # Sequential indices: 0, 1, 2, ...
             block = Block(block_index, mesh, name=mesh.name)
             if block.name in support_names:
                 block.is_support = True
             self.blocks.append(block)
+
+    # def add_blocks(self, meshes, support_names=None):
+    #     """
+    #     Add multiple blocks to the Problem3dec instance from a list of meshes.
+
+    #     Parameters
+    #     ----------
+    #     meshes : list[Mesh]
+    #         A list of compas Mesh objects to be added as blocks.
+    #     support_names : list[str], optional
+    #         List of mesh names that should be marked as supports. Default is ["Supports"].
+
+    #     Examples
+    #     --------
+    #     >>> problem = Problem3dec()
+    #     >>> meshes = [mesh1, mesh2, mesh3]
+    #     >>> problem.add_blocks(meshes, support_names=["Supports", "Base"])
+    #     """
+    #     from .block import Block
+
+    #     if support_names is None:
+    #         support_names = ["Supports"]
+
+    #     for i, mesh in enumerate(meshes):
+    #         block_index = len(self.blocks) + i
+    #         block = Block(block_index, mesh, name=mesh.name)
+    #         if block.name in support_names:
+    #             block.is_support = True
+    #         self.blocks.append(block)
 
     def add_material(self, name, E, poisson, rho, group=None):
         """
@@ -1922,6 +1951,7 @@ class Problem3dec(Data):
         resultants = []
         magnitudes = []
         components = []
+        resultant_points = []
         for block in self.blocks:
             if block.is_support:
                 id = block.index
@@ -1935,14 +1965,15 @@ class Problem3dec(Data):
                             resultant = Vector.sum_vectors([resultant_point, scaled])
                             resultant_line = Line(Point(*resultant_point), Point(*resultant))
                             resultants.append(resultant_line)
-                            magnitudes.append(str(round(resultant_force.length, 3)) + " kN")
+                            magnitudes.append(str(round(resultant_force.length, 1)) + " kN")
                             comps = [
                                 round(resultant_force.x, 3),
                                 round(resultant_force.y, 3),
                                 round(resultant_force.z, 3),
                             ]
                             components.append(comps)
-        return resultants, magnitudes, components
+                            resultant_points.append(resultant_point)
+        return resultants, magnitudes, components, resultant_points
 
     def check_resultant_points(self):
         polygons = []

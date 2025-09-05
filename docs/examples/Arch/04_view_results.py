@@ -40,7 +40,7 @@ for interaction in problem_gravity.interactions:
     interaction: Interaction3dec
     if interaction.forces_per_contact:
         application_point = interaction.display_resultant_application_point()
-        resultant_force = interaction.display_resultant_force(0.002)
+        resultant_force = interaction.display_resultant_force(0.02)
         scene.add(application_point)
     for line in resultant_force:
         scene.add(line, color=(0, 81, 12), width=20.0)
@@ -48,7 +48,7 @@ for interaction in problem_gravity.interactions:
 # =============================================================================
 # show support reaction magnitudes
 # =============================================================================
-resultants, magnitudes, components, resultant_points = problem_gravity.support_resultants(0.002)
+resultants, magnitudes, components, resultant_points = problem_gravity.support_resultants(0.02)
 import rhinoscriptsyntax as rs
 for magnitude, point in zip(magnitudes, resultant_points):
     rs.AddTextDot(str(magnitude), point)

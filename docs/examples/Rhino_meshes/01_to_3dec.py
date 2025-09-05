@@ -2,26 +2,37 @@
 # r: compas, tessagon
 # venv: himass1
 
-import time
-start = time.time()
 import os
 import compas
 from compas.colors import Color
 from compas.scene import Scene
-from compas_dem.models import BlockModel
 from compas_3dec.datastructure import Problem3dec, Group, MohrCoulomb
 
 # =============================================================================
-# Load Blockmodel
+# Input meshes
 # =============================================================================
 HERE = os.path.dirname(__file__)
-FILE = os.path.join(HERE, 'barrel_vault_01.json')
-barrel_vault: BlockModel= compas.json_load(FILE)
+FILE_I = os.path.join(HERE, 'meshes.json')
+meshes = compas.json_load(FILE_I)
 
 # =============================================================================
-# Convert to 3DEC model
+# Init Problem3dec
 # =============================================================================
-problem: Problem3dec = Problem3dec.from_blockmodel(barrel_vault, working_path=HERE)
+problem = Problem3dec(working_path=HERE)
+
+# =============================================================================
+# Add blocks
+# =============================================================================
+problem.add_blocks(meshes)
+
+# =============================================================================
+# Define supports based on z coordinate
+# =============================================================================
+for block in problem.blocks:
+    z_coord = block.mesh.vertices_attribute('z')
+    for i in z_coord:
+        if -0.005 <= i <= 0.005:
+            block.is_support = True
 
 # =============================================================================
 # add/assign groups
@@ -38,37 +49,36 @@ for b in problem.blocks:
         b.group = support_group.name
         b.color = Color.from_rgb255(89,154,255)
 
+
 # =============================================================================
-# add material
+# Add material
 # =============================================================================
 marble = problem.add_material(name="Marble", E=2.5e10, poisson=0.2, rho=2500, group = [block_group.name, support_group.name])
 
 # =============================================================================
-# add contact_properties
+# Add contact properties
 # =============================================================================
 stiffness = problem.set_joint_stiffness_one_material(
-    block_height=0.5,
+    block_height=0.211,
     reduction_factor=1,
     block_length=None,
-    material=marble)
+    material = marble)
 
 failure_criteria = MohrCoulomb(friction=35)
 contact_property = problem.add_contact_property(stiffness, failure_criteria, [block_group.name, support_group.name])
 
 # =============================================================================
-# Save problem_init
+# Save problem init
 # =============================================================================
 FILE_O = os.path.join(HERE, 'problem_init.json')
 compas.json_dump(problem, FILE_O)
-end = time.time()
-print('time', end - start,'s')
+
 
 # =============================================================================
 # View
 # =============================================================================
-# scene = Scene()
-# scene.clear_context()
-# for block in problem.blocks:
-#         scene.add(block.mesh, color=block.color)
-# scene.draw()
-
+scene = Scene()
+scene.clear_context()
+for block in problem.blocks:
+        scene.add(block.mesh, color=block.color)
+scene.draw()

@@ -15,13 +15,13 @@ from compas_3dec.datastructure import Problem3dec, Group, MohrCoulomb
 # Load Blockmodel
 # =============================================================================
 HERE = os.path.dirname(__file__)
-FILE = os.path.join(HERE, 'barrel_vault_01.json')
-barrel_vault: BlockModel= compas.json_load(FILE)
+FILE = os.path.join(HERE, 'arch_01.json')
+arch: BlockModel= compas.json_load(FILE)
 
 # =============================================================================
 # Convert to 3DEC model
 # =============================================================================
-problem: Problem3dec = Problem3dec.from_blockmodel(barrel_vault, working_path=HERE)
+problem: Problem3dec = Problem3dec.from_blockmodel(arch, working_path=HERE)
 
 # =============================================================================
 # add/assign groups
@@ -66,9 +66,9 @@ print('time', end - start,'s')
 # =============================================================================
 # View
 # =============================================================================
-# scene = Scene()
-# scene.clear_context()
-# for block in problem.blocks:
-#         scene.add(block.mesh, color=block.color)
-# scene.draw()
+scene = Scene()
+scene.clear_context()
+for block in problem.blocks:
+        scene.add(block.mesh, color=block.color)
+scene.draw()
 
