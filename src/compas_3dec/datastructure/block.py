@@ -4,6 +4,54 @@ from compas.datastructures import Mesh
 
 
 class Block(Data):
+    """
+    Represents a block in a 3DEC model, including geometry, group assignment, and visualization properties.
+
+    Parameters
+    ----------
+    index : int, optional
+        Unique index of the block.
+    mesh : Mesh, optional
+        Mesh object representing the block geometry.
+    is_support : bool, optional
+        Indicates if the block is a support block (default is False).
+    group : str, optional
+        Name of the group to which the block belongs.
+    unbalanced_force_ratio : float, optional
+        Ratio of unbalanced force for the block.
+    color_equilibrium : Color, optional
+        Color used to visualize equilibrium state.
+    color : Color, optional
+        Color used for block visualization.
+    name : str, optional
+        Name of the block.
+
+    Attributes
+    ----------
+    index : int
+        Unique index of the block.
+    mesh : Mesh
+        Mesh object representing the block geometry.
+    is_support : bool
+        Indicates if the block is a support block.
+    group : str
+        Name of the group to which the block belongs.
+    unbalanced_force_ratio : float
+        Ratio of unbalanced force for the block.
+    color_equilibrium : Color
+        Color used to visualize equilibrium state.
+    color : Color
+        Color used for block visualization.
+    name : str
+        Name of the block.
+
+    Examples
+    --------
+    >>> block = Block(index=1, mesh=my_mesh, is_support=True, group="Supports", name="Block1")
+    >>> print(block)
+    Block index: 1, Mesh: <Mesh object>, is_support: True, Group: Supports, Unbalanced_Force_Ratio: None, Color_Equilibrium: None, Color: None, Name: Block1
+    """
+
     def __init__(
         self,
         index=None,  # type: int
@@ -24,6 +72,8 @@ class Block(Data):
         self.color_equilibrium = color_equilibrium
         self.color = color
         self.name = name
+
+    #
 
     @property
     def __data__(self):

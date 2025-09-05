@@ -1,6 +1,0 @@
-model restore "sqpmodes"
-
-model dynamic active on
-model cycle 0
-
-model dynamic list

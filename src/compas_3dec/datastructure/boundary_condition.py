@@ -3,6 +3,42 @@ from compas.geometry import Vector
 
 
 class BoundaryCondition(Data):
+    """
+    Represents a boundary condition for blocks or regions in a 3DEC model.
+
+    Parameters
+    ----------
+    type : str, optional
+        Type of boundary condition (e.g., "displacement", "force", "velocity").
+    point_of_application : str, optional
+        Identifier or description of the point where the boundary condition is applied.
+    region : int, optional
+        Region index to which the boundary condition is applied.
+    magnitude : float, optional
+        Magnitude of the boundary condition (e.g., displacement, force).
+    direction : Vector, optional
+        Direction vector for the boundary condition.
+
+    Attributes
+    ----------
+    type : str
+        Type of boundary condition.
+    point_of_application : str
+        Point where the boundary condition is applied.
+    region : int
+        Region index.
+    magnitude : float
+        Magnitude of the boundary condition.
+    direction : Vector
+        Direction vector.
+
+    Examples
+    --------
+    >>> bc = BoundaryCondition(type="displacement", region=1, magnitude=0.01, direction=[0, 0, -1])
+    >>> print(bc)
+    BoundaryCondition(type=displacement, point_of_application=None, region=1, magnitude=0.01, direction=[0, 0, -1])
+    """
+
     def __init__(
         self,
         type=None,  # type: str

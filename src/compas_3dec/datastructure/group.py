@@ -2,13 +2,41 @@ from compas.data import Data
 
 
 class Group(Data):
+    """
+    Represents a group of blocks or elements in a 3DEC model, with associated material and contact properties.
+
+    Parameters
+    ----------
+    name : str, optional
+        Name of the group.
+    material : str or Material, optional
+        Material assigned to the group.
+    contact_property : str or ContactProperty, optional
+        Contact property assigned to the group.
+
+    Attributes
+    ----------
+    name : str
+        Name of the group.
+    material : str or Material
+        Material assigned to the group.
+    contact_property : str or ContactProperty
+        Contact property assigned to the group.
+
+    Examples
+    --------
+    >>> group = Group(name="Blocks", material="Stone", contact_property="DryJoint")
+    >>> print(group)
+    Group name: Blocks, Material: Stone, Contact_property: DryJoint
+    """
+
     def __init__(
         self,
         name=None,  # type: str
         material=None,  # type: str | None
         contact_property=None,  # type: str | None
     ):
-        super().__init__(name)  # not sure about name in parenthesis
+        super().__init__(name)
         self.name = name
         self.material = material
         self.contact_property = contact_property

@@ -1,3 +1,4 @@
+from operator import eq
 import os
 import time
 import inspect
@@ -124,6 +125,7 @@ class Problem3dec(Data):
             caller_frame = inspect.stack()[-1]
             caller_filename = caller_frame.filename
             self.working_path = os.path.dirname(os.path.abspath(caller_filename))
+
         else:
             if self.working_path.startswith("file:"):
                 self.working_path = self.working_path[5:]  # Remove the 'file:' prefix
@@ -187,86 +189,350 @@ class Problem3dec(Data):
         blocks_str = "\n".join(str(block) for block in self.blocks)
         groups_str = "\n".join(str(group) for group in self.groups)
         materials_str = "\n".join(str(material) for material in self.materials)
-        # materials_str = "\n".join(str(material) for material in self.materials.values())
         interactions_str = "\n".join(str(interaction) for interaction in self.interactions)
         return f"Blocks:\n{blocks_str}\nGroups:\n{groups_str}\nMaterials:\n{materials_str}\nInteractions:\n{interactions_str}"
 
-    @staticmethod
-    def from_model(model):
-        from compas_3dec.datastructures.conversion import from_model
+    @classmethod
+    def from_blockmodel(cls, blockmodel, working_path=None):
+        """
+        Create a new Problem3dec instance from a compas_dem BlockModel.
 
-        input = from_model(model)
-        return Problem3dec(input)
+        Parameters
+        ----------
+        blockmodel : compas_dem.models.BlockModel
+            The block model containing block elements to be converted.
+        working_path : str, optional
+            The working directory for the new Problem3dec instance. If not provided,
+            the default path logic in the constructor will be used.
+
+        Returns
+        -------
+        Problem3dec
+            A new Problem3dec object populated with blocks from the blockmodel.
+
+        Notes
+        -----
+        - Each block element from the blockmodel is converted to a Block and added to the Problem3dec instance.
+        - The `is_support` attribute is set for blocks marked as support in the blockmodel.
+        - The working path can be set explicitly for consistent file output behavior, especially in environments like Rhino.
+
+        Examples
+        --------
+        >>> from compas_3dec.datastructure.problem_3dec import Problem3dec
+        >>> from compas_dem.models import BlockModel
+        >>> blockmodel = BlockModel.from_json('path/to/blockmodel.json')
+        >>> problem = Problem3dec.from_blockmodel(blockmodel, working_path='C:/my/project')
+        """
+        from .block import Block
+        from compas_dem.models import BlockModel
+
+        problem = cls(working_path=working_path)
+        blockmodel: BlockModel
+        for blockelement in blockmodel.elements():
+            block = Block(blockelement.graphnode, mesh=blockelement._geometry, name=blockelement.name)
+            problem.blocks.append(block)
+            if blockelement.is_support:
+                block.is_support = True
+        return problem
 
     def add_group(self, group):
-        if group.name in [group.name for group in self.groups]:
-            pass
-            # raise ValueError("Group name already exists")
-        else:
-            self.groups.append(group)
+        """
+        Add a group to the Problem3dec instance.
+
+        Parameters
+        ----------
+        group : Group
+            The group object to be added.
+
+        Raises
+        ------
+        ValueError
+            If a group with the same name already exists.
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> group = Group(name="Supports")
+        >>> problem.add_group(group)
+        """
+        if group.name in [g.name for g in self.groups]:
+            raise ValueError(f"Group name '{group.name}' already exists.")
+        self.groups.append(group)
+        return True
 
     def get_group_by_name(self, name):
+        """
+        Retrieve a group from the Problem3dec instance by its name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the group to retrieve.
+
+        Returns
+        -------
+        Group or None
+            The group object with the specified name, or None if no such group exists.
+
+        Raises
+        ------
+        TypeError
+            If the provided name is not a string.
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> group = problem.get_group_by_name("Supports")
+        >>> if group:
+        ...     print("Group found:", group)
+        ... else:
+        ...     print("Group not found.")
+        """
+        if not isinstance(name, str):
+            raise TypeError("Group name must be a string.")
         for group in self.groups:
-            if group.name == name:
+            if group.name.lower() == name.lower():
                 return group
         return None
 
-    def add_blocks(self, meshes):
+    def add_blocks(self, meshes, support_names=None):
+        """
+        Add multiple blocks to the Problem3dec instance from a list of meshes.
+
+        Parameters
+        ----------
+        meshes : list[Mesh]
+            A list of compas Mesh objects to be added as blocks.
+        support_names : list[str], optional
+            List of mesh names that should be marked as supports. Default is ["Supports"].
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> meshes = [mesh1, mesh2, mesh3]
+        >>> problem.add_blocks(meshes, support_names=["Supports", "Base"])
+        """
         from .block import Block
 
+        if support_names is None:
+            support_names = ["Supports"]
+
         for i, mesh in enumerate(meshes):
-            self.blocks.append(Block(i, mesh, name = mesh.name))
+            block_index = len(self.blocks) + i
+            block = Block(block_index, mesh, name=mesh.name)
+            if block.name in support_names:
+                block.is_support = True
+            self.blocks.append(block)
 
     def add_material(self, name, E, poisson, rho, group=None):
+        """
+        Add a material to the Problem3dec instance and optionally assign it to groups.
+
+        Parameters
+        ----------
+        name : str
+            Name of the material.
+        E : float
+            Young's modulus of the material.
+        poisson : float
+            Poisson's ratio of the material.
+        rho : float
+            Density of the material.
+        group : list[str], optional
+            List of group names to assign this material to. If None, the material is not assigned to any group.
+
+        Returns
+        -------
+        Material
+            The created Material object.
+
+        Raises
+        ------
+        TypeError
+            If group is not a list of strings.
+
+        Notes
+        -----
+        - The material is appended to the model's materials list.
+        - If `group` is provided, the material is assigned to all matching groups by name.
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> mat = problem.add_material("Stone", 30e9, 0.2, 2500, group=["Blocks", "Supports"])
+        """
         from .material import Material
 
         material = Material(name, E, poisson, rho, group)
         self.materials.append(material)
         if group:
-            for gr in group:
+            if not isinstance(group, (list, tuple)) or not all(isinstance(gr, str) for gr in group):
+                raise TypeError("group must be a list of strings.")
+            for gr in set(group):
+                found = False
                 for g in self.groups:
                     if g.name == gr:
                         g.material = material
+                        found = True
+                if not found:
+                    print(f"Warning: Group '{gr}' not found in Problem3dec.groups.")
         return material
 
     def add_contact_property(self, stiffness, failure_criteria, group=None):
+        """
+        Add a contact property to the Problem3dec instance and optionally assign it to groups.
+
+        Parameters
+        ----------
+        stiffness : tuple or list
+            The normal and shear stiffness values for the contact property.
+        failure_criteria : object
+            The failure criteria object (e.g., friction, cohesion) for the contact property.
+        group : list[str], optional
+            List of group names to assign this contact property to. If None, the contact property is not assigned to any group.
+
+        Returns
+        -------
+        ContactProperty
+            The created ContactProperty object.
+
+        Raises
+        ------
+        TypeError
+            If group is not a list of strings.
+
+        Notes
+        -----
+        - The contact property is appended to the model's contact_properties list.
+        - If `group` is provided, the contact property is assigned to all matching groups by name.
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> cp = problem.add_contact_property((1e7, 1e6), failure_criteria, group=["Blocks", "Supports"])
+        """
         from .contact_property import ContactProperty
 
         contact_property = ContactProperty(stiffness, failure_criteria, group)
         self.contact_properties.append(contact_property)
         if group:
-            for gr in group:
+            if not isinstance(group, (list, tuple)) or not all(isinstance(gr, str) for gr in group):
+                raise TypeError("group must be a list of strings.")
+            for gr in set(group):
+                found = False
                 for g in self.groups:
                     if g.name == gr:
                         g.contact_property = contact_property
+                        found = True
+                if not found:
+                    print(f"Warning: Group '{gr}' not found in Problem3dec.groups.")
         return contact_property
 
-    # def add_rigid_interactions(self, block_lists):
-    #     for blocks in block_lists:
-    #         self.rigid_interactions.append(blocks)
-
     def add_rigid_interactions(self, block_lists):
+        """
+        Add a rigid interaction to the Problem3dec instance.
+
+        Parameters
+        ----------
+        block_lists : list[list[int]]
+            A list of lists, where each inner list contains block indices that form a rigid interaction.
+
+        Returns
+        -------
+        RigidInteraction
+            The created RigidInteraction object.
+
+        Raises
+        ------
+        TypeError
+            If block_lists is not a list of lists of integers.
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> problem.add_rigid_interactions([[0, 1, 2], [3, 4]])
+        """
         from .rigid_interaction import RigidInteraction
+
+        if not (
+            isinstance(block_lists, list)
+            and all(isinstance(lst, list) and all(isinstance(i, int) for i in lst) for lst in block_lists)
+        ):
+            raise TypeError("block_lists must be a list of lists of integers.")
 
         rigid = RigidInteraction(block_lists)
         self.rigid_interactions.append(rigid)
+        return rigid
 
     def add_interaction(self, interaction_data):
+        """
+        Add an interaction to the Problem3dec instance.
+
+        Parameters
+        ----------
+        interaction_data : Interaction3dec or dict
+            The interaction object or data to be added to the model.
+
+        Raises
+        ------
+        TypeError
+            If interaction_data is not an Interaction3dec or dict.
+
+        Notes
+        -----
+        - The interaction is appended to the model's interactions list.
+        - Interactions typically represent contact or mechanical relationships between blocks.
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> interaction = Interaction3dec(...)
+        >>> problem.add_interaction(interaction)
+        """
+        # Example type check (adjust as needed for your actual interaction type)
+        # from .interaction_3dec import Interaction3dec
+        # if not isinstance(interaction_data, (Interaction3dec, dict)):
+        #     raise TypeError("interaction_data must be an Interaction3dec or dict.")
         self.interactions.append(interaction_data)
+        return True
 
     def make_compounds(self):
+        """
+        Generate the list of compounds for the Problem3dec instance.
+
+        Compounds are groups of block indices that represent either rigidly joined blocks
+        (from rigid interactions) or individual blocks (if no rigid interactions exist).
+
+        Returns
+        -------
+        list[list[int]]
+            A sorted list of compounds, where each compound is a list of block indices.
+
+        Notes
+        -----
+        - If rigid interactions exist, compounds are extended with those from each RigidInteraction.
+        - Blocks not part of any rigid interaction are added as single-block compounds.
+        - If no rigid interactions exist, each block is added as a separate compound.
+        - The compounds list is sorted by the first block index in each compound.
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> problem.make_compounds()
+        [[0], [1], [2], [3, 4]]
+        """
+        self.compounds = []
         if self.rigid_interactions:
-            # Extend compounds with the compounds from each RigidInteraction
+            # Collect all indices in rigid compounds for fast lookup
+            rigid_indices = set()
             for interaction in self.rigid_interactions:
                 self.compounds.extend(interaction.compounds)
+                for compound in interaction.compounds:
+                    rigid_indices.update(compound)
 
             # Add blocks that are not part of any interaction
             for block in self.blocks:
-                if not any(
-                    block.index in compound
-                    for interaction in self.rigid_interactions
-                    for compound in interaction.compounds
-                ):
+                if block.index not in rigid_indices:
                     self.compounds.append([block.index])
 
             # Sort compounds
@@ -276,26 +542,36 @@ class Problem3dec(Data):
             for block in self.blocks:
                 self.compounds.append([block.index])
 
-        return self.compounds
-
-    # def make_compounds(self):
-    #     if self.rigid_interactions:
-    #         self.compounds.extend(self.rigid_interactions)
-    #         for block in self.blocks:
-    #             if not any(block.index in interaction for interaction in self.rigid_interactions):
-    #                 self.compounds.append([block.index])
-    #         self.compounds = sorted(self.compounds, key=lambda x: x[0])
-    #     else:
-    #         for block in self.blocks:
-    #             self.compounds.append([block.index])
-    #     return self.compounds
+        return list(self.compounds)
 
     def to_geometry_3dec(self):
-        """Create the .dat files of the Blocks and Supports geometry for 3DEC from an
-        Assembly_3DEC object. This function recognises compounds of joined blocks (e.g.
-        a group of 3D convex meshes joined together forming a concave shape) enabling
-        the creation of Master/Slave compounds in 3DEC.
         """
+        Export the geometry of blocks and supports to a 3DEC-compatible .dat file.
+
+        This method generates the geometry file for 3DEC by processing all block compounds,
+        grouping them as "Blocks" or "Supports" (or by their assigned group), and writing
+        their mesh data in the required format. Compounds of joined blocks are recognized,
+        enabling the creation of Master/Slave compounds in 3DEC.
+
+        Returns
+        -------
+        str
+            The path to the created geometry file.
+
+        Raises
+        ------
+        ValueError
+            If no blocks are available for export.
+
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> geometry_file = problem.to_geometry_3dec()
+        >>> print("Geometry exported to:", geometry_file)
+        """
+        if not self.blocks:
+            raise ValueError("No blocks available for geometry export.")
+
         self.make_compounds()
         outputs = ""
         for indices in self.compounds:
@@ -312,45 +588,55 @@ class Problem3dec(Data):
             for index in indices:
                 meshes.append(self.blocks[index].mesh)
             outputs += self._to_mesh_string_3dec(meshes, indices, group, precision=3)
-
         geometry_path = os.path.join(self.working_path, "geometry.dat")
-
-        # print('geometry_path',geometry_path)
         self._overwrite_file(geometry_path, outputs)
+        print(f"Geometry exported to {geometry_path}")
+        return geometry_path
 
-    def _to_mesh_string_3dec(self, meshes, indices, group, precision=10):
-        """Convert compas meshes to string readable by 3dec.
+    def _to_mesh_string_3dec(self, meshes, indices, group, precision=10, unit_scale=1.0):
+        """
+        Convert a list of compas meshes to a string readable by 3DEC.
 
         Parameters
         ----------
-        meshes : list[compas.datastractures.Mesh]
-            List of compas meshes.
+        meshes : list[compas.datastructures.Mesh]
+            List of compas Mesh objects representing block geometry.
         indices : list[int]
-            List of indices of the meshes from model graph nodes.
+            List of indices corresponding to the meshes from model graph nodes.
         group : str
-           3dec block's group name.
+            3DEC block's group name.
         precision : int, optional
-            Set vertex coordinates rounding, by default 10.
+            Number of decimal places for vertex coordinates (default is 10).
+        unit_scale : float, optional
+            Scale factor for vertex coordinates (default is 1.0).
 
         Returns
         -------
         str
-            Single string reprensenting the group name and the block geometry.
+            String containing 3DEC block creation and join commands for the given meshes.
+
+        Raises
+        ------
+        ValueError
+            If the lengths of meshes and indices do not match.
+
+        Examples
+        --------
+        >>> mesh1, mesh2 = ... # compas Mesh objects
+        >>> indices = [0, 1]
+        >>> group = "Blocks"
+        >>> s = problem._to_mesh_string_3dec([mesh1, mesh2], indices, group, precision=3)
+        >>> print(s)
         """
-        # create blocks
-        # ***************************************************************************
-        unit_scale = 1.0
+        if len(meshes) != len(indices):
+            raise ValueError("meshes and indices must have the same length.")
         block_description = ""
         for i, mesh in enumerate(meshes):
-            face_description = ""  # should not work with sub_blocks
+            face_description = ""
             for face in mesh.faces():
-                # add new face
                 face_description += "face "
-                # get the vertices of the face in order!
                 vertices = list(mesh.face_vertices(face))
-                # reverse vertex order for 3DEC
                 vertices.reverse()
-                # add the vertices of this face
                 for vertex in vertices:
                     vertex_coordinates = mesh.vertex_coordinates(vertex)
                     face_description += "{0:.{3}f},{1:.{3}f},{2:.{3}f} ".format(
@@ -359,7 +645,6 @@ class Problem3dec(Data):
                         vertex_coordinates[2] / unit_scale,
                         precision,
                     )
-            # add all faces of the block to the block description
             sub_block_description = (
                 "block create group " + '"' + str(group) + '"' + " poly %s r=%i" % (face_description, indices[i])
             )
@@ -370,51 +655,83 @@ class Problem3dec(Data):
         return block_description
 
     def _overwrite_file(self, file_path, replace_string):
-        # Overwrite existing file with replace_string
+        """
+        Overwrite the file at file_path with replace_string.
+        If the file does not exist, it will be created.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to the file to overwrite.
+        replace_string : str
+            Content to write to the file.
+
+        Raises
+        ------
+        PermissionError
+            If the file exists but is not writable.
+        """
+        # Clean up any unwanted prefix
+        file_path = file_path.replace("file:\\", "").replace("file:/", "").replace("file:", "")
+        file_path = os.path.abspath(file_path)
+
         if os.path.exists(file_path):
             if os.access(file_path, os.W_OK):
-                f = open(file_path, "w+")
-                f.write(replace_string)
-                f.close()
+                with open(file_path, "w") as f:
+                    f.write(replace_string)
             else:
-                "File write access denied..."
+                raise PermissionError(f"File write access denied: {file_path}")
         else:
-            with open(file_path, "a+") as f:
+            with open(file_path, "w") as f:
                 f.write(replace_string)
-
-    def assign_material(self, material_name, group_name):
-        self.input.materials[material_name].group = group_name
-        # for key,value in self.input.materials.items():
-        #     if key == material_name:
-        #         self.input.materials.group = group_name
-        print(self.input.materials)
 
     # =============================================================================
     # setup 3dec analysis
     # =============================================================================
-
     def set_joint_stiffness_one_material(self, block_height, reduction_factor, block_length=None, material=None):
-        """Compute the joint stiffness values for a model with one joint material (dry assembled).
+        """
+        Compute the joint stiffness values for a model with one joint material (dry assembled).
 
         Parameters
         ----------
         block_height : float
-            Block height.
+            Height of the block.
         reduction_factor : float
             Reduction factor for the joint stiffness.
         block_length : float, optional
-            Block length, by default None.
-        material_name : str, optional
-            Material name, by default None.
+            Length of the block. If not provided, only block_height is used.
+        material : Material, optional
+            Material object with attributes E (Young's modulus) and G (shear modulus).
+
+        Returns
+        -------
+        tuple (float, float)
+            The computed normal (jkn) and shear (jks) joint stiffness values.
+
+        Raises
+        ------
+        ValueError
+            If material is not provided or does not have E and G attributes.
+
+        Notes
+        -----
+        - If block_length is provided, the stiffness is averaged using both block_height and block_length.
+        - The reduction_factor is applied to both normal and shear stiffness.
+        - This function assumes dry joints (no mortar).
+
+        Examples
+        --------
+        >>> mat = Material(E=30e9, G=12e9)
+        >>> problem.set_joint_stiffness_one_material(0.2, 10, block_length=0.4, material=mat)
+        (750000000.0, 300000000.0)
         """
-        # E = self.materials[material_name].E
-        # G = self.materials[material_name].G
+        if material is None or not hasattr(material, "E") or not hasattr(material, "G"):
+            raise ValueError("A valid material with 'E' and 'G' attributes must be provided.")
+
         E = material.E
         G = material.G
-        # E = self.input.materials[material_name].E
-        # G = self.input.materials[material_name].G
 
-        if not block_length:
+        if block_length is None:
             jkn = E / block_height
             jks = G / block_height
         else:
@@ -429,31 +746,54 @@ class Problem3dec(Data):
     def set_joint_stiffness_two_materials(
         self, block_height, interface_thickness, reduction_factor, material0_name=None, material1_name=None
     ):
-        """Compute the joint stiffness values for a model with two joints materials (i.e. stone and mortar).
+        """
+        Compute the joint stiffness values for a model with two joint materials (e.g., stone and mortar).
 
         Parameters
         ----------
         block_height : float
-            Block height.
+            Height of the block.
         interface_thickness : float
-            Interface material thickness.
+            Thickness of the interface material (e.g., mortar).
         reduction_factor : float
             Reduction factor for the joint stiffness.
         material0_name : str, optional
-            Material name stored in the input.
+            Name of the first material (e.g., stone) stored in self.materials.
         material1_name : str, optional
-            Material name stored in the input.
+            Name of the second material (e.g., mortar) stored in self.materials.
+
+        Returns
+        -------
+        tuple (float, float)
+            The computed normal (jkn) and shear (jks) joint stiffness values.
+
+        Raises
+        ------
+        KeyError
+            If either material name is not found in self.materials.
+        AttributeError
+            If the material does not have E or G attributes.
+
+        Notes
+        -----
+        - The stiffness is computed using the properties of both materials and the interface thickness.
+        - The reduction_factor is applied to both normal and shear stiffness.
+        - This function assumes two distinct joint materials.
+
+        Examples
+        --------
+        >>> problem.set_joint_stiffness_two_materials(0.2, 0.01, 10, material0_name="Stone", material1_name="Mortar")
+        (jkn_value, jks_value)
         """
-
-        E1 = self.materials[material0_name].E
-        G1 = self.materials[material0_name].G
-        E2 = self.materials[material1_name].E
-        G2 = self.materials[material1_name].G
-
-        # E1 = self.input.materials[material0_name].E
-        # G1 = self.input.materials[material0_name].G
-        # E2 = self.input.materials[material1_name].E
-        # G2 = self.input.materials[material1_name].G
+        try:
+            E1 = self.materials[material0_name].E
+            G1 = self.materials[material0_name].G
+            E2 = self.materials[material1_name].E
+            G2 = self.materials[material1_name].G
+        except KeyError as e:
+            raise KeyError(f"Material '{e.args[0]}' not found in self.materials.")
+        except AttributeError as e:
+            raise AttributeError("Material must have 'E' and 'G' attributes.")
 
         jkn = (E1 * E2) / ((block_height * E2) + (interface_thickness * E1))
         jks = (G1 * G2) / ((block_height * G2) + (interface_thickness * G1))
@@ -469,55 +809,52 @@ class Problem3dec(Data):
     def gravity_equilibrium(
         self, steps=10, keyword="ratio-local", ratio=1e-06, time=0.02, final_ratio=1e-06, time_final_step=1
     ):
-        """_summary_
+        """
+        Generate the gravity loading sequence for a 3DEC analysis.
+
+        This method creates a string of 3DEC commands to incrementally apply gravity in multiple steps,
+        solving for equilibrium at each step, and then performing a final solve with specified criteria.
 
         Parameters
         ----------
-        steps : _type_
-            _description_
-        keyword : _type_
-            _description_
-        ratio : _type_
-            _description_
-        time : _type_
-            _description_
-        final_ratio : _type_
-            _description_
-        time_final_step : _type_
-            _description_
+        steps : int, optional
+            Number of gravity loading steps (default is 10).
+        keyword : str, optional
+            Equilibrium criterion keyword for the 3DEC solver (default is "ratio-local").
+        ratio : float, optional
+            Solver ratio for each gravity step (default is 1e-06).
+        time : float, optional
+            Solver time for each gravity step (default is 0.02).
+        final_ratio : float, optional
+            Solver ratio for the final step (default is 1e-06).
+        time_final_step : float, optional
+            Solver time for the final step (default is 1).
 
         Returns
         -------
-        _type_
-            _description_
-        """
+        str
+            String containing the gravity loading and solve commands for 3DEC.
 
+        Examples
+        --------
+        >>> problem = Problem3dec()
+        >>> gravity_string = problem.gravity_equilibrium(steps=5)
+        >>> print(gravity_string)
+        """
         g = -9.806 / steps
         g = round(g, 3)
         text = ";===========================================================================" + "\n"
-        text += ";GRAVITY APPLIED IN" + " " + str(steps) + " " + "STEPS " + "\n"
+        text += ";GRAVITY APPLIED IN " + str(steps) + " STEPS\n"
         text += ";===========================================================================" + "\n"
         for i in range(steps):
             gr = g * (i + 1)
-            # header = ';^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' + '\n'
             header = ";======================================================================" + "\n"
-            header += ";_____GRAVITY_____" + " " + "step" + " " + str(i + 1) + "\n"
+            header += ";_____GRAVITY_____ step " + str(i + 1) + "\n"
             header += ";======================================================================" + "\n"
-            header += "model gravity" + " " + "0" + " " + "0" + " " + str(gr) + "\n"
-            header += "model solve" + " " + str(keyword) + " " + str(ratio) + " " + "time" + " " + str(time) + "\n"
+            header += "model gravity 0 0 " + str(gr) + "\n"
+            header += "model solve " + str(keyword) + " " + str(ratio) + " time " + str(time) + "\n"
             text += header
-        text += (
-            "model solve"
-            + " "
-            + str(keyword)
-            + " "
-            + str(final_ratio)
-            + " "
-            + "time"
-            + " "
-            + str(time_final_step)
-            + "\n"
-        )
+        text += "model solve " + str(keyword) + " " + str(final_ratio) + " time " + str(time_final_step) + "\n"
         return text
 
     def gravity(
@@ -529,13 +866,16 @@ class Problem3dec(Data):
         final_ratio=1e-05,
         time_final_step=1,
     ):
-
         self._check_and_delete_gravity_files(self.working_path)
-        # if not self.contact_property.stiffness:
-        # # if not self.jkn or not self.jks:
-        #     raise ValueError("Missing Joint Stiffness values")
+        if not all(
+            hasattr(group, "contact_property")
+            and hasattr(group.contact_property, "stiffness")
+            and group.contact_property.stiffness
+            for group in self.groups
+        ):
+            raise ValueError("Missing Joint Stiffness values in one or more groups.")
 
-        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
+        main_string = f";{time.strftime('%d/%m/%Y')} {time.strftime('%H:%M:%S')}"
         main_string += """
     model new
     model large-strain on
@@ -543,22 +883,19 @@ class Problem3dec(Data):
     block contact generate-subcontacts
     """
         for group in self.groups:
-            group_header = """
-    block property density {0} range group '{1}'
-    block contact property stiffness-normal {2} stiffness-shear {3} friction {4} range group '{1}'
-    block contact material-table default property stiffness-normal {2} stiffness-shear {3}
-        """.format(
-                group.material.rho,
-                group.name,
-                group.contact_property.stiffness[0],
-                group.contact_property.stiffness[1],
-                group.contact_property.failure_criteria.friction,
+            group_header = (
+                f"\nblock property density {group.material.rho} range group '{group.name}'\n"
+                f"block contact property stiffness-normal {group.contact_property.stiffness[0]} "
+                f"stiffness-shear {group.contact_property.stiffness[1]} "
+                f"friction {group.contact_property.failure_criteria.friction} range group '{group.name}'\n"
+                f"block contact material-table default property stiffness-normal {group.contact_property.stiffness[0]} "
+                f"stiffness-shear {group.contact_property.stiffness[1]}\n"
             )
             if group.name == "Supports":
                 group_header += "block fix range group 'Supports'\n"
             main_string += group_header
-        main_string += self.set_damping_global()
 
+        main_string += self.set_damping_global()
         main_string += self.blocks_output()
         main_string += self.contacts_output()
         main_string += self.save_blocks_output("init_state")
@@ -576,94 +913,223 @@ class Problem3dec(Data):
             file.write(main_string)
         return filename
 
+    def _check_and_delete_gravity_files(self, current_directory, verbose=False):
+        """
+        Check for and delete gravity-related files in the specified directory.
+
+        Parameters
+        ----------
+        current_directory : str
+            The directory in which to check and delete files.
+        verbose : bool, optional
+            If True, print messages about deleted or missing files (default is False).
+
+        Returns
+        -------
+        list[str]
+            List of deleted file names.
+
+        Raises
+        ------
+        OSError
+            If a file cannot be deleted due to permission issues.
+        """
+        files_to_check = ["init_state.txt", "grav_state.txt", "contact_grav.txt"]
+        deleted_files = []
+
+        for file_name in files_to_check:
+            full_path = os.path.join(current_directory, file_name)
+            if os.path.exists(full_path):
+                try:
+                    os.remove(full_path)
+                    deleted_files.append(file_name)
+                    if verbose:
+                        print(f"Deleted {file_name}")
+                except OSError as e:
+                    print(f"Error deleting {file_name}: {e}")
+            else:
+                if verbose:
+                    print(f"{file_name} does not exist in {current_directory} and was not deleted")
+        return deleted_files
+
     # =============================================================================
     # load.dat
     # =============================================================================
-    def _load_box(self, point, precision):
-        """Create a bounding box range around a point 3D adding +/- the precision
-            which can be used after the command 'boundary load' in 3DEC.
-        point: xyz
-            3D point where to apply the point load.
-        precision: float
-            dimension to add and subtract in x,y,z direction to the point 3D
-            to create the box.
+    def _load_box(self, point, precision, decimals=3):
         """
+        Create a bounding box range string around a 3D point for use in 3DEC boundary load commands.
+
+        Parameters
+        ----------
+        point : list[float] or tuple[float]
+            3D coordinates (x, y, z) where the load is applied.
+        precision : float
+            Distance to add and subtract in each direction to create the bounding box.
+        decimals : int, optional
+            Number of decimal places for output (default is 3).
+
+        Returns
+        -------
+        str
+            A string specifying the range in x, y, z directions for 3DEC.
+
+        Raises
+        ------
+        ValueError
+            If point is not a sequence of three numbers.
+        TypeError
+            If precision is not a float or int.
+
+        Examples
+        --------
+        >>> problem._load_box([1.0, 2.0, 3.0], 0.1)
+        'range x 0.900 ,1.100 y 1.900 ,2.100 z 2.900 ,3.100'
+        """
+        if not (isinstance(point, (list, tuple)) and len(point) == 3):
+            raise ValueError("point must be a list or tuple of three numbers.")
+        if not isinstance(precision, (float, int)):
+            raise TypeError("precision must be a float or int.")
+
         x1 = point[0] - precision
         x2 = point[0] + precision
         y1 = point[1] - precision
         y2 = point[1] + precision
         z1 = point[2] - precision
         z2 = point[2] + precision
-        pl = "range x " + str(x1) + " ," + str(x2) + " y " + str(y1) + " ," + str(y2) + " z " + str(z1) + " ," + str(z2)
+        pl = (
+            f"range x {x1:.{decimals}f} ,{x2:.{decimals}f} "
+            f"y {y1:.{decimals}f} ,{y2:.{decimals}f} "
+            f"z {z1:.{decimals}f} ,{z2:.{decimals}f}"
+        )
         return pl
 
-    def _load_along_direction(self, pt1, pt2, load):
+    def _load_along_direction(self, pt1, pt2, load, decimals=3):
+        """
+        Compute the load components along a direction defined by two points for 3DEC boundary load commands.
+
+        Parameters
+        ----------
+        pt1 : list[float] or tuple[float]
+            Starting point of the direction vector (x, y, z).
+        pt2 : list[float] or tuple[float]
+            Ending point of the direction vector (x, y, z).
+        load : float
+            Magnitude of the load to be applied along the direction.
+        decimals : int, optional
+            Number of decimal places for output (default is 3).
+
+        Returns
+        -------
+        str
+            String specifying the x, y, z components of the load for 3DEC.
+
+        Raises
+        ------
+        ValueError
+            If the direction vector is zero-length.
+
+        Examples
+        --------
+        >>> problem._load_along_direction([0, 0, 0], [1, 0, 0], 100)
+        'xload 100.000 yload 0.000 zload 0.000'
+        """
+        if not (isinstance(pt1, (list, tuple)) and isinstance(pt2, (list, tuple)) and len(pt1) == 3 and len(pt2) == 3):
+            raise ValueError("pt1 and pt2 must be lists or tuples of three numbers.")
+        if not isinstance(load, (float, int)):
+            raise TypeError("load must be a float or int.")
+
         vec = Vector.from_start_end(pt1, pt2)
         vec = normalize_vector(vec)
+        if all(abs(v) < 1e-12 for v in vec):
+            raise ValueError("Direction vector cannot be zero-length.")
+
         load_components = (
-            "xload " + str(vec[0] * load) + " yload " + str(vec[1] * load) + " zload " + str(vec[2] * load)
+            f"xload {vec[0] * load:.{decimals}f} yload {vec[1] * load:.{decimals}f} zload {vec[2] * load:.{decimals}f}"
         )
         return load_components
 
-    def set_point_load(self, application_point, direction_point, load_magnitude, radius, subcontacts_per_point):
+    def set_point_load(
+        self, application_point, direction_point, load_magnitude, radius, subcontacts_per_point, decimals=3
+    ):
+        """
+        Generate a 3DEC command string to apply a point load at a gridpoint in a specified direction.
+
+        Parameters
+        ----------
+        application_point : list[float] or tuple[float]
+            3D coordinates (x, y, z) where the load is applied.
+        direction_point : list[float] or tuple[float]
+            3D coordinates (x, y, z) defining the direction of the load.
+        load_magnitude : float
+            Total magnitude of the load to be applied.
+        radius : float
+            Radius of the sphere around the application point for the range command.
+        subcontacts_per_point : int
+            Number of subcontacts at the application point (used to divide the load).
+        decimals : int, optional
+            Number of decimal places for output (default is 3).
+
+        Returns
+        -------
+        str
+            3DEC command string to apply the point load.
+
+        Raises
+        ------
+        ValueError
+            If application_point or direction_point are not sequences of three numbers.
+        TypeError
+            If load_magnitude, radius, or subcontacts_per_point are not numbers.
+
+        Examples
+        --------
+        >>> problem.set_point_load([1, 2, 3], [2, 2, 3], 1000, 0.1, 4)
+        'block gridpoint apply force-x ... force-y ... force-z ... range sphere c 1 2 3 r 0.1'
+        """
+        if not (isinstance(application_point, (list, tuple)) and len(application_point) == 3):
+            raise ValueError("application_point must be a list or tuple of three numbers.")
+        if not (isinstance(direction_point, (list, tuple)) and len(direction_point) == 3):
+            raise ValueError("direction_point must be a list or tuple of three numbers.")
+        if not isinstance(load_magnitude, (float, int)):
+            raise TypeError("load_magnitude must be a float or int.")
+        if not isinstance(radius, (float, int)):
+            raise TypeError("radius must be a float or int.")
+        if not isinstance(subcontacts_per_point, int) or subcontacts_per_point <= 0:
+            raise ValueError("subcontacts_per_point must be a positive integer.")
+
         magnitude_per_point = load_magnitude / subcontacts_per_point
         load_vector = Vector.from_start_end(application_point, direction_point)
         load_vector = normalize_vector(load_vector)
         load_vector = scale_vector(load_vector, magnitude_per_point)
         string = (
-            "block gridpoint apply force-x "
-            + str(load_vector[0])
-            + " force-y "
-            + str(load_vector[1])
-            + " force-z "
-            + str(load_vector[2])
-            + " range sphere c "
-            + str(application_point[0])
-            + " "
-            + str(application_point[1])
-            + " "
-            + str(application_point[2])
-            + " r "
-            + str(radius)
-            + "\n"
+            f"block gridpoint apply force-x {load_vector[0]:.{decimals}f} "
+            f"force-y {load_vector[1]:.{decimals}f} "
+            f"force-z {load_vector[2]:.{decimals}f} "
+            f"range sphere c {application_point[0]:.{decimals}f} {application_point[1]:.{decimals}f} {application_point[2]:.{decimals}f} r {radius:.{decimals}f}\n"
         )
         return string
 
-    # def set_points_load(self, points_list, load_magnitude, load_vector, radius, subcontacts_per_point):
-    #     magnitude_per_point = load_magnitude / subcontacts_per_point
-    #     for point in points_list:
-    #         load_direction = normalize_vector(load_vector)
-    #         load = scale_vector(load_direction, magnitude_per_point)
-    #         string = "block gridpoint force-x " + str(load[0]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
-    #         string += "block gridpoint force-y " + str(load[1]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
-    #         string += "block gridpoint force-z " + str(load[2]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
-    #     return string
+    def set_points_load(self, points_list, load_magnitude, load_vector, radius, subcontacts_per_point, decimals=3):
+        """
+        Generate 3DEC command strings to apply point loads at multiple gridpoints.
 
-    def set_points_load(self, points_list, load_magnitude, load_vector, radius, subcontacts_per_point):
+        Returns
+        -------
+        str
+            Combined command string for all points.
+        """
         magnitude_per_point = load_magnitude / subcontacts_per_point
+        result = ""
         for point in points_list:
             load_direction = normalize_vector(load_vector)
             load = scale_vector(load_direction, magnitude_per_point)
-            string = (
-                "block gridpoint apply force-x "
-                + str(load[0])
-                + "force-y "
-                + str(load[1])
-                + "block gridpoint force-z "
-                + str(load[2])
-                + " range sphere c "
-                + str(point[0])
-                + " "
-                + str(point[1])
-                + " "
-                + str(point[2])
-                + " r "
-                + str(radius)
-                + "\n"
+            result += (
+                f"block gridpoint apply force-x {load[0]:.{decimals}f} "
+                f"force-y {load[1]:.{decimals}f} "
+                f"force-z {load[2]:.{decimals}f} "
+                f"range sphere c {point[0]:.{decimals}f} {point[1]:.{decimals}f} {point[2]:.{decimals}f} r {radius:.{decimals}f}\n"
             )
-            # string += "block gridpoint force-y " + str(load[1]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
-            # string += "block gridpoint force-z " + str(load[2]) + " range sphere c " + str(point[0]) + " " + str(point[1]) + " " + str(point[2]) + " r " + str(radius) + "\n"
-        return string
+        return result
 
     def set_load_analysis(
         self,
@@ -674,55 +1140,452 @@ class Problem3dec(Data):
         load_capacity=False,
         solver_ratio=0.00001,
     ):
+        """
+        Generate and export a 3DEC load analysis sequence to a .dat file.
 
-        if not os.path.join(self.working_path, "grav_state.txt"):
+        Parameters
+        ----------
+        load_string : str
+            3DEC command string to apply the load at each step.
+        total_load : float
+            Total load to be applied over all steps.
+        load_magnitude_per_step : float
+            Magnitude of load applied in each step.
+        number_of_cycles : int, optional
+            Number of solver cycles per step (default is 35000).
+        load_capacity : bool, optional
+            If True, use a fixed large number of steps (default is False).
+        solver_ratio : float, optional
+            Solver ratio for equilibrium check (default is 0.00001).
+
+        Returns
+        -------
+        str
+            The filename of the created load .dat file.
+
+        Raises
+        ------
+        ValueError
+            If the gravity file is missing or if input values are invalid.
+        """
+        gravity_file = os.path.join(self.working_path, "grav_state.txt")
+        if not os.path.exists(gravity_file):
             raise ValueError("Missing gravity file: compute gravity first")
 
-        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
-        main_string += 2 * "\n"
+        if not isinstance(total_load, (float, int)) or total_load <= 0:
+            raise ValueError("total_load must be a positive number.")
+        if not isinstance(load_magnitude_per_step, (float, int)) or load_magnitude_per_step <= 0:
+            raise ValueError("load_magnitude_per_step must be a positive number.")
+        if not isinstance(number_of_cycles, int) or number_of_cycles <= 0:
+            raise ValueError("number_of_cycles must be a positive integer.")
+        if not isinstance(solver_ratio, (float, int)) or solver_ratio <= 0:
+            raise ValueError("solver_ratio must be a positive number.")
+
+        main_string = f";{time.strftime('%d/%m/%Y')} {time.strftime('%H:%M:%S')}\n\n"
         main_string += self.restore_analysis("grav")
         main_string += self.set_damping_global()
-        main_string += 2 * "\n"
+        main_string += "\n\n"
         main_string += self.blocks_output()
         main_string += self.contacts_output() + "\n"
 
         load_steps = int(total_load / load_magnitude_per_step)
         if load_capacity:
             load_steps = 10000
+
         for step in range(load_steps):
-            step_name = (
-                "Load_step"
-                + "_"
-                + str(step + 1)
-                + "_load_magnitude_"
-                + str((step + 1) * load_magnitude_per_step)
-                + " N"
-            )
+            step_load = (step + 1) * load_magnitude_per_step
+            step_name = f"Load_step_{step + 1}_load_magnitude_{step_load} N"
             main_string += ";===========================================================================" + "\n"
-            main_string += "; " + str(step_name) + "\n"
+            main_string += f"; {step_name}\n"
             main_string += ";===========================================================================" + "\n"
             main_string += load_string
-            main_string += "model cycle " + str(number_of_cycles) + "\n"
-            main_string += "\n"
+            main_string += f"model cycle {number_of_cycles}\n\n"
             main_string += self.save_blocks_output(step_name)
             step_name_contact = step_name + "_contacts"
             main_string += self.save_contacts_output(step_name_contact)
             main_string += self.save_analysis(step_name)
             main_string += self.check_and_exit(solver_ratio)
-            main_string += "\n"
-            main_string += ";exit()"
-            output_path = self.working_path
-            filename = "load.dat"
-            with open(os.path.join(output_path, filename), "w") as file:
-                file.write(main_string)
+            main_string += "\n;exit()\n"
+
+        output_path = self.working_path
+        filename = "load.dat"
+        with open(os.path.join(output_path, filename), "w") as file:
+            file.write(main_string)
         return filename
 
     # =============================================================================
     # run 3dec in the background
     # =============================================================================
-    def run(self, sequence=[]):
-        args = ["cd", self.working_path, "&&", self.executable_path] + sequence
-        call(" ".join(args), shell=True)
+    def run(self, sequence=None, suppress_output=True):
+        """
+        Run the 3DEC executable with the specified command sequence in the working directory.
+
+        Parameters
+        ----------
+        sequence : list[str], optional
+            List of additional command-line arguments or files to pass to the executable.
+        suppress_output : bool, optional
+            If True, suppress stdout and stderr output (default is True).
+
+        Returns
+        -------
+        int
+            The return code from the subprocess call.
+        """
+        import subprocess
+
+        if sequence is None:
+            sequence = []
+
+        # Remove quotes from executable_path if present
+        executable = self.executable_path.strip('"')
+        cmd = [executable] + sequence
+
+        # Prevent black shell window on Windows
+        creationflags = 0
+        if os.name == "nt":
+            creationflags = subprocess.CREATE_NO_WINDOW
+
+        if suppress_output:
+            result = subprocess.call(
+                cmd,
+                cwd=self.working_path,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=creationflags,
+            )
+        else:
+            result = subprocess.call(cmd, cwd=self.working_path, creationflags=creationflags)
+        return result
+
+    # =============================================================================
+    # displacement.dat
+    # =============================================================================
+    def get_model_timestep(self):
+        """
+        Retrieve the model timestep value from the 'grav_state.txt' file.
+
+        Returns
+        -------
+        float
+            The timestep value found in the file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If 'grav_state.txt' does not exist in the working directory.
+        ValueError
+            If the timestep value is not found or cannot be converted to float.
+
+        Examples
+        --------
+        >>> timestep = problem.get_model_timestep()
+        >>> print("Model timestep:", timestep)
+        """
+        grav_file = os.path.join(self.working_path, "grav_state.txt")
+        if not os.path.exists(grav_file):
+            raise FileNotFoundError(f"File not found: {grav_file}")
+
+        timestep = None
+        with open(grav_file, "r") as fo:
+            for line in fo:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split()
+                if len(parts) >= 3 and parts[0] == "timestep":
+                    try:
+                        timestep = float(parts[2])
+                        break
+                    except ValueError:
+                        raise ValueError(f"Could not convert timestep value '{parts[2]}' to float.")
+        if timestep is None:
+            raise ValueError("No timestep value found in grav_state.txt.")
+        return timestep
+
+    def set_block_displacement(self, region=0, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
+        """
+        Generate 3DEC command strings to apply block displacement in a specified direction for a region.
+
+        Parameters
+        ----------
+        region : int, optional
+            Region index to which the displacement is applied (default is 0).
+        displacement_direction : list[float] or tuple[float], optional
+            Direction vector for the displacement (default is [0, 0, -1]).
+        displ_magnitude_per_step : float, optional
+            Magnitude of the displacement per step (default is 0.001).
+
+        Returns
+        -------
+        list[str]
+            List containing the command strings for applying and resetting displacement.
+
+        Raises
+        ------
+        ValueError
+            If displacement_direction is not a sequence of three numbers.
+        TypeError
+            If displ_magnitude_per_step is not a float or int.
+
+        Examples
+        --------
+        >>> problem.set_block_displacement(region=1, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.002)
+        [header_string, equilibrium_string]
+        """
+        if not (isinstance(displacement_direction, (list, tuple)) and len(displacement_direction) == 3):
+            raise ValueError("displacement_direction must be a list or tuple of three numbers.")
+        if not isinstance(displ_magnitude_per_step, (float, int)):
+            raise TypeError("displ_magnitude_per_step must be a float or int.")
+
+        displacement_direction = normalize_vector(displacement_direction)
+        single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
+        header = (
+            f"block apply velocity-x {single_displacement_vector[0]} range region {region}\n"
+            f"block apply velocity-y {single_displacement_vector[1]} range region {region}\n"
+            f"block apply velocity-z {single_displacement_vector[2]} range region {region}\n"
+        )
+
+        equilibrium = (
+            f"block apply velocity-x 0.0 range region {region}\n"
+            f"block apply velocity-y 0.0 range region {region}\n"
+            f"block apply velocity-z 0.0 range region {region}\n"
+        )
+
+        from compas_3dec.datastructure.boundary_condition import BoundaryCondition
+
+        boundary = BoundaryCondition()
+        boundary.region = region
+        boundary.type = "displacement"
+        boundary.direction = displacement_direction
+        boundary.magnitude = displ_magnitude_per_step
+        self.boundary_conditions.append(boundary)
+
+        displacement_data = [header, equilibrium]
+        return displacement_data
+
+    def set_blocks_displacement(self, regions, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
+        """
+        Generate 3DEC command strings to apply block displacement in a specified direction for multiple regions.
+
+        Parameters
+        ----------
+        regions : list[int]
+            List of region indices to which the displacement is applied.
+        displacement_direction : list[float] or tuple[float], optional
+            Direction vector for the displacement (default is [0, 0, -1]).
+        displ_magnitude_per_step : float, optional
+            Magnitude of the displacement per step (default is 0.001).
+
+        Returns
+        -------
+        list[str]
+            List containing the command strings for applying and resetting displacement.
+
+        Raises
+        ------
+        ValueError
+            If displacement_direction is not a sequence of three numbers.
+        TypeError
+            If displ_magnitude_per_step is not a float or int.
+            If regions is not a list of integers.
+
+        Examples
+        --------
+        >>> problem.set_blocks_displacement([0, 1], displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.002)
+        [header_string, equilibrium_string]
+        """
+        if not (isinstance(displacement_direction, (list, tuple)) and len(displacement_direction) == 3):
+            raise ValueError("displacement_direction must be a list or tuple of three numbers.")
+        if not isinstance(displ_magnitude_per_step, (float, int)):
+            raise TypeError("displ_magnitude_per_step must be a float or int.")
+        if not (isinstance(regions, (list, tuple)) and all(isinstance(r, int) for r in regions)):
+            raise TypeError("regions must be a list or tuple of integers.")
+
+        displacement_direction = normalize_vector(displacement_direction)
+        single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
+        regions_str = " ".join(str(r) for r in regions)
+
+        header = (
+            f"block apply velocity-x {single_displacement_vector[0]} range region {regions_str}\n"
+            f"block apply velocity-y {single_displacement_vector[1]} range region {regions_str}\n"
+            f"block apply velocity-z {single_displacement_vector[2]} range region {regions_str}\n"
+        )
+
+        equilibrium = (
+            f"block apply velocity-x 0.0 range region {regions_str}\n"
+            f"block apply velocity-y 0.0 range region {regions_str}\n"
+            f"block apply velocity-z 0.0 range region {regions_str}\n"
+        )
+
+        displacement_data = [header, equilibrium]
+        return displacement_data
+
+    def set_displacement_analysis(
+        self,
+        displacements_list,
+        init_dict,
+        mapping_dict,
+        HERE,
+        total_displacement=0.0,
+        displ_magnitude_per_step=0.001,
+        solver_ratio=0.00001,
+        solver_time=3,
+        displacement_capacity=False,
+    ):
+        # Get the model timestep calculated by 3DEC from the gravity file
+        timestep = self.get_model_timestep()
+        # Number of solver cycles to reach the total displacement
+        number_of_cycles = int(displ_magnitude_per_step / (displ_magnitude_per_step * timestep))
+
+        if not os.path.join(self.working_path, "grav_state.txt"):
+            raise ValueError("Missing gravity file: compute gravity first")
+
+        displacement_list = []
+        displacement_steps = int(total_displacement / displ_magnitude_per_step)
+        if displacement_capacity:
+            displacement_steps = 10000
+
+        filenames = []
+        step_names = []
+        equilibrium_steps = []
+        collapse_step = []
+        for step in range(displacement_steps):
+            step_name = (
+                "Displacement_step"
+                + "_"
+                + str(step + 1)
+                + "_distance_"
+                + "{:.4f}".format((step + 1) * displ_magnitude_per_step)
+                + "m"
+            )
+            step_names.append(step_name)
+            step_name_contact = step_name + "_contacts"
+
+            # Initialize the main string for the displacement file
+            main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S") + "\n\n"
+
+            # Load the gravity output for the first step, or the previous step's output for subsequent steps
+            if step == 0:
+                main_string += self.restore_analysis("grav")
+            else:
+                previous_step_name = (
+                    "Displacement_step"
+                    + "_"
+                    + str(step)
+                    + "_distance_"
+                    + "{:.4f}".format(step * displ_magnitude_per_step)
+                    + "m"
+                )
+                main_string += self.restore_analysis(previous_step_name)
+
+            main_string += self.set_damping_local() + "\n\n"
+            main_string += self.blocks_output()
+            main_string += self.contacts_output() + "\n"
+
+            main_string += ";===========================================================================" + "\n"
+            main_string += "; " + str(step_name) + "\n"
+            main_string += ";===========================================================================" + "\n"
+
+            for displacement in displacements_list:
+                main_string += displacement[0]
+            main_string += "model cycle " + str(number_of_cycles) + "\n\n"
+
+            main_string += ";===========================================================================" + "\n"
+            main_string += "; Equilibrium calculation" + "\n"
+            main_string += ";===========================================================================" + "\n"
+            for displacement in displacements_list:
+                main_string += displacement[1]
+            main_string += "model solve unbalanced-maximum {} time".format(solver_ratio) + " " + str(solver_time) + "\n"
+            main_string += self.save_blocks_output(step_name)
+            main_string += self.save_contacts_output(step_name_contact)
+            main_string += self.save_analysis(step_name)
+            main_string += "\nexit()\n"
+
+            # Save the displacement file with the name of the current step
+            output_path = self.working_path
+            filename = f"{step_name}.dat"
+            filenames.append(filename)
+            with open(os.path.join(output_path, filename), "w") as file:
+                file.write(main_string)
+
+        for filename, step_name in zip(filenames, step_names):
+            step_name_contact = step_name + "_contacts"
+            # Run the displacement file
+            self.run([filename])
+
+            # =============================================================================
+            # Read results blocks and interactions
+            # =============================================================================
+            result = self.solve_ratio_check(step_name + ".txt")
+            # displ_dict = self.from_3dec_blocks(step_name + ".txt")
+            if result == "Equilibrium":
+                equilibrium_steps.append(step_name)
+                continue
+            else:
+                collapse_step.append(step_name)
+                break
+
+        # displ_dict = self.from_3dec_blocks(equilibrium_steps[-1] + ".txt")
+        # self.update_blocks(displ_dict, mapping_dict)
+        # output_3dec_per_vertex = self.from_3dec_contacts(equilibrium_steps[-1] + "_contacts")
+        # FILE_O = os.path.join(HERE, 'problem_' + equilibrium_steps[-1] + '.json')
+        # compas.json_dump(self, FILE_O)
+
+        # if result == "Equilibrium":
+        #     displacement_list.append(step_name)
+        #     self.update_blocks(displ_dict, mapping_dict)
+        #     output_3dec_per_vertex = self.from_3dec_contacts(step_name_contact + ".txt")
+        #     FILE_O = os.path.join(HERE, 'problem_' + step_name + '.json')
+        #     compas.json_dump(self, FILE_O)
+        # else:
+        #     print("Not in equilibrium at {}".format(step_name))
+        #     self.update_blocks(displ_dict, mapping_dict)
+        #     output_3dec_per_vertex = self.from_3dec_contacts(step_name_contact + ".txt")
+        #     FILE_O = os.path.join(HERE, 'problem_collapse' + step_name + '.json')
+        #     compas.json_dump(self, FILE_O)
+        #     break
+
+        return filename, displacement_steps, displ_magnitude_per_step, self, equilibrium_steps, collapse_step
+
+    def show_displacement(self, mapping_dict, equilibrium_steps, collapse_step, HERE):
+        """
+        Update block geometry and export the current state to a JSON file after equilibrium is reached.
+
+        Parameters
+        ----------
+        mapping_dict : dict
+            Mapping between model vertices and 3DEC output vertices.
+        equilibrium_steps : list[str]
+            List of step names where equilibrium was reached.
+        collapse_step : list[str]
+            List of step names where collapse occurred (not used in this function).
+        HERE : str
+            Directory path where the output JSON file will be saved.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        - Updates block geometry using the last equilibrium step's output.
+        - Exports the updated Problem3dec object to a JSON file.
+        - Also processes contact data for the last equilibrium step.
+
+        Examples
+        --------
+        >>> problem.show_displacement(mapping_dict, equilibrium_steps, collapse_step, HERE)
+        """
+        if not equilibrium_steps:
+            raise ValueError("No equilibrium steps provided.")
+        step_name = equilibrium_steps[-1]
+        displ_dict = self.from_3dec_blocks(f"{step_name}.txt")
+        self.update_blocks(displ_dict, mapping_dict)
+        output_3dec_per_vertex = self.from_3dec_contacts(f"{step_name}_contacts.txt")
+        file_o = os.path.join(HERE, f"problem_{step_name}.json")
+        compas.json_dump(self, file_o)
+        return
 
     # =============================================================================
     # get and process BLOCK data from 3dec
@@ -1065,16 +1928,21 @@ class Problem3dec(Data):
                 id = block.index
                 for interaction in self.interactions:
                     if id in interaction.neighbours:
-                        resultant_force = Vector(*interaction.forces_per_contact["resultant_force"])
-                        # print("Resultant force: ", resultant_force, id)
-                        scaled = scale_vector(resultant_force, scale_factor)
-                        resultant_point = Vector(*interaction.forces_per_contact["resultant_point"])
-                        resultant = Vector.sum_vectors([resultant_point, scaled])
-                        resultant_line = Line(Point(*resultant_point), Point(*resultant))
-                        resultants.append(resultant_line)
-                        magnitudes.append(str(round(resultant_force.length, 3)) + " kN")
-                        comps = [round(resultant_force.x, 3), round(resultant_force.y, 3), round(resultant_force.z, 3)]
-                        components.append(comps)
+                        if "resultant_force" in interaction.forces_per_contact:
+                            resultant_force = Vector(*interaction.forces_per_contact["resultant_force"])
+                            # print("Resultant force: ", resultant_force, id)
+                            scaled = scale_vector(resultant_force, scale_factor)
+                            resultant_point = Vector(*interaction.forces_per_contact["resultant_point"])
+                            resultant = Vector.sum_vectors([resultant_point, scaled])
+                            resultant_line = Line(Point(*resultant_point), Point(*resultant))
+                            resultants.append(resultant_line)
+                            magnitudes.append(str(round(resultant_force.length, 3)) + " kN")
+                            comps = [
+                                round(resultant_force.x, 3),
+                                round(resultant_force.y, 3),
+                                round(resultant_force.z, 3),
+                            ]
+                            components.append(comps)
         return resultants, magnitudes, components
 
     def check_resultant_points(self):
@@ -1110,129 +1978,8 @@ class Problem3dec(Data):
         return polygons, resultant_points, points_out, points_not_polygon
 
     # =============================================================================
-    # displacement.dat
-    # =============================================================================
-
-    def get_model_timestep(self):
-        with open(os.path.join(self.working_path, "grav_state.txt"), "r") as fo:
-            for line in fo:
-                line = line.strip()
-                if not line:
-                    continue
-                parts = line.split()
-                if not len(parts):
-                    continue
-                if parts[0] == "timestep":
-                    timestep = float(parts[2])
-        return timestep
-
-    def set_block_displacement(self, region=0, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
-
-        displacement_direction = normalize_vector(displacement_direction)
-        single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
-        header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + str(region) + "\n"
-        header += "block apply velocity-y " + str(single_displacement_vector[1]) + " range region " + str(region) + "\n"
-        header += "block apply velocity-z " + str(single_displacement_vector[2]) + " range region " + str(region) + "\n"
-
-        equilibrium = "block apply velocity-x 0.0 range region " + str(region) + "\n"
-        equilibrium += "block apply velocity-y 0.0 range region " + str(region) + "\n"
-        equilibrium += "block apply velocity-z 0.0 range region " + str(region) + "\n"
-        from compas_3dec.datastructure.boundary_condition import BoundaryCondition
-
-        boundary = BoundaryCondition()
-        boundary.region = region
-        boundary.type = "displacement"
-        boundary.direction = displacement_direction
-        boundary.magnitude = displ_magnitude_per_step
-        self.boundary_conditions.append(boundary)
-
-        displacement_data = [header, equilibrium]
-
-        return [displacement_data]
-
-    def set_blocks_displacement(self, regions, displacement_direction=[0, 0, -1], displ_magnitude_per_step=0.001):
-        displacement_direction = normalize_vector(displacement_direction)
-        single_displacement_vector = scale_vector(displacement_direction, displ_magnitude_per_step)
-        regions_str = " ".join(str(r) for r in regions)
-        header = "block apply velocity-x " + str(single_displacement_vector[0]) + " range region " + regions_str + "\n"
-        header += "block apply velocity-y " + str(single_displacement_vector[1]) + " range region " + regions_str + "\n"
-        header += "block apply velocity-z " + str(single_displacement_vector[2]) + " range region " + regions_str + "\n"
-
-        equilibrium = "block apply velocity-x 0.0 range region " + regions_str + "\n"
-        equilibrium += "block apply velocity-y 0.0 range region " + regions_str + "\n"
-        equilibrium += "block apply velocity-z 0.0 range region " + regions_str + "\n"
-
-        displacement_data = [header, equilibrium]
-        return displacement_data
-
-    def set_displacement_analysis(
-        self,
-        displacements_list,
-        total_displacement=0.0,
-        displ_magnitude_per_step=0.001,
-        solver_ratio=0.00001,
-        solver_time=3,
-        displacement_capacity=False,
-    ):
-        # get the model timestep calculated by 3DEC from the gravity file
-        timestep = self.get_model_timestep()
-        # number of solver cycles to reach the total displacement
-        number_of_cycles = int(displ_magnitude_per_step / (displ_magnitude_per_step * timestep))
-
-        if not os.path.join(self.working_path, "grav_state.txt"):
-            raise ValueError("Missing gravity file: compute gravity first")
-
-        main_string = ";" + time.strftime("%d/%m/%Y") + " " + time.strftime("%H:%M:%S")
-        main_string += 2 * "\n"
-        main_string += self.restore_analysis("grav")
-        main_string += self.set_damping_local()
-        main_string += 2 * "\n"
-        main_string += self.blocks_output()
-        main_string += self.contacts_output() + "\n"
-
-        displacement_steps = int(total_displacement / displ_magnitude_per_step)
-        if displacement_capacity:
-            displacement_steps = 10000
-        for step in range(displacement_steps):
-            step_name = (
-                "Displacement_step"
-                + "_"
-                + str(step + 1)
-                + "_distance_"
-                + "{:.4f}".format((step + 1) * displ_magnitude_per_step)
-                + "m"
-            )
-            main_string += ";===========================================================================" + "\n"
-            main_string += "; " + str(step_name) + "\n"
-            main_string += ";===========================================================================" + "\n"
-
-            for displacement in displacements_list:
-                main_string += displacement[0]
-            main_string += "model cycle " + str(number_of_cycles) + "\n"
-            main_string += "\n"
-            main_string += ";===========================================================================" + "\n"
-            main_string += "; Equilibrium calculation" + "\n"
-            main_string += ";===========================================================================" + "\n"
-            for displacement in displacements_list:
-                main_string += displacement[1]
-            main_string += "model solve unbalanced-maximum {} time".format(solver_ratio) + " " + str(solver_time) + "\n"
-            main_string += self.save_blocks_output(step_name)
-            step_name_contact = step_name + "_contacts"
-            main_string += self.save_contacts_output(step_name_contact)
-            main_string += self.save_analysis(step_name)
-            main_string += self.check_and_exit(solver_ratio)
-            main_string += "\n"
-
-            output_path = self.working_path
-            filename = "displacement.dat"
-            with open(os.path.join(output_path, filename), "w") as file:
-                file.write(main_string)
-        return filename, displacement_steps, displ_magnitude_per_step
-
-    # =============================================================================
     # utilities
     # =============================================================================
-
     def check_and_exit(self, solve_ratio):
 
         check_and_exit = """
@@ -1475,32 +2222,12 @@ model restore "./{}.sav"
                     if solve_r <= 1.0000e-05:
                         print("Equilibrium reached")
                         print("solve ratio = " + str(solve_r))
+                        result = "Equilibrium"
                     else:
                         print("Equilibrium NOT reached")
                         print("solve ratio = " + str(solve_r))
-        return
-
-    def _check_and_delete_gravity_files(self, current_directory):
-        # Get the current working directory
-        # current_directory = os.getcwd()
-        print(f"Checking in the current directory: {current_directory}")
-
-        # List of files to check and potentially delete
-        files_to_check = ["init_state.txt", "grav_state.txt", "contact_grav.txt"]
-
-        # Iterate through each file in the list
-        for file_name in files_to_check:
-            # Construct the full path to the file
-            full_path = os.path.join(current_directory, file_name)
-
-            # Check if the file exists
-            if os.path.exists(full_path):
-                # If the file exists, delete it
-                os.remove(full_path)
-                print(f"Deleted {file_name}")
-            else:
-                # If the file does not exist, print a message
-                print(f"{file_name} does not exist in the current directory and was not deleted")
+                        result = "Collapse"
+        return result
 
     # =============================================================================
     # damping
@@ -1510,7 +2237,6 @@ model restore "./{}.sav"
 
     def set_damping_global(self, fac=False, f1=None, f2=None):
         header = "block mech damping global"
-
         if fac:
             header = "block mech damping global" + " " + str(fac) + " " + str(f1) + " " + str(f2)
         return header
@@ -1543,7 +2269,3 @@ model restore "./{}.sav"
         """
         header = "block mech damping rayleigh" + " " + str(f1) + " " + str(f2) + " " + str(keyword)
         return header
-
-    # =============================================================================
-    # View
-    # =============================================================================

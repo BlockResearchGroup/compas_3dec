@@ -5,6 +5,58 @@ from compas.geometry import Point, Vector, Line, Polygon
 
 
 class Interaction3dec(Data):
+    """
+    Represents a contact interaction between blocks in a 3DEC model.
+
+    Parameters
+    ----------
+    neighbours : list, optional
+        List of neighbouring block indices or identifiers involved in the interaction.
+    type : int or str, optional
+        Type or category of the interaction (e.g., contact type).
+    normal : Vector or list[float], optional
+        Normal vector at the contact interface.
+    position : Vector or list[float], optional
+        Position vector of the contact point.
+    contact_geometry : Polygon, Line, or Point, optional
+        Geometry object representing the contact area or line.
+    forces_per_vertices : list[dict], optional
+        List of dictionaries containing force and stress data per contact vertex.
+    forces_per_contact : dict, optional
+        Dictionary containing resultant forces, moments, and application points for the contact.
+
+    Attributes
+    ----------
+    neighbours : list
+        Neighbouring blocks involved in the interaction.
+    type : int or str
+        Type or category of the interaction.
+    normal : Vector or list[float]
+        Normal vector at the contact interface.
+    position : Vector or list[float]
+        Position vector of the contact point.
+    contact_geometry : Polygon, Line, or Point
+        Geometry object representing the contact area or line.
+    forces_per_vertices : list[dict]
+        Force and stress data per contact vertex.
+    forces_per_contact : dict
+        Resultant forces, moments, and application points for the contact.
+
+    Examples
+    --------
+    >>> interaction = Interaction3dec(
+    ...     neighbours=[1, 2],
+    ...     type=0,
+    ...     normal=[0, 0, 1],
+    ...     position=[1.0, 2.0, 3.0],
+    ...     contact_geometry=Polygon(...),
+    ...     forces_per_vertices=[{"position": [1,2,3], "normal_force": [0,0,1], ...}],
+    ...     forces_per_contact={"resultant_force": [0,0,100], "resultant_point": [1,2,3]}
+    ... )
+    >>> print(interaction)
+    [type: 0, neighbours: [1, 2], normal: [0, 0, 1], position: [1.0, 2.0, 3.0], ...]
+    """
+
     def __init__(
         self,
         neighbours=None,  # type: list | None

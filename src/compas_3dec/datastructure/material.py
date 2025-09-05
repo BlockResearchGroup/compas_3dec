@@ -2,6 +2,42 @@ from compas.data import Data
 
 
 class Material(Data):
+    """
+    Represents a material with mechanical properties for use in 3DEC models.
+
+    Parameters
+    ----------
+    name : str, optional
+        Name of the material.
+    E : float, optional
+        Young's modulus of the material.
+    poisson : float, optional
+        Poisson's ratio of the material.
+    rho : float, optional
+        Density of the material.
+    group : list, optional
+        List of group names or indices associated with the material.
+
+    Attributes
+    ----------
+    name : str
+        Name of the material.
+    E : float
+        Young's modulus.
+    poisson : float
+        Poisson's ratio.
+    rho : float
+        Density.
+    group : list
+        Associated groups.
+
+    Examples
+    --------
+    >>> mat = Material(name="Stone", E=30e9, poisson=0.2, rho=2500)
+    >>> print(mat)
+    Stone E: 30000000000.0 poisson: 0.2 rho: 2500 group: []
+    """
+
     def __init__(
         self,
         name=None,  # type: str

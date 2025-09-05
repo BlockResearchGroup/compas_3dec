@@ -2,6 +2,42 @@ from compas.data import Data
 
 
 class MohrCoulomb(Data):
+    """
+    Represents a Mohr-Coulomb failure criterion for use in 3DEC models.
+
+    Parameters
+    ----------
+    name : str, optional
+        Name of the failure criterion (default is "MohrCoulomb").
+    friction : float, optional
+        Friction angle or coefficient.
+    cohesion : float, optional
+        Cohesion value (default is 0).
+    dilation : float, optional
+        Dilation angle or coefficient (default is 0).
+    tension : float, optional
+        Tensile strength (default is 0).
+
+    Attributes
+    ----------
+    name : str
+        Name of the failure criterion.
+    friction : float
+        Friction angle or coefficient.
+    cohesion : float
+        Cohesion value.
+    dilation : float
+        Dilation angle or coefficient.
+    tension : float
+        Tensile strength.
+
+    Examples
+    --------
+    >>> fc = MohrCoulomb(friction=30, cohesion=1000, dilation=5, tension=0)
+    >>> print(fc)
+    [name: MohrCoulomb, friction: 30, cohesion: 1000, dilation: 5, tension: 0]
+    """
+
     def __init__(
         self,
         name="MohrCoulomb",

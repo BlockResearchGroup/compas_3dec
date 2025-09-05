@@ -3,6 +3,39 @@ from compas_3dec.datastructure.failure_criteria import MohrCoulomb
 
 
 class ContactProperty(Data):
+    """
+    Represents contact properties for block interactions in a 3DEC model.
+
+    Parameters
+    ----------
+    stiffness : tuple[float, float], optional
+        Tuple containing normal and shear stiffness values.
+    failure_criteria : MohrCoulomb, optional
+        Failure criterion assigned to the contact (e.g., Mohr-Coulomb).
+    group : list, optional
+        List of group names or indices associated with the contact property.
+    name : str, optional
+        Name of the contact property.
+
+    Attributes
+    ----------
+    stiffness : tuple[float, float]
+        Normal and shear stiffness values.
+    failure_criteria : MohrCoulomb
+        Failure criterion assigned to the contact.
+    group : list
+        Associated groups.
+    name : str
+        Name of the contact property.
+
+    Examples
+    --------
+    >>> fc = MohrCoulomb(friction=30, cohesion=1000)
+    >>> cp = ContactProperty(stiffness=(1e7, 5e6), failure_criteria=fc, group=["Blocks"], name="DryJoint")
+    >>> print(cp)
+    [Stiffness: (10000000.0, 5000000.0), failure_criteria: [name: MohrCoulomb, friction: 30, cohesion: 1000, dilation: 0, tension: 0], group: ['Blocks'], Name: DryJoint]
+    """
+
     def __init__(
         self,
         stiffness=None,  # type: tuple[float, float]
