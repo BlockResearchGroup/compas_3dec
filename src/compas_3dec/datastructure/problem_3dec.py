@@ -1919,7 +1919,6 @@ class Problem3dec(Data):
 
     def support_resultants(self, scale_factor):
         from compas.geometry import scale_vector
-
         resultants = []
         magnitudes = []
         components = []
