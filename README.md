@@ -1,7 +1,7 @@
 # compas_3dec
 
 `compas_3dec` is a COMPAS integration for preparing, running, and
-post-processing rigid-block analyses with Itasca 3DEC.
+post-processing rigid-block analyses with 3DEC by Itasca Consulting Group.
 
 ## Installation
 
