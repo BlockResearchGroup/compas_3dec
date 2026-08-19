@@ -1,0 +1,9 @@
+name: compas-3dec-dev
+channels:
+  - conda-forge
+dependencies:
+  - python >=3.9
+  - pip
+  - compas >=2.0
+  - pip:
+      - -e .[dev,docs]

@@ -1,27 +1,23 @@
-from __future__ import print_function
+# ruff: noqa: F401
 
-import os
+from compas_3dec.analysis import ThreeDECAnalysis
+from compas_3dec.analysis import ThreeDECAnalysisBuilder
+from compas_3dec.solver import find_3dec_executable
+from compas_3dec.solver import ThreeDECSolver
 
 
 __author__ = ["Alessandro Dell'Endice, Petras Vestartas"]
 __copyright__ = "Block Research Group"
 __license__ = "MIT License"
 __email__ = "dellendice@arch.ethz.ch"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
-HERE = os.path.dirname(__file__)
-
-HOME = os.path.abspath(os.path.join(HERE, "../../"))
-DATA = os.path.abspath(os.path.join(HOME, "data"))
-DOCS = os.path.abspath(os.path.join(HOME, "docs"))
-TEMP = os.path.abspath(os.path.join(HOME, "temp"))
-log = "compas_3dec: 0.1.0"
-
-__all__ = ["HOME", "DATA", "DOCS", "TEMP"]
-
-__all_plugins__ = [
-    "compas_3dec.scene",
-    "compas_3dec.notebook.scene",
-    "compas_3dec.rhino.scene",
+__all__ = [
+    "ThreeDECAnalysis",
+    "ThreeDECAnalysisBuilder",
+    "ThreeDECSolver",
+    "find_3dec_executable",
 ]
+
+__all_plugins__ = []

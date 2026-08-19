@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+build/
 env/
 develop-eggs/
 dist/
@@ -98,6 +99,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+.pytest_cache/
+.ruff_cache/
 
 # ==============================================================================
 # compas_3dec
@@ -109,11 +112,10 @@ ENV/
 
 temp/**
 !temp/PLACEHOLDER
+scripts/runs/
 
 .DS_Store
 
 .vscode
-
-docs/api/generated/
 
 conda.recipe/

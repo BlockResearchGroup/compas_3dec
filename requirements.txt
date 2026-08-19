@@ -1,6 +1,0 @@
-compas >=2.0
-compas_notebook >=0.5
-compas_model >= 0.3
-compas_viewer
-jupyter
-

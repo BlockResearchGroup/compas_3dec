@@ -1,92 +1,58 @@
 # compas_3dec
 
-Discrete Element Modelling add-on for the COMPAS framework using 3DEC by Itasca
+`compas_3dec` is a COMPAS integration for preparing, running, and
+post-processing rigid-block analyses with Itasca 3DEC.
 
+## Installation
 
-## Getting started with this project
+```bash
+pip install -e .
+```
 
-### Setup code editor
+Install development, visualisation, and documentation dependencies with:
 
-1. Open project folder in VS Code
-2. Select python environment for the project
-3. First time using VS Code and on Windows? Make sure select the correct terminal profile: `Ctrl+Shift+P`, `Terminal: Select Default Profile` and select `Command Prompt`.
+```bash
+pip install -e .[dev,docs]
+```
 
-> All terminal commands in the following sections can be run from the VS Code integrated terminal. 
+The 3DEC executable is proprietary and must be installed separately.
 
+## Usage
 
-### First steps with git
+```python
+from compas_3dec import ThreeDECAnalysisBuilder, ThreeDECSolver
 
-1. Go to the `Source control` tab
-2. Make an initial commit with all newly created files
+builder = ThreeDECAnalysisBuilder.from_meshes(meshes, name="Arch gravity")
+builder.set_material(density=2500, young_modulus=25e9, poisson_ratio=0.2)
+builder.set_supports([0, 9])
+builder.set_contact_properties()
+builder.add_gravity()
 
+analysis = builder.build()
+results = ThreeDECSolver(workspace=r"C:\path\to\runs").solve(analysis)
+```
 
-### First steps with code
+Inputs can also be translated from a `compas_dem` problem with
+`ThreeDECAnalysisBuilder.from_dem_problem`.
 
-1. Install the newly created project 
+Native results can be processed selectively or converted to the limited
+`compas_dem.Results` contract:
 
-        pip install -e .
+```python
+contacts = results.postprocess_contacts(analysis)
+failure = results.postprocess_failure(analysis)
+dem_results = results.to_compas_dem_results(analysis)
+```
 
-2. Install it on Rhino
+## Development
 
-        python -m compas_rhino.install
+```bash
+pytest
+ruff check .
+ruff format .
+mkdocs serve
+```
 
-
-### Code conventions
-
-Code convention follows [PEP8](https://pep8.org/) style guidelines and line length of 120 characters.
-
-1. Check adherence to style guidelines
-
-        invoke lint
-
-2. Format code automatically
-
-        invoke format
-
-
-### Documentation
-
-Documentation is generated automatically out of docstrings and [RST](https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html) files in this repository
-
-1. Generate the docs
-
-        invoke docs
-
-2. Check links in docs are valid
-
-        invoke linkcheck
-
-3. Open docs in your browser (file explorer -> `dist/docs/index.html`)
-
-
-### Testing
-
-Tests are written using the [pytest](https://docs.pytest.org/) framework
-
-1. Run all tests from terminal
-
-        invoke test
-
-2. Or run them from VS Code from the `Testing` tab
-
-
-### Developing Grasshopper components
-
-We use [Grasshopper Componentizer](https://github.com/compas-dev/compas-actions.ghpython_components) to develop Python components that can be stored and edited on git.
-
-1. Build components
-
-        invoke build-ghuser-components
-
-2. Install components on Rhino
-
-        python -m compas_rhino.install
-
-
-### Publish release
-
-Releases follow the [semver](https://semver.org/spec/v2.0.0.html) versioning convention.
-
-1. Create a new release
-
-        invoke release major
+Automated tests live in `tests/`. Executable analysis and visualisation
+scripts live in `scripts/`. Generated solver runs should be stored outside the
+repository or in an ignored `runs/` directory.

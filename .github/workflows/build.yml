@@ -14,12 +14,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest]
-        python: ['3.9', '3.10', '3.11']
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        python: ['3.10', '3.11', '3.12']
 
     steps:
-      - uses: compas-dev/compas-actions.build@v3
+      - uses: compas-dev/compas-actions.build@v4
         with:
-          python: ${{ matrix.python }}
           invoke_lint: true
           invoke_test: true
+          use_conda: true
+          python: ${{ matrix.python }}
