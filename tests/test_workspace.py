@@ -2,9 +2,9 @@ from compas.datastructures import Mesh
 from compas_dem.interactions import ContactProperties
 from compas_dem.interactions import JointModel
 from compas_dem.interactions import MohrCoulomb
-from compas_dem.material import GenericMaterial
 from compas_dem.problem import BoundaryConditionGroup
 
+from compas_3dec.solver import ThreeDECBlockMaterial
 from compas_3dec.solver import ThreeDECAnalysis
 from compas_3dec.solver import ThreeDECEntityMap
 from compas_3dec.solver import ThreeDECRawResults
@@ -46,7 +46,7 @@ def make_gravity_analysis():
                 "region": 0,
                 "name": "block",
                 "geometry": mesh,
-                "material": GenericMaterial(density=1800),
+                "material": ThreeDECBlockMaterial(density=1800),
                 "is_support": True,
             }
         ],
