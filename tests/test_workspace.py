@@ -1,13 +1,13 @@
+from types import SimpleNamespace
+
 from compas.datastructures import Mesh
-from compas_dem.interactions import ContactProperties
-from compas_dem.interactions import JointModel
-from compas_dem.interactions import MohrCoulomb
-from compas_dem.problem import BoundaryConditionGroup
 
 from compas_3dec.solver import ThreeDECBlockMaterial
+from compas_3dec.solver import ThreeDECContactProperties
 from compas_3dec.solver import ThreeDECAnalysis
 from compas_3dec.solver import ThreeDECEntityMap
 from compas_3dec.solver import ThreeDECRawResults
+from compas_3dec.solver import ThreeDECStage
 from compas_3dec import ThreeDECSolver
 from compas_3dec.solver import ThreeDECStagePlan
 
@@ -34,7 +34,6 @@ def make_gravity_analysis():
         region=0,
         vertices=[(vertex, mesh.vertex_coordinates(vertex)) for vertex in mesh.vertices()],
     )
-    boundary_condition = BoundaryConditionGroup(name="gravity", g=9.81)
     return ThreeDECAnalysis(
         name="gravity",
         model_id="model",
@@ -51,12 +50,21 @@ def make_gravity_analysis():
             }
         ],
         supports=[0],
-        boundary_conditions=[boundary_condition],
-        contact_properties=ContactProperties(
-            contact_model=MohrCoulomb(mu=0.6),
-            joint_model=JointModel(kn=1e9, kt=5e8),
+        boundary_conditions=[],
+        contact_properties=ThreeDECContactProperties(
+            stiffness_normal=1e9,
+            stiffness_shear=5e8,
+            friction=35.0,
         ),
         entity_map=mapping,
+        stages=[
+            ThreeDECStage(
+                name="gravity",
+                kind="gravity",
+                gravity=9.81,
+                options={"gravity_steps": 10, "ratio": 1e-5, "ratio_keyword": "ratio-local", "time": 1.0},
+            )
+        ],
     )
 
 
@@ -119,13 +127,20 @@ def test_default_run_directory_uses_analysis_name_and_timestamp(tmp_path):
 
 def test_compas_dem_point_loads_use_direct_load_schema():
     analysis = make_gravity_analysis()
-    boundary = analysis.boundary_conditions[0]
-    boundary.add_point_load(block_index=0, force=[0, 0, -2000])
-    boundary.add_point_load(
-        block_index=0,
-        force=[3000, 0, 0],
-        point=[0.0, 0.0, 1.0],
-    )
+    analysis.stages = []
+    analysis.boundary_conditions = [
+        SimpleNamespace(
+            guid="boundary-condition",
+            g=None,
+            body_forces=[],
+            point_loads=[
+                {"block_index": 0, "force": [0, 0, -2000]},
+                {"block_index": 0, "force": [3000, 0, 0], "point": [0.0, 0.0, 1.0]},
+            ],
+            surface_loads=[],
+            displacements=[],
+        )
+    ]
 
     loads = ThreeDECStagePlan.from_analysis(analysis).stage("loads").point_loads
 
