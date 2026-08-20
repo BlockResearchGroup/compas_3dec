@@ -29,11 +29,14 @@ classifiers = [
 dependencies = ["compas>=2.0"]
 
 [project.optional-dependencies]
-dem = ["compas_dem", "compas_model"]
+dem = [
+    "compas_dem @ git+https://github.com/adellendice/compas_dem.git@ecc18e467d38df2a5271ec0a3305285de1a79d8e",
+    "compas_model",
+]
 dev = [
     "build",
     "bump-my-version",
-    "compas_dem",
+    "compas_dem @ git+https://github.com/adellendice/compas_dem.git@ecc18e467d38df2a5271ec0a3305285de1a79d8e",
     "compas_invocations2",
     "compas_model",
     "invoke>=0.14",
