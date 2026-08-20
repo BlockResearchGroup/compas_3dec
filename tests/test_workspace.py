@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 from compas.datastructures import Mesh
+from compas_dem.problem import BoundaryConditionGroup
 
 from compas_3dec.solver import ThreeDECBlockMaterial
 from compas_3dec.solver import ThreeDECContactProperties
@@ -149,3 +150,23 @@ def test_compas_dem_point_loads_use_direct_load_schema():
     assert loads[0]["direction"] == [0.0, 0.0, -1.0]
     assert loads[1]["kind"] == "sphere"
     assert loads[1]["point"] == [0.0, 0.0, 1.0]
+
+
+def test_prepare_run_indexes_compas_dem_load_stage(tmp_path):
+    """A DEM-derived load stage must also exist in the result-state index."""
+    analysis = make_gravity_analysis()
+    analysis.stages = []
+    boundary_condition = BoundaryConditionGroup(name="gravity-and-load")
+    boundary_condition.add_gravity(g=9.81)
+    boundary_condition.add_point_load(block_index=0, force=[0, 0, -2000])
+    analysis.boundary_conditions = [boundary_condition]
+
+    workspace = ThreeDECSolver(version="7.0", workspace=tmp_path).prepare_run(
+        analysis,
+        run_id="dem-load",
+    )
+    manifest = workspace.read_manifest()
+
+    assert workspace.file("loads.dat").is_file()
+    assert "loads" in manifest["result_states"]
+    assert manifest["result_states"]["loads"]["source_state"] == "gravity"

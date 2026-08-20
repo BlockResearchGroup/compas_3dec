@@ -69,12 +69,18 @@ def prescribed_displacements_at_step(displacements, step):
     return output
 
 
-def result_state_plan(analysis):
-    """Build the ordered result-state index for an analysis."""
+def result_state_plan(analysis, stage_plan=None):
+    """Build the ordered result-state index for an analysis.
+
+    A prepared COMPAS DEM analysis stores boundary-condition groups rather than
+    direct stages. In that case the solver passes the semantic stage plan it has
+    already derived from those groups.
+    """
     states = {
         "initial": {"raw": "results-initial.txt", "json": "results-initial.json", "save": "initial.sav"},
     }
-    stages = [stage for stage in analysis.stages if stage.kind != "initialization"]
+    source_stages = stage_plan.stages if stage_plan is not None else analysis.stages
+    stages = [stage for stage in source_stages if stage.kind != "initialization"]
     gravity = next((stage for stage in stages if stage.kind == "gravity"), None)
     if gravity is not None:
         states["gravity"] = {

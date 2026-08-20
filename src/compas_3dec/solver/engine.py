@@ -99,10 +99,10 @@ class ThreeDECSolver:
                 final_results_filename=final_results_filename,
             ),
         )
-        state_plan = result_state_plan(analysis)
+        state_plan = result_state_plan(analysis, stage_plan=stage_plan)
         phases = [stage for stage in stage_plan.stages if stage.kind in ("loads", "displacements")]
         stage_decks = []
-        previous_state = "gravity"
+        previous_state = "gravity" if "gravity" in state_plan else "initial"
         kind_counts = {"loads": 0, "displacements": 0}
         for index, stage in enumerate(phases):
             kind_counts[stage.kind] += 1
