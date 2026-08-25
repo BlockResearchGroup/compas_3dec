@@ -237,45 +237,51 @@ def draw_results(
             attr.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
         return attr
 
-    for category, items in visual.items():
-        # Backward-compatible aggregate; Rhino draws the two independently
-        # switchable label categories below instead.
-        if category == "reaction_labels":
-            continue
-        if not items:
-            continue
-        for index, item in enumerate(items):
-            # The backend-neutral reaction arrow contains one shaft followed
-            # by two geometric arrowhead segments. Rhino uses its clearer
-            # native curve decoration, so only add each shaft here.
-            if category in ("reaction_force_lines", "prescribed_displacement_lines") and index % 3:
+    redraw_was_enabled = sc.doc.Views.RedrawEnabled
+    sc.doc.Views.RedrawEnabled = False
+    try:
+        for category, items in visual.items():
+            # Backward-compatible aggregate; Rhino draws the two independently
+            # switchable label categories below instead.
+            if category == "reaction_labels":
                 continue
-            attr = attributes(category, index)
-            if isinstance(item, Mesh):
-                guid = sc.doc.Objects.AddMesh(mesh_to_rhino(item, disjoint=False), attr)
-            elif isinstance(item, Line):
-                guid = sc.doc.Objects.AddLine(line_to_rhino(item), attr)
-            elif isinstance(item, Point):
-                guid = sc.doc.Objects.AddPoint(point_to_rhino(item), attr)
-            elif isinstance(item, Polygon):
-                points = [Rhino.Geometry.Point3d(*point) for point in item.points]
-                points.append(points[0])
-                guid = sc.doc.Objects.AddPolyline(points, attr)
-            elif category in (
-                "reaction_labels",
-                "reaction_magnitude_labels",
-                "reaction_component_labels",
-                "applied_load_labels",
-                "prescribed_displacement_labels",
-            ) and isinstance(item, dict):
-                text_dot = Rhino.Geometry.TextDot(
-                    item["text"],
-                    Rhino.Geometry.Point3d(*item["point"]),
-                )
-                guid = sc.doc.Objects.AddTextDot(text_dot, attr)
-            else:
+            if not items:
                 continue
-            if guid:
-                output[category].append(guid)
-    sc.doc.Views.Redraw()
+            for index, item in enumerate(items):
+                # The backend-neutral reaction arrow contains one shaft followed
+                # by two geometric arrowhead segments. Rhino uses its clearer
+                # native curve decoration, so only add each shaft here.
+                if category in ("reaction_force_lines", "prescribed_displacement_lines") and index % 3:
+                    continue
+                attr = attributes(category, index)
+                if isinstance(item, Mesh):
+                    guid = sc.doc.Objects.AddMesh(mesh_to_rhino(item, disjoint=False), attr)
+                elif isinstance(item, Line):
+                    guid = sc.doc.Objects.AddLine(line_to_rhino(item), attr)
+                elif isinstance(item, Point):
+                    guid = sc.doc.Objects.AddPoint(point_to_rhino(item), attr)
+                elif isinstance(item, Polygon):
+                    points = [Rhino.Geometry.Point3d(*point) for point in item.points]
+                    points.append(points[0])
+                    guid = sc.doc.Objects.AddPolyline(points, attr)
+                elif category in (
+                    "reaction_labels",
+                    "reaction_magnitude_labels",
+                    "reaction_component_labels",
+                    "applied_load_labels",
+                    "prescribed_displacement_labels",
+                ) and isinstance(item, dict):
+                    text_dot = Rhino.Geometry.TextDot(
+                        item["text"],
+                        Rhino.Geometry.Point3d(*item["point"]),
+                    )
+                    guid = sc.doc.Objects.AddTextDot(text_dot, attr)
+                else:
+                    continue
+                if guid:
+                    output[category].append(guid)
+    finally:
+        sc.doc.Views.RedrawEnabled = redraw_was_enabled
+        if redraw_was_enabled:
+            sc.doc.Views.Redraw()
     return output

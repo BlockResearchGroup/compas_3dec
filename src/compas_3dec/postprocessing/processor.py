@@ -31,8 +31,14 @@ class ThreeDECPostProcessor:
         """Compute contact mechanics and failure-state indicators."""
         return self.process(components=("contacts", "failure"), **options)
 
-    def to_compas_dem_results(self):
-        """Create the limited result contract consumed by COMPAS DEM."""
+    def to_compas_dem_results(self, include_native=False):
+        """Create the compact result contract consumed by COMPAS DEM.
+
+        Parameters
+        ----------
+        include_native : bool, optional
+            Include duplicated native diagnostic records. Default is ``False``.
+        """
         from .compas_dem import create_compas_dem_results
 
-        return create_compas_dem_results(self.analysis, self.raw_results)
+        return create_compas_dem_results(self.analysis, self.raw_results, include_native=include_native)

@@ -44,11 +44,19 @@ class ThreeDECRawResults(Data):
             metadata=data.get("metadata", {}),
         )
 
-    def to_compas_dem_results(self, analysis):
-        """Convert these records to the limited ``compas_dem.Results`` contract."""
+    def to_compas_dem_results(self, analysis, include_native=False):
+        """Convert these records to the compact ``compas_dem.Results`` contract.
+
+        Parameters
+        ----------
+        analysis : :class:`compas_3dec.analysis.ThreeDECAnalysis`
+            Analysis providing the entity mapping.
+        include_native : bool, optional
+            Include duplicated native diagnostic records. Default is ``False``.
+        """
         from compas_3dec.postprocessing import ThreeDECPostProcessor
 
-        return ThreeDECPostProcessor(analysis, self).to_compas_dem_results()
+        return ThreeDECPostProcessor(analysis, self).to_compas_dem_results(include_native=include_native)
 
     def postprocess(self, analysis, **kwargs):
         """Derive selected mechanics from these native records."""

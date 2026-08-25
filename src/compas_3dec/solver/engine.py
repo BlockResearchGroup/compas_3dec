@@ -2,6 +2,7 @@ import os
 import subprocess
 from pathlib import Path
 from time import perf_counter
+from time import sleep
 
 import compas
 from compas_3dec.analysis import ThreeDECAnalysis
@@ -35,6 +36,9 @@ class ThreeDECSolver:
         suppress_output=True,
         timeout=None,
         gridpoint_tolerance=1e-6,
+        progress_callback=None,
+        event_pump=None,
+        poll_interval=0.2,
     ):
         self.version = str(version)
         self.executable = executable
@@ -43,7 +47,98 @@ class ThreeDECSolver:
         self.suppress_output = bool(suppress_output)
         self.timeout = timeout
         self.gridpoint_tolerance = float(gridpoint_tolerance)
+        self.progress_callback = progress_callback
+        self.event_pump = event_pump
+        self.poll_interval = max(float(poll_interval), 0.01)
         self.fish = fish_dialect(self.version)
+
+    def _report_progress(self, **event):
+        """Forward one concise runtime event to an optional caller callback."""
+        if self.progress_callback is not None:
+            self.progress_callback(event)
+
+    def _run_process(self, command, workspace, started_at, progress_entries):
+        """Run one hidden 3DEC process while polling progress and UI events."""
+        creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        process = subprocess.Popen(
+            command,
+            cwd=str(workspace.path),
+            stdout=subprocess.DEVNULL if self.suppress_output else None,
+            stderr=subprocess.DEVNULL if self.suppress_output else None,
+            creationflags=creationflags,
+        )
+        reported = set()
+        try:
+            while process.poll() is None:
+                if self.timeout is not None and perf_counter() - started_at >= float(self.timeout):
+                    process.kill()
+                    process.wait()
+                    raise subprocess.TimeoutExpired(command, self.timeout)
+
+                for entry in progress_entries:
+                    if entry["state"] in reported or not workspace.file(entry["raw"]).is_file():
+                        continue
+                    reported.add(entry["state"])
+                    self._report_progress(**entry)
+
+                if self.event_pump is not None:
+                    self.event_pump()
+                sleep(self.poll_interval)
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait()
+
+        for entry in progress_entries:
+            if entry["state"] not in reported and workspace.file(entry["raw"]).is_file():
+                self._report_progress(**entry)
+        return process.returncode
+
+    @staticmethod
+    def _stage_progress_entries(manifest, stage):
+        """Describe the small result files that mark completed stage steps."""
+        if stage is None or stage.kind not in ("loads", "displacements"):
+            return []
+        prefix = stage.name.replace("loads", "load", 1).replace("displacements", "displacement", 1)
+        candidates = []
+        for state, item in manifest.get("result_states", {}).items():
+            if not state.startswith("{}-step-".format(prefix)) or item.get("step") is None:
+                continue
+            candidates.append((int(item["step"]), state, item))
+        total = max((step for step, _, _ in candidates), default=0)
+        output = []
+        for step, state, item in sorted(candidates):
+            if stage.kind == "loads":
+                magnitude = sum(
+                    sum(float(value) ** 2 for value in load.get("force", [])) ** 0.5
+                    for load in item.get("applied_loads", [])
+                )
+                value = "{:.3f} kN".format(magnitude / 1000.0)
+                label = "Load"
+            else:
+                magnitude = max(
+                    (
+                        sum(float(value) ** 2 for value in displacement.get("displacement", [])) ** 0.5
+                        for displacement in item.get("prescribed_displacements", [])
+                    ),
+                    default=0.0,
+                )
+                value = "{:.4f} m".format(magnitude)
+                label = "Displacement"
+            output.append(
+                {
+                    "status": "step_complete",
+                    "stage": stage.name,
+                    "stage_kind": stage.kind,
+                    "state": state,
+                    "raw": item["raw"],
+                    "step": step,
+                    "total_steps": total,
+                    "value": magnitude,
+                    "message": "{}: step {}/{} - {}".format(label, step, total, value),
+                }
+            )
+        return output
 
     def create_results(self, analysis, raw_results):
         """Convert native records into ``compas_dem.Results`` explicitly."""
@@ -231,6 +326,8 @@ class ThreeDECSolver:
 
         workspace = self.prepare_run(analysis, run_id=run_id)
         manifest = workspace.read_manifest()
+        stage_plan = ThreeDECStagePlan.from_analysis(analysis)
+        phase_stages = [stage for stage in stage_plan.stages if stage.kind in ("loads", "displacements")]
         deck_names = [manifest["files"]["deck"]]
         stage_decks = manifest["files"].get("stage_decks")
         if stage_decks:
@@ -241,39 +338,41 @@ class ThreeDECSolver:
             if manifest["files"].get("displacement_deck"):
                 deck_names.append(manifest["files"]["displacement_deck"])
         commands = [[str(executable)] + self.arguments + [deck_name] for deck_name in deck_names]
-        creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
 
         workspace.update_manifest(status="running", commands=commands)
         completed = None
-        for command in commands:
-            remaining_timeout = None
-            if self.timeout is not None:
-                remaining_timeout = max(
-                    1e-6,
-                    float(self.timeout) - (perf_counter() - started_at),
-                )
-            completed = subprocess.run(
-                command,
-                cwd=str(workspace.path),
-                stdout=subprocess.DEVNULL if self.suppress_output else None,
-                stderr=subprocess.DEVNULL if self.suppress_output else None,
-                creationflags=creationflags,
-                timeout=remaining_timeout,
-                check=False,
+        for command_index, command in enumerate(commands):
+            stage = phase_stages[command_index - 1] if command_index else stage_plan.stage("gravity")
+            stage_name = stage.name if stage is not None else "initialisation"
+            stage_kind = stage.kind if stage is not None else "initialization"
+            self._report_progress(
+                status="stage_started",
+                stage=stage_name,
+                stage_kind=stage_kind,
+                message="3DEC: running {}".format(stage_name.replace("-", " ")),
             )
-            if completed.returncode != 0:
+            progress_entries = self._stage_progress_entries(manifest, stage)
+            returncode = self._run_process(command, workspace, started_at, progress_entries)
+            completed = subprocess.CompletedProcess(command, returncode)
+            if returncode != 0:
                 workspace.update_manifest(
                     status="failed",
-                    returncode=completed.returncode,
+                    returncode=returncode,
                     failed_command=command,
                 )
                 raise RuntimeError(
                     "3DEC exited with return code {} while running {}. Run workspace: {}".format(
-                        completed.returncode,
+                        returncode,
                         command[-1],
                         workspace.path,
                     )
                 )
+            self._report_progress(
+                status="stage_complete",
+                stage=stage_name,
+                stage_kind=stage_kind,
+                message="3DEC: completed {}".format(stage_name.replace("-", " ")),
+            )
 
         initial_path = workspace.file(manifest["files"]["initial_results"])
         final_path = workspace.file(manifest["files"]["final_results"])
@@ -310,7 +409,6 @@ class ThreeDECSolver:
             }
         )
 
-        stage_plan = ThreeDECStagePlan.from_analysis(analysis)
         equilibrium_stage = stage_plan.stage("displacements") or stage_plan.stage("loads") or stage_plan.stage("gravity")
         if equilibrium_stage is not None and final.metadata.get("ratio_local") is not None:
             target = float(equilibrium_stage.options.get("ratio", 1e-5))
@@ -400,6 +498,12 @@ class ThreeDECSolver:
             contact_count=final.metadata.get("contact_count", 0),
         )
         self.report_solve_summary(final, elapsed_seconds=elapsed_seconds)
+        self._report_progress(
+            status="complete",
+            stage="complete",
+            stage_kind="complete",
+            message="3DEC solve complete in {:.1f} s".format(elapsed_seconds),
+        )
         return final
 
     def solve_compas_dem(self, analysis, run_id=None):

@@ -152,6 +152,54 @@ def test_compas_dem_point_loads_use_direct_load_schema():
     assert loads[1]["point"] == [0.0, 0.0, 1.0]
 
 
+def test_compas_dem_groups_become_sequential_stages_in_registered_order():
+    analysis = make_gravity_analysis()
+    analysis.stages = []
+
+    gravity = BoundaryConditionGroup(name="Gravity")
+    gravity.add_gravity(g=9.81)
+    settlement = BoundaryConditionGroup(name="Support settlement")
+    settlement.add_displacement(block_index=0, dx=0.001, dy=None, dz=None)
+    live_load = BoundaryConditionGroup(name="Live load")
+    live_load.add_point_load(block_index=0, force=[0, 0, -2000])
+    analysis.boundary_conditions = [gravity, settlement, live_load]
+
+    plan = ThreeDECStagePlan.from_analysis(analysis)
+
+    assert [stage.kind for stage in plan.stages] == ["initialization", "gravity", "displacements", "loads"]
+    assert [stage.name for stage in plan.stages] == [
+        "initialization",
+        "gravity",
+        "support-settlement-displacements",
+        "live-load-loads",
+    ]
+    assert plan.stages[2].source_boundary_conditions == [str(settlement.guid)]
+    assert plan.stages[3].source_boundary_conditions == [str(live_load.guid)]
+
+
+def test_compas_dem_configured_load_groups_share_one_stage():
+    analysis = make_gravity_analysis()
+    analysis.stages = []
+
+    gravity = BoundaryConditionGroup(name="Gravity")
+    gravity.add_gravity(g=9.81)
+    dead = BoundaryConditionGroup(name="Dead load")
+    dead.add_point_load(block_index=0, force=[0, 0, -1000])
+    live = BoundaryConditionGroup(name="Live load")
+    live.add_point_load(block_index=0, force=[0, 0, -2000])
+    analysis.boundary_conditions = [gravity, dead, live]
+    analysis.solver_configuration = {
+        "name": "3DEC",
+        "parameters": {"stages": [["Gravity"], ["Dead load", "Live load"]]},
+    }
+
+    plan = ThreeDECStagePlan.from_analysis(analysis)
+
+    assert [stage.kind for stage in plan.stages] == ["initialization", "gravity", "loads"]
+    assert len(plan.stages[2].point_loads) == 2
+    assert plan.stages[2].source_boundary_conditions == [str(dead.guid), str(live.guid)]
+
+
 def test_prepare_run_indexes_compas_dem_load_stage(tmp_path):
     """A DEM-derived load stage must also exist in the result-state index."""
     analysis = make_gravity_analysis()
@@ -168,5 +216,5 @@ def test_prepare_run_indexes_compas_dem_load_stage(tmp_path):
     manifest = workspace.read_manifest()
 
     assert workspace.file("loads.dat").is_file()
-    assert "loads" in manifest["result_states"]
-    assert manifest["result_states"]["loads"]["source_state"] == "gravity"
+    assert "gravity-and-load-loads" in manifest["result_states"]
+    assert manifest["result_states"]["gravity-and-load-loads"]["source_state"] == "gravity"

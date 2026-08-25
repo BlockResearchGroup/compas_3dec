@@ -1,3 +1,4 @@
+import re
 from math import sqrt
 
 from compas.data import Data
@@ -5,6 +6,20 @@ from compas.data import Data
 
 def _value(item, name, default=None):
     return item.get(name, default) if isinstance(item, dict) else getattr(item, name, default)
+
+
+def _stage_name(group, kind, used):
+    """Return a filesystem-safe, unique stage name derived from a DEM group."""
+    label = str(getattr(group, "name", "") or kind).strip().lower()
+    label = re.sub(r"[^a-z0-9]+", "-", label).strip("-") or kind
+    base = "{}-{}".format(label, kind)
+    name = base
+    index = 2
+    while name in used:
+        name = "{}-{}".format(base, index)
+        index += 1
+    used.add(name)
+    return name
 
 
 def _direct_point_load(load, default_steps=1, default_radius=0.01):
@@ -162,9 +177,11 @@ class ThreeDECStagePlan(Data):
     def from_analysis(cls, analysis):
         """Build initialization, gravity, load and displacement stages.
 
-        Multiple COMPAS DEM boundary-condition groups are combined because the
-        current ``Problem.solve`` contract solves them concurrently. Supports
-        are read from the model during analysis preparation; prescribed zero
+        COMPAS DEM boundary-condition groups become sequential 3DEC stages in
+        their registered order. Gravity is extracted into the mandatory first
+        stage. A group containing both loads and prescribed displacements is
+        split into a load stage followed by a displacement stage. Supports are
+        read from the model during analysis preparation; prescribed zero
         translations are not reinterpreted as supports.
         """
         supports = set(analysis.supports)
@@ -181,25 +198,15 @@ class ThreeDECStagePlan(Data):
             )
 
         gravity_values = set()
-        body_forces = []
-        point_loads = []
-        surface_loads = []
-        displacements = []
-        sources = []
-
+        gravity_sources = []
         for boundary_condition in analysis.boundary_conditions:
-            sources.append(str(boundary_condition.guid))
             gravity = getattr(boundary_condition, "g", None)
             if gravity is not None:
                 gravity_values.add(float(gravity))
-            body_forces.extend(list(boundary_condition.body_forces))
-            point_loads.extend(list(boundary_condition.point_loads))
-            surface_loads.extend(list(boundary_condition.surface_loads))
-
-            displacements.extend(list(boundary_condition.displacements))
+                gravity_sources.append(str(boundary_condition.guid))
 
         if len(gravity_values) > 1:
-            raise ValueError("Concurrent boundary conditions specify different gravity values: {}.".format(sorted(gravity_values)))
+            raise ValueError("Boundary conditions specify different gravity values: {}.".format(sorted(gravity_values)))
 
         solver_parameters = {}
         if analysis.solver_configuration is not None:
@@ -231,36 +238,31 @@ class ThreeDECStagePlan(Data):
             "damping": solver_parameters.get("displacement_damping", "local"),
         }
 
-        point_loads = [
-            _direct_point_load(
-                load,
-                default_steps=solver_parameters.get("load_steps", 1),
-                default_radius=solver_parameters.get("load_radius", 0.01),
-            )
-            for load in point_loads
-        ]
-        blocks = {int(block["node"]): block for block in analysis.blocks}
-        surface_loads = [
-            _direct_surface_load(
-                load,
-                blocks,
-                default_steps=solver_parameters.get("load_steps", 1),
-                range_tolerance=solver_parameters.get("surface_load_range_tolerance"),
-            )
-            for load in surface_loads
-        ]
-        displacements = [
-            item
-            for item in (
-                _direct_displacement(
-                    displacement,
-                    default_steps=solver_parameters.get("displacement_steps", 1),
+        boundary_conditions = list(analysis.boundary_conditions)
+        configured_stages = solver_parameters.get("stages")
+        phase_by_guid = {}
+        if configured_stages:
+            by_name = {str(_value(condition, "name", "")): condition for condition in boundary_conditions}
+            configured_names = [str(name) for phase in configured_stages for name in phase]
+            unknown = [name for name in configured_names if name not in by_name]
+            missing = [name for name in by_name if name not in configured_names]
+            if unknown or missing or len(configured_names) != len(set(configured_names)):
+                raise ValueError(
+                    "Invalid 3DEC stage plan. Unknown: {}; missing: {}; duplicate names: {}.".format(
+                        unknown,
+                        missing,
+                        len(configured_names) != len(set(configured_names)),
+                    )
                 )
-                for displacement in displacements
-            )
-            if item is not None
-        ]
+            boundary_conditions = [by_name[name] for name in configured_names]
+            for phase_index, phase in enumerate(configured_stages):
+                conditions = [by_name[str(name)] for name in phase]
+                if len(conditions) > 1 and any(_value(condition, "displacements", []) for condition in conditions):
+                    raise ValueError("A 3DEC stage containing prescribed displacements cannot contain another boundary-condition group.")
+                for condition in conditions:
+                    phase_by_guid[str(_value(condition, "guid"))] = phase_index
 
+        blocks = {int(block["node"]): block for block in analysis.blocks}
         stages = [ThreeDECStage(name="initialization", kind="initialization")]
         if gravity_values:
             stages.append(
@@ -268,32 +270,75 @@ class ThreeDECStagePlan(Data):
                     name="gravity",
                     kind="gravity",
                     gravity=next(iter(gravity_values)),
-                    source_boundary_conditions=sources,
+                    source_boundary_conditions=gravity_sources,
                     options=solve_options,
                 )
             )
-        if body_forces or point_loads or surface_loads:
-            stages.append(
-                ThreeDECStage(
-                    name="loads",
-                    kind="loads",
-                    body_forces=body_forces,
-                    point_loads=point_loads,
-                    surface_loads=surface_loads,
-                    source_boundary_conditions=sources,
-                    options=solve_options,
+
+        used_names = {stage.name for stage in stages}
+        load_stages = {}
+        for boundary_index, boundary_condition in enumerate(boundary_conditions):
+            source = [str(boundary_condition.guid)]
+            body_forces = list(boundary_condition.body_forces)
+            point_loads = [
+                _direct_point_load(
+                    load,
+                    default_steps=solver_parameters.get("load_steps", 1),
+                    default_radius=solver_parameters.get("load_radius", 0.01),
                 )
-            )
-        if displacements:
-            stages.append(
-                ThreeDECStage(
-                    name="displacements",
-                    kind="displacements",
-                    displacements=displacements,
-                    source_boundary_conditions=sources,
-                    options=displacement_options,
+                for load in boundary_condition.point_loads
+            ]
+            surface_loads = [
+                _direct_surface_load(
+                    load,
+                    blocks,
+                    default_steps=solver_parameters.get("load_steps", 1),
+                    range_tolerance=solver_parameters.get("surface_load_range_tolerance"),
                 )
-            )
+                for load in boundary_condition.surface_loads
+            ]
+            displacements = [
+                item
+                for item in (
+                    _direct_displacement(
+                        displacement,
+                        default_steps=solver_parameters.get("displacement_steps", 1),
+                    )
+                    for displacement in boundary_condition.displacements
+                )
+                if item is not None
+            ]
+
+            if body_forces or point_loads or surface_loads:
+                phase_key = phase_by_guid.get(str(boundary_condition.guid), boundary_index)
+                load_stage = load_stages.get(phase_key)
+                if load_stage is None:
+                    load_stage = ThreeDECStage(
+                        name=_stage_name(boundary_condition, "loads", used_names),
+                        kind="loads",
+                        body_forces=body_forces,
+                        point_loads=point_loads,
+                        surface_loads=surface_loads,
+                        source_boundary_conditions=source,
+                        options=solve_options,
+                    )
+                    stages.append(load_stage)
+                    load_stages[phase_key] = load_stage
+                else:
+                    load_stage.body_forces.extend(body_forces)
+                    load_stage.point_loads.extend(point_loads)
+                    load_stage.surface_loads.extend(surface_loads)
+                    load_stage.source_boundary_conditions.extend(source)
+            if displacements:
+                stages.append(
+                    ThreeDECStage(
+                        name=_stage_name(boundary_condition, "displacements", used_names),
+                        kind="displacements",
+                        displacements=displacements,
+                        source_boundary_conditions=source,
+                        options=displacement_options,
+                    )
+                )
 
         return cls(
             name="{} stages".format(analysis.name),

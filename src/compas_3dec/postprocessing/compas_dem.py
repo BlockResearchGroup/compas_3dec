@@ -209,11 +209,14 @@ def block_transformation(analysis, raw_results, region):
     return Transformation.from_matrix(_bestfit_rigid_matrix(source, target))
 
 
-def create_compas_dem_results(analysis, raw_results):
+def create_compas_dem_results(analysis, raw_results, include_native=False):
     """Map parsed 3DEC records to :class:`compas_dem.problem.Results`.
 
     ``compas_dem`` is imported lazily so that direct command-generation
-    parts of ``compas_3dec`` do not require it at import time.
+    parts of ``compas_3dec`` do not require it at import time. By default the
+    result contains only the compact interoperability contract. Set
+    ``include_native=True`` to duplicate native contact and mechanics records
+    into the DEM result for diagnostics; the raw run files are always retained.
     """
     try:
         from compas_dem.interactions import EdgeContact
@@ -230,7 +233,9 @@ def create_compas_dem_results(analysis, raw_results):
 
     mechanics = raw_results.postprocess(
         analysis,
-        components=("blocks", "contacts"),
+        # Block transformations are populated once below. Requesting blocks
+        # here calculated every transformation a first time and discarded it.
+        components=("contacts",),
     )
     mechanics_by_id = {record["contact_id"]: record for record in mechanics.contacts}
 
@@ -303,8 +308,7 @@ def create_compas_dem_results(analysis, raw_results):
                     frame=frame,
                     forces=interaction_forces,
                 )
-            record.update(
-                {
+            converted = {
                     "contact_geometry": derived["geometry"],
                     "contact_polygon": derived["geometry"] if isinstance(derived["geometry"], Polygon) else None,
                     "contact_frame": frame,
@@ -341,9 +345,12 @@ def create_compas_dem_results(analysis, raw_results):
                     ],
                     "gap": [subcontact["displacement_normal"] for subcontact in derived["subcontacts"]],
                     "status": ["open" if subcontact["open"] else "sliding" if subcontact["sliding"] else "closed" for subcontact in derived["subcontacts"]],
-                    "three_dec_mechanics": derived,
                 }
-            )
+            # The derived dictionary duplicates the native contact mechanics
+            # and can be large. Keep it only for the explicit diagnostic route.
+            if include_native:
+                converted["three_dec_mechanics"] = derived
+            record.update(converted)
         edge = analysis.entity_map.bind_contact(
             record["region_a"],
             record["region_b"],
@@ -367,11 +374,11 @@ def create_compas_dem_results(analysis, raw_results):
         "force_tangent2",
         "force_vector",
         "nodal_force_magnitudes",
-        "three_dec_mechanics",
     )
 
     for edge, records in contacts_by_edge.items():
-        results.set_edge(edge, "three_dec_contacts", records)
+        if include_native:
+            results.set_edge(edge, "three_dec_contacts", records)
 
         points = [record["point"] for record in records if record.get("point") is not None]
         if points:
@@ -426,6 +433,8 @@ def create_compas_dem_results(analysis, raw_results):
             for attribute in standard_contact_attributes:
                 if record.get(attribute) is not None:
                     results.set_edge(edge, attribute, record[attribute])
+            if include_native and record.get("three_dec_mechanics") is not None:
+                results.set_edge(edge, "three_dec_mechanics", record["three_dec_mechanics"])
 
     results.metadata.update(raw_results.metadata)
     results.metadata.update(

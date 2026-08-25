@@ -216,7 +216,7 @@ def test_postprocessed_results_are_compas_serializable():
     assert restored.contacts[0]["geometry"] is not None
 
 
-def test_compas_dem_conversion_includes_native_contact_fields():
+def test_compas_dem_conversion_is_compact_by_default_and_native_is_opt_in():
     analysis = make_direct_analysis()
     raw = make_raw_contact_results()
 
@@ -232,11 +232,16 @@ def test_compas_dem_conversion_includes_native_contact_fields():
     assert len(results.force_tangent1(edge)) == 4
     assert len(results.force_tangent2(edge)) == 4
     assert results.status(edge)[0] == "open"
-    assert results.edge_attribute(edge, "three_dec_mechanics") is not None
+    assert results.edge_attribute(edge, "three_dec_mechanics") is None
+    assert results.edge_attribute(edge, "three_dec_contacts") is None
     dem_contact = results.contact_data(edge)
     native = raw.postprocess(analysis).contacts[0]
     assert list(dem_contact.resultantline().vector) == pytest.approx(native["resultant_force"])
     assert list(dem_contact.resultantpoint) == pytest.approx(native["resultant_point"])
+
+    diagnostic = raw.to_compas_dem_results(analysis, include_native=True)
+    assert diagnostic.edge_attribute(edge, "three_dec_mechanics") is not None
+    assert diagnostic.edge_attribute(edge, "three_dec_contacts") is not None
 
 
 def test_compas_dem_adapter_preserves_exterior_native_resultant_point():
