@@ -7,7 +7,6 @@ from compas_dem.problem import Solver
 
 from compas_3dec.solver import ThreeDECAnalysis
 from compas_3dec import ThreeDECAnalysisBuilder
-from compas_3dec import ThreeDECSolver
 
 
 class FakeGraph:
@@ -113,17 +112,6 @@ def test_analysis_builder_reads_complete_compas_dem_problem():
         "name": "3DEC",
         "parameters": {"version": "9.0", "ratio": 1e-6},
     }
-
-
-def test_solver_prepares_compas_dem_problem():
-    model = FakeModel()
-    problem = make_problem(model)
-
-    analysis = ThreeDECSolver().prepare(problem)
-
-    assert isinstance(analysis, ThreeDECAnalysis)
-    assert analysis.model_id == str(model.guid)
-    assert analysis.problem_id == str(problem.guid)
 
 
 def test_dem_problem_uses_global_contact_properties_only():

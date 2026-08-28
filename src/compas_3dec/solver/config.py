@@ -67,7 +67,23 @@ class ThreeDECBlockMaterial(Data):
 
 
 class ThreeDECContactProperties(Data):
-    """Direct contact parameters understood by the 3DEC deck renderer."""
+    """Direct contact parameters understood by the 3DEC deck renderer.
+
+    Parameters
+    ----------
+    stiffness_normal : float, optional
+        Normal joint stiffness in pascals per metre.
+    stiffness_shear : float, optional
+        Shear joint stiffness in pascals per metre.
+    friction : float, optional
+        Friction angle in degrees.
+    cohesion : float, optional
+        Cohesive strength in pascals.
+    tension : float, optional
+        Tensile strength in pascals.
+    name : str, optional
+        Contact-property name.
+    """
 
     def __init__(
         self,
@@ -84,6 +100,16 @@ class ThreeDECContactProperties(Data):
         self.friction = float(friction)
         self.cohesion = float(cohesion)
         self.tension = float(tension)
+        if self.stiffness_normal <= 0.0:
+            raise ValueError("Normal joint stiffness must be positive.")
+        if self.stiffness_shear <= 0.0:
+            raise ValueError("Shear joint stiffness must be positive.")
+        if not 0.0 <= self.friction < 90.0:
+            raise ValueError("Friction angle must be between 0 and 90 degrees.")
+        if self.cohesion < 0.0:
+            raise ValueError("Cohesion must be nonnegative.")
+        if self.tension < 0.0:
+            raise ValueError("Tensile strength must be nonnegative.")
 
     @property
     def __data__(self):

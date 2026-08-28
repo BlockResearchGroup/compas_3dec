@@ -153,18 +153,23 @@ class ThreeDECEntityMap(Data):
         self._edge_by_regions[key] = record
 
     def node_for_region(self, region):
+        """Return the model node mapped to a 3DEC region."""
         return self._block_by_region[int(region)]["node"]
 
     def region_for_node(self, node):
+        """Return the 3DEC region mapped to a model node."""
         return self._block_by_node[int(node)]["region"]
 
     def element_guid_for_node(self, node):
+        """Return the element GUID mapped to a model node."""
         return self._block_by_node[int(node)]["element_guid"]
 
     def node_for_element_guid(self, element_guid):
+        """Return the model node mapped to an element GUID."""
         return self._block_by_guid[str(element_guid)]["node"]
 
     def edge_for_regions(self, region_a, region_b):
+        """Return the model edge joining two 3DEC regions."""
         record = self._edge_by_regions.get(frozenset([int(region_a), int(region_b)]))
         if record is None:
             raise KeyError(
@@ -279,6 +284,7 @@ class ThreeDECEntityMap(Data):
         return {record["vertex"]: record["gridpoint"] for record in records}
 
     def gridpoint_for_vertex(self, node, vertex):
+        """Return the bound 3DEC gridpoint for a model vertex."""
         node = int(node)
         for record in self.vertices:
             if record["node"] == node and record["vertex"] == vertex:
@@ -293,6 +299,7 @@ class ThreeDECEntityMap(Data):
         raise KeyError("Vertex {} on graph node {} is not mapped.".format(vertex, node))
 
     def vertex_for_gridpoint(self, node, gridpoint):
+        """Return the model vertex bound to a 3DEC gridpoint."""
         node = int(node)
         gridpoint = int(gridpoint)
         for record in self.vertices:

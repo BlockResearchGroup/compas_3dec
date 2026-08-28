@@ -62,6 +62,14 @@ def test_direct_stage_plan_adds_initialisation():
     assert plan.stage("gravity").options["gravity_steps"] == 5
 
 
+@pytest.mark.parametrize("options", [{"g": 0.0}, {"gravity_steps": 0}, {"ratio": 0.0}, {"time": 0.0}])
+def test_gravity_rejects_nonpositive_configuration(options):
+    builder = ThreeDECAnalysisBuilder.from_analysis(make_direct_analysis())
+
+    with pytest.raises(ValueError, match="positive"):
+        builder.add_gravity(**options)
+
+
 def test_calculate_joint_stiffness_for_one_material():
     material = ThreeDECBlockMaterial(2500, 30e9, 0.25)
 
@@ -107,7 +115,7 @@ def test_direct_analysis_generates_gravity_workspace(tmp_path):
     assert "model save './gravity.sav' compress" in deck
 
 
-def test_synchronized_sphere_and_centroid_point_loads(tmp_path):
+def test_synchronised_sphere_and_centroid_point_loads(tmp_path):
     builder = ThreeDECAnalysisBuilder.from_analysis(make_direct_analysis())
     builder.add_point_load(
         magnitude=10000,
@@ -175,7 +183,7 @@ def test_centroid_load_applies_the_magnitude_to_each_selected_block(tmp_path):
     assert "model solve ratio-local 1e-05 or cycles 500" in deck
 
 
-def test_face_stress_is_incremented_and_synchronized_with_point_loads(tmp_path):
+def test_face_stress_is_incremented_and_synchronised_with_point_loads(tmp_path):
     builder = ThreeDECAnalysisBuilder.from_analysis(make_direct_analysis())
     load = builder.add_face_stress(
         block=1,
@@ -271,7 +279,7 @@ def test_displacement_stage_restores_gravity_and_equilibrates_each_increment(tmp
     assert manifest["result_states"]["displacement-step-0002"]["prescribed_displacements"][0]["magnitude"] == pytest.approx(0.002)
 
 
-def test_multiple_displacements_are_synchronized_and_load_state_is_restored(tmp_path):
+def test_multiple_displacements_are_synchronised_and_load_state_is_restored(tmp_path):
     builder = ThreeDECAnalysisBuilder.from_analysis(make_direct_analysis())
     builder.add_point_load(
         magnitude=1000,
@@ -418,6 +426,13 @@ def test_surface_load_capacity_uses_traction_increment(tmp_path):
     assert deck.count("system.command('exit')") == 3
 
 
+def test_surface_load_rejects_unknown_stage_options():
+    builder = ThreeDECAnalysisBuilder.from_analysis(make_direct_analysis())
+
+    with pytest.raises(TypeError, match="Unexpected load option: cycle"):
+        builder.add_surface_load(block=1, face=0, load=[0, 0, -1000], cycle=5000)
+
+
 def test_displacement_capacity_uses_cumulative_increment(tmp_path):
     builder = ThreeDECAnalysisBuilder.from_analysis(make_direct_analysis())
     displacement = builder.add_displacement_capacity(
@@ -445,6 +460,23 @@ def test_direct_builder_validates_required_configuration():
     builder.set_material(density=1800, young_modulus=25e9, poisson_ratio=0.2)
     with pytest.raises(ValueError, match="contact properties"):
         builder.build()
+
+
+@pytest.mark.parametrize(
+    ("options", "message"),
+    [
+        ({"kn": 0.0}, "Normal joint stiffness"),
+        ({"kt": 0.0}, "Shear joint stiffness"),
+        ({"friction": 90.0}, "Friction angle"),
+        ({"cohesion": -1.0}, "Cohesion"),
+        ({"tension": -1.0}, "Tensile strength"),
+    ],
+)
+def test_contact_properties_reject_nonphysical_values(options, message):
+    builder = ThreeDECAnalysisBuilder.from_analysis(make_direct_analysis())
+
+    with pytest.raises(ValueError, match=message):
+        builder.set_contact_properties(**options)
 
 
 def test_direct_interfaces_are_optional_and_serialisable():

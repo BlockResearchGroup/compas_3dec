@@ -1,5 +1,7 @@
+import subprocess
 from types import SimpleNamespace
 
+import pytest
 from compas.datastructures import Mesh
 from compas_dem.problem import BoundaryConditionGroup
 
@@ -11,6 +13,9 @@ from compas_3dec.solver import ThreeDECRawResults
 from compas_3dec.solver import ThreeDECStage
 from compas_3dec import ThreeDECSolver
 from compas_3dec.solver import ThreeDECStagePlan
+from compas_3dec.solver.engine import _capacity_stage
+from compas_3dec.solver.engine import _last_equilibrium_stage
+from compas_3dec.solver.io import ThreeDECWorkspace
 
 
 def make_gravity_analysis():
@@ -88,7 +93,27 @@ def test_solver_reports_elapsed_time_and_equilibrium(capsys):
     assert "Target solve ratio = 1e-05" in output
 
 
-def test_prepare_run_writes_isolated_serializable_workspace(tmp_path):
+def test_solver_records_timeout_as_failed_run(tmp_path, monkeypatch):
+    executable = tmp_path / "3dec-console.exe"
+    executable.touch()
+    runs = tmp_path / "runs"
+    solver = ThreeDECSolver(executable=executable, workspace=runs, timeout=1)
+
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired([str(executable), "analysis.dat"], 1)
+
+    monkeypatch.setattr(solver, "_run_process", timeout)
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        solver.solve(make_gravity_analysis(), run_id="timeout-test")
+
+    manifest = ThreeDECWorkspace(runs / "timeout-test").read_manifest()
+    assert manifest["status"] == "failed"
+    assert manifest["failure"] == "timeout"
+    assert manifest["timeout"] == 1
+
+
+def test_prepare_run_writes_isolated_serialisable_workspace(tmp_path):
     analysis = make_gravity_analysis()
     solver = ThreeDECSolver(
         version="9.0",
@@ -126,13 +151,19 @@ def test_default_run_directory_uses_analysis_name_and_timestamp(tmp_path):
     assert workspace.path.name == workspace.run_id
 
 
+@pytest.mark.parametrize("run_id", ["../outside", "..\\outside", "C:\\outside", "bad:name"])
+def test_explicit_run_id_cannot_escape_workspace(tmp_path, run_id):
+    with pytest.raises(ValueError, match="run_id"):
+        ThreeDECWorkspace.create(root=tmp_path, run_id=run_id)
+
+
 def test_compas_dem_point_loads_use_direct_load_schema():
     analysis = make_gravity_analysis()
     analysis.stages = []
     analysis.boundary_conditions = [
         SimpleNamespace(
             guid="boundary-condition",
-            g=None,
+            g=9.81,
             body_forces=[],
             point_loads=[
                 {"block_index": 0, "force": [0, 0, -2000]},
@@ -150,6 +181,42 @@ def test_compas_dem_point_loads_use_direct_load_schema():
     assert loads[0]["direction"] == [0.0, 0.0, -1.0]
     assert loads[1]["kind"] == "sphere"
     assert loads[1]["point"] == [0.0, 0.0, 1.0]
+
+
+def test_compas_dem_loads_require_gravity():
+    analysis = make_gravity_analysis()
+    analysis.stages = []
+    boundary_condition = SimpleNamespace(
+        guid="live-load",
+        g=None,
+        body_forces=[],
+        point_loads=[{"block_index": 0, "force": [0, 0, -2000]}],
+        surface_loads=[],
+        displacements=[],
+    )
+    analysis.boundary_conditions = [boundary_condition]
+
+    with pytest.raises(ValueError, match="require exactly one gravity stage"):
+        ThreeDECStagePlan.from_analysis(analysis)
+
+
+def test_final_stage_controls_convergence_and_capacity_detection():
+    load = {"capacity": False}
+    capacity_load = {"capacity": True}
+    plan = ThreeDECStagePlan(
+        stages=[
+            ThreeDECStage(name="initialization", kind="initialization"),
+            ThreeDECStage(name="gravity", kind="gravity", options={"ratio": 1e-4}),
+            ThreeDECStage(name="loads", kind="loads", point_loads=[load], options={"ratio": 1e-5}),
+            ThreeDECStage(name="displacements", kind="displacements", displacements=[{"capacity": False}], options={"ratio": 1e-6}),
+            ThreeDECStage(name="loads-2", kind="loads", point_loads=[capacity_load], options={"ratio": 1e-7}),
+        ]
+    )
+
+    assert _last_equilibrium_stage(plan).name == "loads-2"
+    stage, kind = _capacity_stage(plan)
+    assert stage.name == "loads-2"
+    assert kind == "load"
 
 
 def test_compas_dem_groups_become_sequential_stages_in_registered_order():

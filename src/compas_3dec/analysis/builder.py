@@ -10,6 +10,51 @@ from .analysis import ThreeDECAnalysis
 from .mapping import ThreeDECEntityMap
 
 
+def _elastic_moduli(material):
+    """Return the Young and shear moduli of a material."""
+    if material is None:
+        raise ValueError("A material is required to calculate joint stiffness.")
+    young_modulus = getattr(material, "E", None)
+    shear_modulus = getattr(material, "G", None)
+    if young_modulus is None or shear_modulus is None:
+        raise ValueError("The material must define Young's modulus and Poisson's ratio.")
+    return float(young_modulus), float(shear_modulus)
+
+
+def _positive(value, name):
+    """Return a positive float or raise a descriptive error."""
+    value = float(value)
+    if value <= 0.0:
+        raise ValueError("{} must be positive.".format(name))
+    return value
+
+
+def _group_name(name):
+    """Validate and return one public 3DEC block-group name."""
+    name = str(name).strip()
+    if not name:
+        raise ValueError("Group names cannot be empty.")
+    return name
+
+
+def _load_options(options):
+    """Normalise optional load-stage settings and reject spelling mistakes."""
+    options = dict(options)
+    values = {
+        "ratio": options.pop("equilibrium_ratio", 1e-5),
+        "keyword": options.pop("ratio_keyword", "ratio-local"),
+        "solve_time": options.pop("solve_time", None),
+        "cycles": options.pop("cycles", 15000),
+        "save_steps": options.pop("save_steps", True),
+        "stop_on_nonconvergence": options.pop("stop_on_nonconvergence", True),
+        "damping": options.pop("damping", "global"),
+    }
+    if options:
+        names = ", ".join(sorted(options))
+        raise TypeError("Unexpected load option{}: {}.".format("s" if len(options) > 1 else "", names))
+    return values
+
+
 class ThreeDECAnalysisBuilder:
     """Prepare a portable 3DEC analysis from COMPAS DEM or direct input.
 
@@ -39,13 +84,41 @@ class ThreeDECAnalysisBuilder:
 
     @classmethod
     def from_meshes(cls, meshes, name=None, **kwargs):
+        """Create a direct-input builder from block meshes.
+
+        Parameters
+        ----------
+        meshes : sequence[:class:`compas.datastructures.Mesh`]
+            Closed meshes representing 3DEC blocks.
+        name : str, optional
+            Analysis name.
+        **kwargs : dict, optional
+            Additional builder constructor arguments.
+
+        Returns
+        -------
+        :class:`ThreeDECAnalysisBuilder`
+            Builder containing the supplied blocks.
+        """
         builder = cls(name=name, **kwargs)
         builder.add_blocks(meshes)
         return builder
 
     @classmethod
     def from_dem_problem(cls, problem):
-        """Prepare a builder from a complete ``compas_dem`` problem."""
+        """Prepare a builder from a complete ``compas_dem`` problem.
+
+        Parameters
+        ----------
+        problem : :class:`compas_dem.problem.Problem`
+            Problem with a linked block model, boundary conditions, contact
+            properties, and solver configuration.
+
+        Returns
+        -------
+        :class:`ThreeDECAnalysisBuilder`
+            Builder populated from the solver-independent problem.
+        """
         return cls.from_analysis(ThreeDECAnalysis.from_dem_problem(problem))
 
     @classmethod
@@ -93,7 +166,18 @@ class ThreeDECAnalysisBuilder:
 
     @classmethod
     def from_analysis(cls, analysis):
-        """Prepare a builder from an existing portable analysis snapshot."""
+        """Prepare a builder from an existing portable analysis snapshot.
+
+        Parameters
+        ----------
+        analysis : :class:`ThreeDECAnalysis`
+            Existing portable analysis.
+
+        Returns
+        -------
+        :class:`ThreeDECAnalysisBuilder`
+            Mutable builder containing a copy of the analysis input.
+        """
         if not isinstance(analysis, ThreeDECAnalysis):
             raise TypeError("from_analysis expects a ThreeDECAnalysis.")
         builder = cls(
@@ -124,6 +208,28 @@ class ThreeDECAnalysisBuilder:
         support=False,
         group="block",
     ):
+        """Add one rigid block.
+
+        Parameters
+        ----------
+        mesh : :class:`compas.datastructures.Mesh`
+            Closed block mesh.
+        node : int, optional
+            Stable block identifier. The next index is used by default.
+        name : str, optional
+            Block name.
+        material : :class:`ThreeDECBlockMaterial`, optional
+            Block material.
+        support : bool, optional
+            Whether the block is fixed during gravity.
+        group : str, optional
+            Public 3DEC block group.
+
+        Returns
+        -------
+        int
+            Assigned block identifier.
+        """
         if not isinstance(mesh, Mesh):
             raise TypeError("Direct 3DEC blocks must be COMPAS Mesh objects.")
         node = len(self._blocks) if node is None else int(node)
@@ -136,7 +242,7 @@ class ThreeDECAnalysisBuilder:
             "name": name or "block-{}".format(node),
             "geometry": mesh.copy(),
             "material": material,
-            "group": self._group_name(group),
+            "group": _group_name(group),
             "is_support": bool(support),
         }
         self._blocks.append(block)
@@ -147,12 +253,24 @@ class ThreeDECAnalysisBuilder:
         return node
 
     def add_blocks(self, meshes):
+        """Add multiple rigid blocks.
+
+        Parameters
+        ----------
+        meshes : sequence[:class:`compas.datastructures.Mesh`]
+            Closed block meshes.
+
+        Returns
+        -------
+        list[int]
+            Assigned block identifiers.
+        """
         return [self.add_block(mesh) for mesh in meshes]
 
     def start_new_phase(self):
         """Make the next boundary condition start from a new saved state.
 
-        Consecutive compatible calls are synchronized by default. Call this
+        Consecutive compatible calls are synchronised by default. Call this
         between them when the next load or displacement should restore the
         final ``.sav`` file produced by the preceding phase.
         """
@@ -161,7 +279,7 @@ class ThreeDECAnalysisBuilder:
 
     def add_group(self, name, nodes=None):
         """Add a block group and optionally assign blocks to it."""
-        name = self._group_name(name)
+        name = _group_name(name)
         self._groups.add(name)
         if nodes is not None:
             self.assign_blocks_to_group(name, nodes)
@@ -169,7 +287,7 @@ class ThreeDECAnalysisBuilder:
 
     def assign_blocks_to_group(self, name, nodes):
         """Assign each selected block to exactly one group."""
-        name = self._group_name(name)
+        name = _group_name(name)
         self._groups.add(name)
         for block in self._selected_blocks(nodes):
             block["group"] = name
@@ -183,6 +301,28 @@ class ThreeDECAnalysisBuilder:
         name=None,
         group=None,
     ):
+        """Assign an isotropic material to selected blocks.
+
+        Parameters
+        ----------
+        density : float
+            Mass density in kilograms per cubic metre.
+        young_modulus : float
+            Young's modulus in pascals.
+        poisson_ratio : float
+            Poisson's ratio.
+        nodes : sequence[int], optional
+            Block identifiers. All blocks are selected by default.
+        name : str, optional
+            Material name.
+        group : str, optional
+            Select blocks by group instead of by identifier.
+
+        Returns
+        -------
+        :class:`ThreeDECBlockMaterial`
+            Assigned material.
+        """
         if nodes is not None and group is not None:
             raise ValueError("Select material blocks by either nodes or group, not both.")
         material = ThreeDECBlockMaterial(
@@ -197,6 +337,13 @@ class ThreeDECAnalysisBuilder:
         return material
 
     def set_supports(self, nodes):
+        """Replace the set of fixed support blocks.
+
+        Parameters
+        ----------
+        nodes : sequence[int]
+            Block identifiers to fix.
+        """
         nodes = {int(node) for node in nodes}
         known = {block["node"] for block in self._blocks}
         unknown = sorted(nodes - known)
@@ -207,6 +354,15 @@ class ThreeDECAnalysisBuilder:
             block["is_support"] = block["node"] in nodes
 
     def add_interface(self, node_a, node_b):
+        """Register an expected interface between two blocks.
+
+        Parameters
+        ----------
+        node_a : int
+            First block identifier.
+        node_b : int
+            Second block identifier.
+        """
         node_a, node_b = int(node_a), int(node_b)
         known = {block["node"] for block in self._blocks}
         if node_a not in known or node_b not in known:
@@ -225,6 +381,28 @@ class ThreeDECAnalysisBuilder:
         tension=0.0,
         name=None,
     ):
+        """Set the default joint properties for all contacts.
+
+        Parameters
+        ----------
+        kn : float, optional
+            Normal joint stiffness in pascals per metre.
+        kt : float, optional
+            Shear joint stiffness in pascals per metre.
+        friction : float, optional
+            Friction angle in degrees.
+        cohesion : float, optional
+            Cohesion in pascals.
+        tension : float, optional
+            Tensile strength in pascals.
+        name : str, optional
+            Property-set name.
+
+        Returns
+        -------
+        :class:`ThreeDECContactProperties`
+            Assigned default properties.
+        """
         self._contact_properties = ThreeDECContactProperties(
             stiffness_normal=kn,
             stiffness_shear=kt,
@@ -336,13 +514,13 @@ class ThreeDECAnalysisBuilder:
         tuple[float, float]
             Normal and shear joint stiffness in pascals per metre.
         """
-        E, G = ThreeDECAnalysisBuilder._elastic_moduli(material)
-        height = ThreeDECAnalysisBuilder._positive(block_height, "block_height")
-        reduction = ThreeDECAnalysisBuilder._positive(reduction_factor, "reduction_factor")
+        E, G = _elastic_moduli(material)
+        height = _positive(block_height, "block_height")
+        reduction = _positive(reduction_factor, "reduction_factor")
         kn = E / height
         kt = G / height
         if block_length is not None:
-            length = ThreeDECAnalysisBuilder._positive(block_length, "block_length")
+            length = _positive(block_length, "block_length")
             kn = 0.5 * (kn + E / length)
             kt = 0.5 * (kt + G / length)
         return kn / reduction, kt / reduction
@@ -375,11 +553,11 @@ class ThreeDECAnalysisBuilder:
         tuple[float, float]
             Normal and shear joint stiffness in pascals per metre.
         """
-        E1, G1 = ThreeDECAnalysisBuilder._elastic_moduli(block_material)
-        E2, G2 = ThreeDECAnalysisBuilder._elastic_moduli(interface_material)
-        height = ThreeDECAnalysisBuilder._positive(block_height, "block_height")
-        thickness = ThreeDECAnalysisBuilder._positive(interface_thickness, "interface_thickness")
-        reduction = ThreeDECAnalysisBuilder._positive(reduction_factor, "reduction_factor")
+        E1, G1 = _elastic_moduli(block_material)
+        E2, G2 = _elastic_moduli(interface_material)
+        height = _positive(block_height, "block_height")
+        thickness = _positive(interface_thickness, "interface_thickness")
+        reduction = _positive(reduction_factor, "reduction_factor")
         kn = (E1 * E2) / (height * E2 + thickness * E1)
         kt = (G1 * G2) / (height * G2 + thickness * G1)
         return kn / reduction, kt / reduction
@@ -405,23 +583,6 @@ class ThreeDECAnalysisBuilder:
         )
         return self.set_contact_properties(kn=kn, kt=kt, **contact_options)
 
-    @staticmethod
-    def _elastic_moduli(material):
-        if material is None:
-            raise ValueError("A material is required to calculate joint stiffness.")
-        E = getattr(material, "E", None)
-        G = getattr(material, "G", None)
-        if E is None or G is None:
-            raise ValueError("The material must define Young's modulus and Poisson's ratio.")
-        return float(E), float(G)
-
-    @staticmethod
-    def _positive(value, name):
-        value = float(value)
-        if value <= 0.0:
-            raise ValueError("{} must be positive.".format(name))
-        return value
-
     def add_gravity(
         self,
         g=9.81,
@@ -430,11 +591,32 @@ class ThreeDECAnalysisBuilder:
         ratio_keyword="ratio-local",
         time=1.0,
     ):
+        """Add or replace the mandatory first gravity stage.
+
+        Parameters
+        ----------
+        g : float, optional
+            Gravitational acceleration in metres per second squared.
+        gravity_steps : int, optional
+            Number of gravity ramp increments.
+        ratio : float, optional
+            Target local equilibrium ratio.
+        ratio_keyword : str, optional
+            3DEC solve-ratio keyword.
+        time : float, optional
+            Mechanical time used to ramp gravity.
+        """
+        g = _positive(g, "g")
+        gravity_steps = int(gravity_steps)
+        ratio = _positive(ratio, "ratio")
+        time = _positive(time, "time")
+        if gravity_steps <= 0:
+            raise ValueError("gravity_steps must be positive.")
         options = {
-            "gravity_steps": int(gravity_steps),
-            "ratio": float(ratio),
+            "gravity_steps": gravity_steps,
+            "ratio": ratio,
             "ratio_keyword": str(ratio_keyword),
-            "time": float(time),
+            "time": time,
         }
         self._stages = [stage for stage in self._stages if stage.kind != "gravity"]
         self._stages.insert(
@@ -442,7 +624,7 @@ class ThreeDECAnalysisBuilder:
             ThreeDECStage(
                 name="gravity",
                 kind="gravity",
-                gravity=float(g),
+                gravity=g,
                 options=options,
             ),
         )
@@ -469,7 +651,7 @@ class ThreeDECAnalysisBuilder:
         """Add a stepped concentrated load selected by a spherical range.
 
         ``magnitude`` is the total global force reached after ``steps``. The
-        force direction is unitized. By default the distribution count is
+        force direction is normalised. By default the distribution count is
         calculated from the input block vertices inside the sphere. ``cycles``
         is the maximum number of cycles allowed per increment; the solve stops
         earlier when ``equilibrium_ratio`` is reached. ``solve_time`` may add
@@ -521,7 +703,7 @@ class ThreeDECAnalysisBuilder:
         selected rigid-block centroid. ``max_steps`` is a safety limit for a
         structure that remains stable throughout the requested range.
         """
-        increment = self._positive(magnitude_increment, "magnitude_increment")
+        increment = _positive(magnitude_increment, "magnitude_increment")
         maximum = int(max_steps)
         if maximum <= 0:
             raise ValueError("max_steps must be a positive integer.")
@@ -619,7 +801,7 @@ class ThreeDECAnalysisBuilder:
             name=name,
             range_tolerance=range_tolerance,
         )
-        self._add_load_stage(item, collection="surface_loads", **self._load_options(options))
+        self._add_load_stage(item, collection="surface_loads", **_load_options(options))
         return item
 
     def add_surface_load(self, block, face, load, steps=1, name=None, range_tolerance=None, **options):
@@ -647,7 +829,7 @@ class ThreeDECAnalysisBuilder:
             name=name,
             range_tolerance=range_tolerance,
         )
-        self._add_load_stage(item, collection="surface_loads", **self._load_options(options))
+        self._add_load_stage(item, collection="surface_loads", **_load_options(options))
         return item
 
     def add_surface_load_capacity(self, block, face, load_increment, max_steps=100, name=None, range_tolerance=None, **options):
@@ -681,18 +863,6 @@ class ThreeDECAnalysisBuilder:
             capacity_max_steps=maximum,
         )
         return item
-
-    @staticmethod
-    def _load_options(options):
-        return {
-            "ratio": options.pop("equilibrium_ratio", 1e-5),
-            "keyword": options.pop("ratio_keyword", "ratio-local"),
-            "solve_time": options.pop("solve_time", None),
-            "cycles": options.pop("cycles", 15000),
-            "save_steps": options.pop("save_steps", True),
-            "stop_on_nonconvergence": options.pop("stop_on_nonconvergence", True),
-            "damping": options.pop("damping", "global"),
-        }
 
     def _surface_stress(self, block, face, stress, steps, name=None, traction=None, range_tolerance=None):
         block_item = self._selected_blocks([block])[0]
@@ -750,7 +920,7 @@ class ThreeDECAnalysisBuilder:
         damping="local",
         constrain_other_translations=True,
     ):
-        """Prescribe a cumulative rigid-block translation in synchronized steps.
+        """Prescribe a cumulative rigid-block translation in synchronised steps.
 
         The displacement phase derives its cycle count from the current 3DEC
         mechanical timestep. Each phase is followed by zero prescribed
@@ -824,7 +994,7 @@ class ThreeDECAnalysisBuilder:
         and equilibrium is checked at every step. ``max_steps`` is the safety
         termination criterion when the structure remains stable.
         """
-        increment = self._positive(magnitude_increment, "magnitude_increment")
+        increment = _positive(magnitude_increment, "magnitude_increment")
         maximum = int(max_steps)
         if maximum <= 0:
             raise ValueError("max_steps must be a positive integer.")
@@ -919,6 +1089,19 @@ class ThreeDECAnalysisBuilder:
         self._start_new_phase = False
 
     def build(self):
+        """Validate and create a portable analysis snapshot.
+
+        Returns
+        -------
+        :class:`ThreeDECAnalysis`
+            Prepared, serialisable analysis input.
+
+        Raises
+        ------
+        ValueError
+            If required geometry, materials, contact properties, or gravity
+            configuration is missing or inconsistent.
+        """
         if not self._blocks:
             raise ValueError("Add at least one mesh before building the analysis.")
         missing_material = [block["node"] for block in self._blocks if block["material"] is None]
@@ -979,15 +1162,8 @@ class ThreeDECAnalysisBuilder:
             raise ValueError("Unknown direct block nodes: {}.".format(unknown))
         return selected
 
-    @staticmethod
-    def _group_name(name):
-        name = str(name).strip()
-        if not name:
-            raise ValueError("A block group name cannot be empty.")
-        return name
-
     def _require_group(self, name):
-        name = self._group_name(name)
+        name = _group_name(name)
         if name not in self._groups:
             raise ValueError("Unknown block group {!r}.".format(name))
         return name

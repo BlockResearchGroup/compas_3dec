@@ -155,7 +155,7 @@ def postprocess_raw_results(
 
     3DEC normal force is assumed positive in compression by default. A positive
     normal displacement is classified as opening when it exceeds
-    ``opening_tolerance``. Sliding requires both mobilization of the friction
+    ``opening_tolerance``. Sliding requires both mobilisation of the friction
     capacity and a shear displacement larger than
     ``shear_displacement_tolerance``. Hinge candidates are the closed
     subcontact points farthest from the centroid of the opening points; this

@@ -20,11 +20,66 @@ from .stages import ThreeDECStagePlan
 from .states import result_state_plan
 
 
+def _stage_progress_entries(manifest, stage):
+    """Describe result files that mark completed load or displacement steps."""
+    if stage is None or stage.kind not in ("loads", "displacements"):
+        return []
+    prefix = stage.name.replace("loads", "load", 1).replace("displacements", "displacement", 1)
+    candidates = []
+    for state, item in manifest.get("result_states", {}).items():
+        if not state.startswith("{}-step-".format(prefix)) or item.get("step") is None:
+            continue
+        candidates.append((int(item["step"]), state, item))
+    total = max((step for step, _, _ in candidates), default=0)
+    output = []
+    for step, state, item in sorted(candidates):
+        if stage.kind == "loads":
+            magnitude = sum(sum(float(value) ** 2 for value in load.get("force", [])) ** 0.5 for load in item.get("applied_loads", []))
+            value = "{:.3f} kN".format(magnitude / 1000.0)
+            label = "Load"
+        else:
+            magnitude = max(
+                (sum(float(value) ** 2 for value in displacement.get("displacement", [])) ** 0.5 for displacement in item.get("prescribed_displacements", [])),
+                default=0.0,
+            )
+            value = "{:.4f} m".format(magnitude)
+            label = "Displacement"
+        output.append(
+            {
+                "status": "step_complete",
+                "stage": stage.name,
+                "stage_kind": stage.kind,
+                "state": state,
+                "raw": item["raw"],
+                "step": step,
+                "total_steps": total,
+                "value": magnitude,
+                "message": "{}: step {}/{} - {}".format(label, step, total, value),
+            }
+        )
+    return output
+
+
+def _last_equilibrium_stage(stage_plan):
+    """Return the final stage whose local ratio defines convergence."""
+    return next((stage for stage in reversed(stage_plan.stages) if stage.kind in ("gravity", "loads", "displacements")), None)
+
+
+def _capacity_stage(stage_plan):
+    """Return the capacity stage and its result kind, if present."""
+    for stage in reversed(stage_plan.stages):
+        if stage.kind == "displacements" and any(item.get("capacity") for item in stage.displacements or []):
+            return stage, "displacement"
+        if stage.kind == "loads" and any(item.get("capacity") for item in list(stage.point_loads or []) + list(stage.surface_loads or [])):
+            return stage, "load"
+    return None, None
+
+
 class ThreeDECSolver:
     """Runtime orchestration for a 3DEC analysis.
 
     Paths and executable configuration deliberately live here rather than in
-    the serializable :class:`ThreeDECAnalysis`.
+    the serialisable :class:`ThreeDECAnalysis`.
     """
 
     def __init__(
@@ -94,69 +149,21 @@ class ThreeDECSolver:
                 self._report_progress(**entry)
         return process.returncode
 
-    @staticmethod
-    def _stage_progress_entries(manifest, stage):
-        """Describe the small result files that mark completed stage steps."""
-        if stage is None or stage.kind not in ("loads", "displacements"):
-            return []
-        prefix = stage.name.replace("loads", "load", 1).replace("displacements", "displacement", 1)
-        candidates = []
-        for state, item in manifest.get("result_states", {}).items():
-            if not state.startswith("{}-step-".format(prefix)) or item.get("step") is None:
-                continue
-            candidates.append((int(item["step"]), state, item))
-        total = max((step for step, _, _ in candidates), default=0)
-        output = []
-        for step, state, item in sorted(candidates):
-            if stage.kind == "loads":
-                magnitude = sum(
-                    sum(float(value) ** 2 for value in load.get("force", [])) ** 0.5
-                    for load in item.get("applied_loads", [])
-                )
-                value = "{:.3f} kN".format(magnitude / 1000.0)
-                label = "Load"
-            else:
-                magnitude = max(
-                    (
-                        sum(float(value) ** 2 for value in displacement.get("displacement", [])) ** 0.5
-                        for displacement in item.get("prescribed_displacements", [])
-                    ),
-                    default=0.0,
-                )
-                value = "{:.4f} m".format(magnitude)
-                label = "Displacement"
-            output.append(
-                {
-                    "status": "step_complete",
-                    "stage": stage.name,
-                    "stage_kind": stage.kind,
-                    "state": state,
-                    "raw": item["raw"],
-                    "step": step,
-                    "total_steps": total,
-                    "value": magnitude,
-                    "message": "{}: step {}/{} - {}".format(label, step, total, value),
-                }
-            )
-        return output
-
-    def create_results(self, analysis, raw_results):
-        """Convert native records into ``compas_dem.Results`` explicitly."""
-        return raw_results.to_compas_dem_results(analysis)
-
-    def prepare(self, problem):
-        """Convert a ``compas_dem`` problem into a portable 3DEC analysis.
-
-        This method is the solver-adapter entry point used by ``compas_dem``.
-        It does not create a run directory or write 3DEC input files; that
-        happens later in :meth:`prepare_run` when :meth:`solve` is called.
-        """
-        from compas_3dec.analysis import ThreeDECAnalysisBuilder
-
-        return ThreeDECAnalysisBuilder.from_dem_problem(problem).build()
-
     def prepare_run(self, analysis, run_id=None):
-        """Create an isolated dry-run workspace and all solver input files."""
+        """Create an isolated dry-run workspace and all solver input files.
+
+        Parameters
+        ----------
+        analysis : :class:`compas_3dec.analysis.ThreeDECAnalysis`
+            Portable prepared analysis.
+        run_id : str, optional
+            Explicit safe run-directory name.
+
+        Returns
+        -------
+        :class:`ThreeDECWorkspace`
+            Workspace containing the generated data files and manifest.
+        """
         if not isinstance(analysis, ThreeDECAnalysis):
             raise TypeError("prepare_run expects a ThreeDECAnalysis.")
 
@@ -309,6 +316,18 @@ class ThreeDECSolver:
         The 3DEC executable is launched without a shell. The generated data
         file is passed as its final command-line argument, matching the legacy
         invocation used by this repository.
+
+        Parameters
+        ----------
+        analysis : :class:`compas_3dec.analysis.ThreeDECAnalysis`
+            Portable prepared analysis.
+        run_id : str, optional
+            Explicit safe run-directory name.
+
+        Returns
+        -------
+        :class:`ThreeDECRawResults`
+            Native records for the final requested state.
         """
         started_at = perf_counter()
         selected_executable = self.executable or find_3dec_executable(self.version)
@@ -351,8 +370,23 @@ class ThreeDECSolver:
                 stage_kind=stage_kind,
                 message="3DEC: running {}".format(stage_name.replace("-", " ")),
             )
-            progress_entries = self._stage_progress_entries(manifest, stage)
-            returncode = self._run_process(command, workspace, started_at, progress_entries)
+            progress_entries = _stage_progress_entries(manifest, stage)
+            try:
+                returncode = self._run_process(command, workspace, started_at, progress_entries)
+            except subprocess.TimeoutExpired:
+                workspace.update_manifest(
+                    status="failed",
+                    failure="timeout",
+                    timeout=self.timeout,
+                    failed_command=command,
+                )
+                self._report_progress(
+                    status="failed",
+                    stage=stage_name,
+                    stage_kind=stage_kind,
+                    message="3DEC: {} timed out".format(stage_name.replace("-", " ")),
+                )
+                raise
             completed = subprocess.CompletedProcess(command, returncode)
             if returncode != 0:
                 workspace.update_manifest(
@@ -409,22 +443,17 @@ class ThreeDECSolver:
             }
         )
 
-        equilibrium_stage = stage_plan.stage("displacements") or stage_plan.stage("loads") or stage_plan.stage("gravity")
+        equilibrium_stage = _last_equilibrium_stage(stage_plan)
         if equilibrium_stage is not None and final.metadata.get("ratio_local") is not None:
             target = float(equilibrium_stage.options.get("ratio", 1e-5))
             final.metadata["target_ratio"] = target
             final.metadata["converged"] = float(final.metadata["ratio_local"]) <= target
 
-        displacement_stage = stage_plan.stage("displacements")
-        load_stage = stage_plan.stage("loads")
-        capacity_kind = None
-        if displacement_stage is not None and any(item.get("capacity") for item in displacement_stage.displacements or []):
-            capacity_kind = "displacement"
-        elif load_stage is not None and any(item.get("capacity") for item in list(load_stage.point_loads or []) + list(load_stage.surface_loads or [])):
-            capacity_kind = "load"
+        capacity_stage, capacity_kind = _capacity_stage(stage_plan)
 
         if capacity_kind is not None:
-            prefix = "{}-step-".format(capacity_kind)
+            state_prefix = capacity_stage.name.replace("loads", "load", 1).replace("displacements", "displacement", 1)
+            prefix = "{}-step-".format(state_prefix)
             produced = [(name, entry) for name, entry in manifest.get("result_states", {}).items() if name.startswith(prefix) and workspace.file(entry["raw"]).is_file()]
             if produced:
                 _, actual = max(produced, key=lambda pair: int(pair[1].get("step", 0)))
@@ -505,8 +534,3 @@ class ThreeDECSolver:
             message="3DEC solve complete in {:.1f} s".format(elapsed_seconds),
         )
         return final
-
-    def solve_compas_dem(self, analysis, run_id=None):
-        """Run 3DEC and explicitly convert the native output to DEM results."""
-        raw_results = self.solve(analysis, run_id=run_id)
-        return raw_results.to_compas_dem_results(analysis)

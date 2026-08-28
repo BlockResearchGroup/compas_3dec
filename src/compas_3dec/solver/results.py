@@ -2,7 +2,23 @@ from compas.data import Data
 
 
 class ThreeDECRawResults(Data):
-    """Serializable native records produced directly by 3DEC."""
+    """Serialisable native records produced directly by 3DEC.
+
+    Parameters
+    ----------
+    blocks : list[dict], optional
+        Native block records.
+    gridpoints : list[dict], optional
+        Native gridpoint records.
+    contacts : list[dict], optional
+        Native contact and subcontact records.
+    metadata : dict, optional
+        Solver and result-state metadata.
+    schema_version : int, optional
+        Native result schema version.
+    name : str, optional
+        Result-set name.
+    """
 
     CURRENT_SCHEMA_VERSION = 2
 
@@ -53,25 +69,78 @@ class ThreeDECRawResults(Data):
             Analysis providing the entity mapping.
         include_native : bool, optional
             Include duplicated native diagnostic records. Default is ``False``.
+
+        Returns
+        -------
+        :class:`compas_dem.problem.Results`
+            Compact solver-independent result contract.
         """
         from compas_3dec.postprocessing import ThreeDECPostProcessor
 
         return ThreeDECPostProcessor(analysis, self).to_compas_dem_results(include_native=include_native)
 
     def postprocess(self, analysis, **kwargs):
-        """Derive selected mechanics from these native records."""
+        """Derive selected mechanics from these native records.
+
+        Parameters
+        ----------
+        analysis : :class:`compas_3dec.analysis.ThreeDECAnalysis`
+            Analysis providing geometry and entity mappings.
+        **kwargs : dict, optional
+            Options forwarded to :meth:`ThreeDECPostProcessor.process`.
+
+        Returns
+        -------
+        :class:`ThreeDECPostProcessedResults`
+            Selected derived mechanics.
+        """
         from compas_3dec.postprocessing import ThreeDECPostProcessor
 
         return ThreeDECPostProcessor(analysis, self).process(**kwargs)
 
     def postprocess_blocks(self, analysis):
-        """Compute only updated rigid-block transformations."""
+        """Compute only updated rigid-block transformations.
+
+        Parameters
+        ----------
+        analysis : :class:`compas_3dec.analysis.ThreeDECAnalysis`
+            Analysis providing geometry and entity mappings.
+
+        Returns
+        -------
+        :class:`ThreeDECPostProcessedResults`
+            Block transformations without contact mechanics.
+        """
         return self.postprocess(analysis, components=("blocks",))
 
     def postprocess_contacts(self, analysis):
-        """Compute canonical contact forces, resultants, and application points."""
+        """Compute canonical contact forces, resultants, and application points.
+
+        Parameters
+        ----------
+        analysis : :class:`compas_3dec.analysis.ThreeDECAnalysis`
+            Analysis providing geometry and entity mappings.
+
+        Returns
+        -------
+        :class:`ThreeDECPostProcessedResults`
+            Contact mechanics without failure indicators.
+        """
         return self.postprocess(analysis, components=("contacts",))
 
     def postprocess_failure(self, analysis, **kwargs):
-        """Compute contact mechanics and failure-state indicators."""
+        """Compute contact mechanics and failure-state indicators.
+
+        Parameters
+        ----------
+        analysis : :class:`compas_3dec.analysis.ThreeDECAnalysis`
+            Analysis providing geometry and entity mappings.
+        **kwargs : dict, optional
+            Failure thresholds forwarded to the postprocessor.
+
+        Returns
+        -------
+        :class:`ThreeDECPostProcessedResults`
+            Contact mechanics with opening, sliding, and hinge indicators.
+        """
         return self.postprocess(analysis, components=("contacts", "failure"), **kwargs)

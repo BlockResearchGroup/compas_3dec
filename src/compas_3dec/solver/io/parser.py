@@ -50,9 +50,10 @@ def parse_results_text(text, name=None):
         if start < 0:
             continue
         fields = line[start:].strip().split("|")
-        record_type = fields[1]
+        record_type = "unknown"
 
         try:
+            record_type = fields[1] or "unknown"
             if record_type == "META":
                 # Logging is append-by-default in 3DEC. Legacy result files may
                 # therefore contain several complete snapshots. Every capture
@@ -150,6 +151,8 @@ def parse_results_text(text, name=None):
                 if state is not None:
                     record["state"] = state
                 contact_by_id[contact_id]["subcontacts"].append(record)
+            else:
+                raise ValueError("Unknown result record type {}.".format(record_type))
         except (IndexError, TypeError, ValueError) as error:
             raise ValueError(
                 "Invalid {} record on log line {}: {!r}".format(
@@ -176,6 +179,18 @@ def parse_results_text(text, name=None):
 
 
 def parse_results_file(filepath):
+    """Parse a tagged 3DEC result log file.
+
+    Parameters
+    ----------
+    filepath : path-like
+        Result log path.
+
+    Returns
+    -------
+    :class:`ThreeDECRawResults`
+        Parsed native solver records.
+    """
     path = Path(filepath)
     return parse_results_text(
         path.read_text(encoding="utf-8", errors="replace"),

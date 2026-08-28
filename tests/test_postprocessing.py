@@ -201,7 +201,7 @@ def test_native_state_must_agree_before_sliding_is_confirmed():
     assert contact["sliding_inconsistent"] is True
 
 
-def test_postprocessed_results_are_compas_serializable():
+def test_postprocessed_results_are_compas_serialisable():
     analysis = make_direct_analysis()
     post = postprocess_raw_results(
         analysis,

@@ -35,7 +35,7 @@ builder.set_contact_properties(
 )
 
 # Gravity is always first. Later phases follow the order written below.
-# Consecutive load calls are synchronized in one phase. To make the next
+# Consecutive load calls are synchronised in one phase. To make the next
 # boundary condition restore the preceding phase instead, insert:
 # builder.start_new_phase()
 builder.add_gravity(g=9.81, gravity_steps=10)
@@ -89,7 +89,6 @@ solver = ThreeDECSolver(
 )
 raw_results = solver.solve(analysis)
 postprocessed = raw_results.postprocess(analysis)
-
 
 
 print("Run ID:", raw_results.metadata.get("run_id"))

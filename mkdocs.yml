@@ -1,7 +1,7 @@
 site_name: COMPAS 3DEC
-site_url: https://BRG-research.github.io/compas_3dec/
-repo_name: BRG-research/compas_3dec
-repo_url: https://github.com/BRG-research/compas_3dec/
+site_url: https://blockresearchgroup.github.io/compas_3dec/
+repo_name: BlockResearchGroup/compas_3dec
+repo_url: https://github.com/BlockResearchGroup/compas_3dec/
 copyright: Copyright &copy; ETH Zurich - Block Research Group
 
 theme:

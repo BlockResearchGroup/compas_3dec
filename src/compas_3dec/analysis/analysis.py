@@ -30,7 +30,7 @@ def _portable_solver_configuration(solver):
 class ThreeDECAnalysis(Data):
     """Portable prepared input for a 3DEC analysis.
 
-    The analysis is a serializable snapshot. Runtime configuration such as an
+    The analysis is a serialisable snapshot. Runtime configuration such as an
     executable path or working directory belongs to :class:`ThreeDECSolver`
     and is intentionally excluded.
     """

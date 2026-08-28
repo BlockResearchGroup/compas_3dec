@@ -3,16 +3,16 @@ from math import cos
 from math import sin
 from math import sqrt
 
+from compas.geometry import dot_vectors
+from compas.geometry import length_vector
+from compas.geometry import sum_vectors
+
 
 def _sum_vectors(vectors):
     vectors = list(vectors)
     if not vectors:
         return None
-    return [sum(float(vector[index]) for vector in vectors) for index in range(3)]
-
-
-def _vector_length(vector):
-    return sqrt(sum(float(value) ** 2 for value in vector))
+    return sum_vectors(vectors)
 
 
 def _merge_contact_point_forces(points, forces, tolerance=1e-9):
@@ -21,7 +21,7 @@ def _merge_contact_point_forces(points, forces, tolerance=1e-9):
     merged_forces = []
     for point, force in zip(points, forces):
         match = next(
-            (index for index, existing in enumerate(merged_points) if _vector_length([float(point[i]) - float(existing[i]) for i in range(3)]) <= tolerance),
+            (index for index, existing in enumerate(merged_points) if length_vector([float(point[i]) - float(existing[i]) for i in range(3)]) <= tolerance),
             None,
         )
         if match is None:
@@ -40,9 +40,6 @@ def _forces_on_polygon_vertices(points, forces, vertices, tolerance=1e-9):
     if len(vertices) < 3:
         return list(forces)
 
-    def dot(a, b):
-        return sum(a[i] * b[i] for i in range(3))
-
     origin = list(vertices[0])
     for point, force in zip(points, forces):
         point_vector = [float(point[i]) - origin[i] for i in range(3)]
@@ -52,11 +49,11 @@ def _forces_on_polygon_vertices(points, forces, vertices, tolerance=1e-9):
         for index in range(1, len(vertices) - 1):
             a = [float(vertices[index][i]) - origin[i] for i in range(3)]
             b = [float(vertices[index + 1][i]) - origin[i] for i in range(3)]
-            aa, ab, bb = dot(a, a), dot(a, b), dot(b, b)
+            aa, ab, bb = dot_vectors(a, a), dot_vectors(a, b), dot_vectors(b, b)
             denominator = aa * bb - ab * ab
             if abs(denominator) <= 1e-30:
                 continue
-            ap, bp = dot(a, point_vector), dot(b, point_vector)
+            ap, bp = dot_vectors(a, point_vector), dot_vectors(b, point_vector)
             weight_a = (bb * ap - ab * bp) / denominator
             weight_b = (aa * bp - ab * ap) / denominator
             candidate = [1.0 - weight_a - weight_b, weight_a, weight_b]
@@ -76,7 +73,7 @@ def _forces_on_polygon_vertices(points, forces, vertices, tolerance=1e-9):
             else:
                 nearest = min(
                     range(len(vertices)),
-                    key=lambda index: _vector_length([float(point[i]) - float(vertices[index][i]) for i in range(3)]),
+                    key=lambda index: length_vector([float(point[i]) - float(vertices[index][i]) for i in range(3)]),
                 )
                 weights, indices = [1.0], [nearest]
         for vertex_index, weight in zip(indices, weights):
@@ -264,7 +261,7 @@ def create_compas_dem_results(analysis, raw_results, include_native=False):
         record = dict(source_record)
         derived = mechanics_by_id.get(int(record["contact_id"]))
         if derived is not None:
-            normal_length = _vector_length(derived["normal"])
+            normal_length = length_vector(derived["normal"])
             frame = Frame.from_plane(Plane(derived["origin"], derived["normal"])) if normal_length > 1e-30 else None
             resultant = derived["resultant_force"]
             subcontact_shear = [subcontact["force_shear"] for subcontact in derived["subcontacts"]]
@@ -309,43 +306,41 @@ def create_compas_dem_results(analysis, raw_results, include_native=False):
                     forces=interaction_forces,
                 )
             converted = {
-                    "contact_geometry": derived["geometry"],
-                    "contact_polygon": derived["geometry"] if isinstance(derived["geometry"], Polygon) else None,
-                    "contact_frame": frame,
-                    "contact_frames": [frame] * len(derived["subcontacts"]) if frame is not None else None,
-                    "contact_points": contact_points,
-                    "contact_data": contact_data,
-                    "resultant_global": resultant,
-                    "resultant_local": [sum(resultant[index] * axis[index] for index in range(3)) for axis in (frame.xaxis, frame.yaxis, frame.zaxis)]
-                    if frame is not None
-                    else None,
-                    "force_point": derived["resultant_point"],
-                    "force_normal": [subcontact["force_normal"] for subcontact in derived["subcontacts"]],
-                    "force_tangent1": [sum(force[index] * frame.xaxis[index] for index in range(3)) for force in subcontact_shear] if frame is not None else None,
-                    "force_tangent2": [sum(force[index] * frame.yaxis[index] for index in range(3)) for force in subcontact_shear] if frame is not None else None,
-                    "force_vector": [
+                "contact_geometry": derived["geometry"],
+                "contact_polygon": derived["geometry"] if isinstance(derived["geometry"], Polygon) else None,
+                "contact_frame": frame,
+                "contact_frames": [frame] * len(derived["subcontacts"]) if frame is not None else None,
+                "contact_points": contact_points,
+                "contact_data": contact_data,
+                "resultant_global": resultant,
+                "resultant_local": [sum(resultant[index] * axis[index] for index in range(3)) for axis in (frame.xaxis, frame.yaxis, frame.zaxis)] if frame is not None else None,
+                "force_point": derived["resultant_point"],
+                "force_normal": [subcontact["force_normal"] for subcontact in derived["subcontacts"]],
+                "force_tangent1": [sum(force[index] * frame.xaxis[index] for index in range(3)) for force in subcontact_shear] if frame is not None else None,
+                "force_tangent2": [sum(force[index] * frame.yaxis[index] for index in range(3)) for force in subcontact_shear] if frame is not None else None,
+                "force_vector": [
+                    _sum_vectors(
+                        [
+                            subcontact["force_normal_vector"],
+                            subcontact["force_shear"],
+                        ]
+                    )
+                    for subcontact in derived["subcontacts"]
+                ],
+                "nodal_force_magnitudes": [
+                    length_vector(
                         _sum_vectors(
                             [
                                 subcontact["force_normal_vector"],
                                 subcontact["force_shear"],
                             ]
                         )
-                        for subcontact in derived["subcontacts"]
-                    ],
-                    "nodal_force_magnitudes": [
-                        _vector_length(
-                            _sum_vectors(
-                                [
-                                    subcontact["force_normal_vector"],
-                                    subcontact["force_shear"],
-                                ]
-                            )
-                        )
-                        for subcontact in derived["subcontacts"]
-                    ],
-                    "gap": [subcontact["displacement_normal"] for subcontact in derived["subcontacts"]],
-                    "status": ["open" if subcontact["open"] else "sliding" if subcontact["sliding"] else "closed" for subcontact in derived["subcontacts"]],
-                }
+                    )
+                    for subcontact in derived["subcontacts"]
+                ],
+                "gap": [subcontact["displacement_normal"] for subcontact in derived["subcontacts"]],
+                "status": ["open" if subcontact["open"] else "sliding" if subcontact["sliding"] else "closed" for subcontact in derived["subcontacts"]],
+            }
             # The derived dictionary duplicates the native contact mechanics
             # and can be large. Keep it only for the explicit diagnostic route.
             if include_native:
@@ -390,7 +385,7 @@ def create_compas_dem_results(analysis, raw_results, include_native=False):
             results.set_edge(
                 edge,
                 "force_magnitude",
-                _vector_length(global_resultant),
+                length_vector(global_resultant),
             )
 
         contact_types = {str(record.get("contact_type", "")).lower().replace("_", "-") for record in records}

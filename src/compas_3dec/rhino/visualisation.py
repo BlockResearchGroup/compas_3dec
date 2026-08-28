@@ -1,25 +1,12 @@
 from compas.geometry import Line
 from compas.geometry import Point
-
-
-def _length(vector):
-    return sum(float(value) ** 2 for value in vector) ** 0.5
-
-
-def _dot(a, b):
-    return sum(float(a[index]) * float(b[index]) for index in range(3))
-
-
-def _cross(a, b):
-    return [
-        a[1] * b[2] - a[2] * b[1],
-        a[2] * b[0] - a[0] * b[2],
-        a[0] * b[1] - a[1] * b[0],
-    ]
+from compas.geometry import cross_vectors
+from compas.geometry import dot_vectors
+from compas.geometry import length_vector
 
 
 def _line(point, vector, scale):
-    if _length(vector) <= 1e-30:
+    if length_vector(vector) <= 1e-30:
         return None
     return Line(point, [point[index] + vector[index] * scale for index in range(3)])
 
@@ -36,12 +23,12 @@ def _arrow_lines(point, vector, scale, model_size):
     shaft = _line(point, vector, scale)
     if shaft is None:
         return []
-    direction = [value / _length(vector) for value in vector]
+    direction = [value / length_vector(vector) for value in vector]
     reference = [0.0, 0.0, 1.0]
-    if abs(_dot(direction, reference)) > 0.9:
+    if abs(dot_vectors(direction, reference)) > 0.9:
         reference = [0.0, 1.0, 0.0]
-    side = _cross(direction, reference)
-    side_length = _length(side)
+    side = cross_vectors(direction, reference)
+    side_length = length_vector(side)
     side = [value / side_length for value in side]
     arrow_length = min(0.25 * shaft.length, 0.025 * model_size)
     endpoint = list(shaft.end)
@@ -63,7 +50,7 @@ def _model_size(analysis):
         return 1.0
     minimum = [min(point[index] for point in coordinates) for index in range(3)]
     maximum = [max(point[index] for point in coordinates) for index in range(3)]
-    diagonal = _length([maximum[index] - minimum[index] for index in range(3)])
+    diagonal = length_vector([maximum[index] - minimum[index] for index in range(3)])
     return diagonal or 1.0
 
 
@@ -76,7 +63,7 @@ def _block_size(analysis, fallback):
             continue
         minimum = [min(point[index] for point in points) for index in range(3)]
         maximum = [max(point[index] for point in points) for index in range(3)]
-        diagonal = _length([maximum[index] - minimum[index] for index in range(3)])
+        diagonal = length_vector([maximum[index] - minimum[index] for index in range(3)])
         if diagonal > 1e-30:
             sizes.append(diagonal)
     return min(sizes or [fallback])
@@ -87,7 +74,7 @@ def _interface_size(contact_geometry, fallback):
     if contact_geometry is None:
         return fallback
     points = list(contact_geometry.points)
-    distances = [_length([a[index] - b[index] for index in range(3)]) for position, a in enumerate(points) for b in points[position + 1 :]]
+    distances = [length_vector([a[index] - b[index] for index in range(3)]) for position, a in enumerate(points) for b in points[position + 1 :]]
     return max(distances or [fallback])
 
 
@@ -110,8 +97,8 @@ def build_visualisation(
     """Build backend-neutral COMPAS geometry for Rhino output."""
     model_size = _model_size(analysis)
     if force_scale is None:
-        force_magnitudes = [_length(contact["resultant_force"]) for contact in postprocessed.contacts]
-        force_magnitudes.extend(_length(load["force"]) for load in postprocessed.metadata.get("applied_loads", []))
+        force_magnitudes = [length_vector(contact["resultant_force"]) for contact in postprocessed.contacts]
+        force_magnitudes.extend(length_vector(load["force"]) for load in postprocessed.metadata.get("applied_loads", []))
         maximum_force = max(force_magnitudes or [0.0])
         maximum_length = float(force_length_ratio) * _block_size(
             analysis,
@@ -119,7 +106,7 @@ def build_visualisation(
         )
         force_scale = maximum_length / maximum_force if maximum_force > 1e-30 else 1.0
     if torque_scale is None:
-        torque_magnitudes = [_length(contact["torque_at_normal_point"]) for contact in postprocessed.contacts]
+        torque_magnitudes = [length_vector(contact["torque_at_normal_point"]) for contact in postprocessed.contacts]
         maximum_torque = max(torque_magnitudes or [0.0])
         torque_scale = 0.10 * model_size / maximum_torque if maximum_torque > 1e-30 else force_scale
     geometry = {
@@ -204,7 +191,7 @@ def build_visualisation(
     prescribed_displacements = postprocessed.metadata.get("prescribed_displacements", [])
     if prescribed_displacement_scale is None:
         maximum_displacement = max(
-            (_length(item.get("displacement", [0.0, 0.0, 0.0])) for item in prescribed_displacements),
+            (length_vector(item.get("displacement", [0.0, 0.0, 0.0])) for item in prescribed_displacements),
             default=0.0,
         )
         maximum_length = float(force_length_ratio) * _block_size(analysis, model_size)
@@ -212,7 +199,7 @@ def build_visualisation(
 
     for item in prescribed_displacements:
         vector = item.get("displacement", [0.0, 0.0, 0.0])
-        magnitude = _length(vector)
+        magnitude = length_vector(vector)
         for node in item.get("blocks", []):
             point = block_centroids.get(node)
             if point is None:
@@ -269,7 +256,7 @@ def build_visualisation(
                     {
                         "point": Point(*line.end),
                         "text": "{:.{}f} {}".format(
-                            _length(visual_force) * float(reaction_force_factor),
+                            length_vector(visual_force) * float(reaction_force_factor),
                             int(reaction_label_decimals),
                             reaction_force_unit,
                         ),
@@ -280,7 +267,7 @@ def build_visualisation(
                 {
                     "point": surface_label_point,
                     "text": "{:.{}f} kN/m²".format(
-                        _length(load["traction"]) * 0.001,
+                        length_vector(load["traction"]) * 0.001,
                         int(reaction_label_decimals),
                     ),
                 }
@@ -312,7 +299,7 @@ def build_visualisation(
             free_node = free[0]
             vector = list(contact["resultant_force"])
             toward_support = [block_centroids[support_node][index] - block_centroids[free_node][index] for index in range(3)]
-            if _dot(vector, toward_support) < 0.0:
+            if dot_vectors(vector, toward_support) < 0.0:
                 vector = [-value for value in vector]
             point = contact["resultant_point"]
             reaction_lines = _arrow_lines(point, vector, force_scale, model_size)
@@ -324,7 +311,7 @@ def build_visualisation(
             if reaction_label_mode:
                 converted = [value * reaction_force_factor for value in vector]
                 magnitude_text = "{:.{}f} {}".format(
-                    _length(converted),
+                    length_vector(converted),
                     int(reaction_label_decimals),
                     reaction_force_unit,
                 )
@@ -351,7 +338,7 @@ def build_visualisation(
         )
 
         shear = contact["resultant_shear"]
-        shear_length = _length(shear)
+        shear_length = length_vector(shear)
         if shear_length > 1e-30:
             direction = [value / shear_length for value in shear]
             point = contact["shear_application_point"]

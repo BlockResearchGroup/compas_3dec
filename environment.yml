@@ -6,4 +6,5 @@ dependencies:
   - pip
   - compas >=2.0
   - pip:
+      - compas_dem @ git+https://github.com/BlockResearchGroup/compas_dem.git@main
       - -e .[dev,docs]

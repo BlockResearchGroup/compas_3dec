@@ -6,7 +6,7 @@ from compas_3dec.solver import find_3dec_executable
 from compas_3dec.solver import ThreeDECSolver
 
 
-__author__ = ["Alessandro Dell'Endice, Petras Vestartas"]
+__author__ = ["Alessandro Dell'Endice", "Petras Vestartas"]
 __copyright__ = "Block Research Group"
 __license__ = "MIT License"
 __email__ = "dellendice@arch.ethz.ch"

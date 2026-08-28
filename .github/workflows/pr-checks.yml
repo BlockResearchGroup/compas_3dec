@@ -11,11 +11,13 @@ jobs:
     name: Check Actions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Changelog check
-        uses: Zomzog/changelog-checker@v1.2.0
+      - uses: actions/checkout@v4
         with:
-          fileName: CHANGELOG.md
-          checkNotification: Simple
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      - name: Check that the changelog was updated
+        shell: bash
+        run: |
+          if ! git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -qx "CHANGELOG.md"; then
+            echo "CHANGELOG.md must be updated"
+            exit 1
+          fi

@@ -6,13 +6,21 @@ post-processing rigid-block analyses with 3DEC by Itasca Consulting Group.
 ## Installation
 
 ```bash
-pip install -e .
+pip install compas_3dec
 ```
 
-Install development, visualisation, and documentation dependencies with:
+Install COMPAS DEM interoperability support with:
 
 ```bash
-pip install -e .[dev,docs]
+pip install "compas_3dec[dem]"
+```
+
+For local development, clone the repository and install the development and
+documentation dependencies with:
+
+```bash
+pip install "compas_dem @ git+https://github.com/BlockResearchGroup/compas_dem.git@main"
+pip install -e ".[dev,docs]"
 ```
 
 The 3DEC executable is proprietary and must be installed separately.

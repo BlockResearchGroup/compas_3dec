@@ -71,6 +71,11 @@ def test_parser_rejects_text_without_tagged_records():
         parse_results_text("normal log output only")
 
 
+def test_parser_reports_malformed_prefix_record_with_line_context():
+    with pytest.raises(ValueError, match="Invalid unknown record on log line 1"):
+        parse_results_text("COMPAS3DEC|")
+
+
 def test_parser_normalizes_numeric_3dec_contact_type():
     raw = parse_results_text("COMPAS3DEC|CONTACT|500|0|1|2|0.5|0|0|1|0|0")
 

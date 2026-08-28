@@ -76,10 +76,14 @@ program log off
 
 
 class ThreeDECFish7(ThreeDECFishDialect):
+    """FISH command dialect for 3DEC 7."""
+
     major_version = 7
 
 
 class ThreeDECFish9(ThreeDECFishDialect):
+    """FISH command dialect for 3DEC 9."""
+
     major_version = 9
 
 

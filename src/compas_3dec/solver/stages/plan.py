@@ -108,6 +108,17 @@ def _direct_displacement(displacement, default_steps=1):
     }
 
 
+def _validate_gravity_order(stages):
+    """Require gravity to be the first physical stage when loads are present."""
+    physical = [stage for stage in stages if stage.kind != "initialization"]
+    gravity_indices = [index for index, stage in enumerate(physical) if stage.kind == "gravity"]
+    boundary_indices = [index for index, stage in enumerate(physical) if stage.kind in ("loads", "displacements")]
+    if len(gravity_indices) > 1:
+        raise ValueError("An analysis can contain only one gravity stage.")
+    if boundary_indices and gravity_indices != [0]:
+        raise ValueError("Analyses with loads or displacements require exactly one gravity stage, and gravity must be first.")
+
+
 class ThreeDECStage(Data):
     """Portable description of one semantic analysis stage."""
 
@@ -175,7 +186,7 @@ class ThreeDECStagePlan(Data):
 
     @classmethod
     def from_analysis(cls, analysis):
-        """Build initialization, gravity, load and displacement stages.
+        """Build initialisation, gravity, load and displacement stages.
 
         COMPAS DEM boundary-condition groups become sequential 3DEC stages in
         their registered order. Gravity is extracted into the mandatory first
@@ -191,6 +202,7 @@ class ThreeDECStagePlan(Data):
                 stages = direct_stages
             else:
                 stages = [ThreeDECStage(name="initialization", kind="initialization")] + direct_stages
+            _validate_gravity_order(stages)
             return cls(
                 name="{} stages".format(analysis.name),
                 stages=stages,
@@ -340,6 +352,7 @@ class ThreeDECStagePlan(Data):
                     )
                 )
 
+        _validate_gravity_order(stages)
         return cls(
             name="{} stages".format(analysis.name),
             stages=stages,
@@ -347,6 +360,18 @@ class ThreeDECStagePlan(Data):
         )
 
     def stage(self, kind):
+        """Return the first stage of a given kind.
+
+        Parameters
+        ----------
+        kind : str
+            Semantic stage kind.
+
+        Returns
+        -------
+        :class:`ThreeDECStage` | None
+            The first matching stage, or ``None`` when no match exists.
+        """
         for stage in self.stages:
             if stage.kind == kind:
                 return stage

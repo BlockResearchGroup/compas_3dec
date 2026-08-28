@@ -30,13 +30,12 @@ dependencies = ["compas>=2.0"]
 
 [project.optional-dependencies]
 dem = [
-    "compas_dem @ git+https://github.com/adellendice/compas_dem.git@a2fdb04878c046052e0068c7b9a70c966ca5c706",
+    "compas_dem>0.5.0",
     "compas_model",
 ]
 dev = [
     "build",
     "bump-my-version",
-    "compas_dem @ git+https://github.com/adellendice/compas_dem.git@a2fdb04878c046052e0068c7b9a70c966ca5c706",
     "compas_invocations2",
     "compas_model",
     "invoke>=0.14",
@@ -48,10 +47,10 @@ dev = [
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]"]
 
 [project.urls]
-Homepage = "https://github.com/BRG-research/compas_3dec"
-Documentation = "https://BRG-research.github.io/compas_3dec"
-Repository = "https://github.com/BRG-research/compas_3dec.git"
-Changelog = "https://github.com/BRG-research/compas_3dec/blob/main/CHANGELOG.md"
+Homepage = "https://blockresearchgroup.github.io/compas_3dec"
+Documentation = "https://blockresearchgroup.github.io/compas_3dec"
+Repository = "https://github.com/BlockResearchGroup/compas_3dec.git"
+Changelog = "https://github.com/BlockResearchGroup/compas_3dec/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -90,8 +89,8 @@ replace = "{new_version}"
 
 [[tool.bumpversion.files]]
 filename = "CHANGELOG.md"
-search = "Unreleased"
-replace = "[{new_version}] {now:%Y-%m-%d}"
+search = "## Unreleased"
+replace = "## Unreleased\n\n## [{new_version}] {now:%Y-%m-%d}"
 
 [tool.ruff]
 line-length = 179
@@ -99,11 +98,12 @@ indent-width = 4
 target-version = "py39"
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["D", "E", "F", "I"]
+ignore = ["D100", "D104", "D105", "D107", "D203", "D213"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["I001"]
-"tests/*" = ["I001"]
+"tests/*" = ["D", "I001"]
 "scripts/*" = ["I001"]
 "scripts/view_results_rhino.py" = ["E402", "I001"]
 "src/compas_3dec/solver/fish/dialect.py" = ["E501"]

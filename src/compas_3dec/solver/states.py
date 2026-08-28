@@ -7,7 +7,7 @@ from .io import parse_results_file
 
 
 def applied_loads_at_step(loads, step):
-    """Return the cumulative applied loads at a synchronized load step."""
+    """Return the cumulative applied loads at a synchronised load step."""
     output = []
     for load in loads:
         fraction = min(int(step), int(load["steps"])) / float(load["steps"])
@@ -49,7 +49,7 @@ def applied_loads_at_step(loads, step):
 
 
 def prescribed_displacements_at_step(displacements, step):
-    """Return cumulative prescribed translations at one synchronized step."""
+    """Return cumulative prescribed translations at one synchronised step."""
     output = []
     for item in displacements:
         fraction = min(int(step), int(item["steps"])) / float(item["steps"])
