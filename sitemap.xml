@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://blockresearchgroup.github.io/compas_3dec/</loc>
+         <lastmod>2026-08-28</lastmod>
+    </url>
+    <url>
+         <loc>https://blockresearchgroup.github.io/compas_3dec/installation/</loc>
+         <lastmod>2026-08-28</lastmod>
+    </url>
+    <url>
+         <loc>https://blockresearchgroup.github.io/compas_3dec/license/</loc>
+         <lastmod>2026-08-28</lastmod>
+    </url>
+    <url>
+         <loc>https://blockresearchgroup.github.io/compas_3dec/reference/compas_3dec/</loc>
+         <lastmod>2026-08-28</lastmod>
+    </url>
+    <url>
+         <loc>https://blockresearchgroup.github.io/compas_3dec/reference/compas_3dec.postprocessing/</loc>
+         <lastmod>2026-08-28</lastmod>
+    </url>
+    <url>
+         <loc>https://blockresearchgroup.github.io/compas_3dec/reference/compas_3dec.rhino/</loc>
+         <lastmod>2026-08-28</lastmod>
+    </url>
+    <url>
+         <loc>https://blockresearchgroup.github.io/compas_3dec/reference/compas_3dec.solver/</loc>
+         <lastmod>2026-08-28</lastmod>
+    </url>
+</urlset>

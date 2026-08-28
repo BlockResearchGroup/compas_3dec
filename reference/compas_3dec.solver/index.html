@@ -1,0 +1,4712 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://blockresearchgroup.github.io/compas_3dec/reference/compas_3dec.solver/">
+      
+      
+        <link rel="prev" href="../compas_3dec/">
+      
+      
+        <link rel="next" href="../compas_3dec.postprocessing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Solver - COMPAS 3DEC</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#solver" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="COMPAS 3DEC" class="md-header__button md-logo" aria-label="COMPAS 3DEC" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            COMPAS 3DEC
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Solver
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="light-blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BlockResearchGroup/compas_3dec/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BlockResearchGroup/compas_3dec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="COMPAS 3DEC" class="md-nav__button md-logo" aria-label="COMPAS 3DEC" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    COMPAS 3DEC
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BlockResearchGroup/compas_3dec/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BlockResearchGroup/compas_3dec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compas_3dec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Public API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Solver
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Solver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECAnalysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECAnalysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECAnalysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECAnalysis.from_blockmodel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_blockmodel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECAnalysis.from_dem_problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_dem_problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECBlockMaterial
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECBlockMaterial">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial.E" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial.G" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial.poisson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        poisson
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial.shear_modulus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shear_modulus
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECContactProperties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECContactProperties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECEntityMap
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECEntityMap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.add_block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.add_edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.bind_contact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bind_contact
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.bind_gridpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bind_gridpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.edge_for_regions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        edge_for_regions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.element_guid_for_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        element_guid_for_node
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.gridpoint_distance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        gridpoint_distance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.gridpoint_for_vertex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        gridpoint_for_vertex
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.node_for_element_guid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        node_for_element_guid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.node_for_region" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        node_for_region
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.region_for_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        region_for_node
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.vertex_for_gridpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vertex_for_gridpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECFish7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECFish7
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECFish9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECFish9
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECRawResults
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECRawResults">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.postprocess" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postprocess
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postprocess_blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_contacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postprocess_contacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postprocess_failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.to_compas_dem_results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_compas_dem_results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECSolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECSolver
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECSolver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECSolver.prepare_run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECSolver.report_solve_summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        report_solve_summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECSolver.solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solve
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECStage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECStage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECStagePlan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECStagePlan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECStagePlan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECStagePlan.from_analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECStagePlan.stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECWorkspace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECWorkspace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.manifest_path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        manifest_path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.initialise_manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        initialise_manifest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.read_manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_manifest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.update_manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_manifest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.write_analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.write_text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_text
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.bind_initial_gridpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bind_initial_gridpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.find_3dec_executable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_3dec_executable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.fish_dialect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fish_dialect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.load_result_state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_result_state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.parse_results_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_results_file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.parse_results_text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_results_text
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.result_state_plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        result_state_plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compas_3dec.postprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Postprocessing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compas_3dec.rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECAnalysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECAnalysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECAnalysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECAnalysis.from_blockmodel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_blockmodel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECAnalysis.from_dem_problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_dem_problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECBlockMaterial
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECBlockMaterial">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial.E" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial.G" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial.poisson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        poisson
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECBlockMaterial.shear_modulus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shear_modulus
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECContactProperties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECContactProperties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECEntityMap
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECEntityMap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.add_block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.add_edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.bind_contact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bind_contact
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.bind_gridpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bind_gridpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.edge_for_regions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        edge_for_regions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.element_guid_for_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        element_guid_for_node
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.gridpoint_distance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        gridpoint_distance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.gridpoint_for_vertex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        gridpoint_for_vertex
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.node_for_element_guid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        node_for_element_guid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.node_for_region" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        node_for_region
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.region_for_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        region_for_node
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECEntityMap.vertex_for_gridpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vertex_for_gridpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECFish7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECFish7
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECFish9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECFish9
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECRawResults
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECRawResults">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.postprocess" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postprocess
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postprocess_blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_contacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postprocess_contacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postprocess_failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECRawResults.to_compas_dem_results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_compas_dem_results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECSolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECSolver
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECSolver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECSolver.prepare_run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prepare_run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECSolver.report_solve_summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        report_solve_summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECSolver.solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solve
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECStage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECStage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECStagePlan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECStagePlan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECStagePlan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECStagePlan.from_analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECStagePlan.stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ThreeDECWorkspace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ThreeDECWorkspace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.manifest_path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        manifest_path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.initialise_manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        initialise_manifest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.read_manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_manifest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.update_manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update_manifest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.write_analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compas_3dec.solver.ThreeDECWorkspace.write_text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_text
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.bind_initial_gridpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bind_initial_gridpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.find_3dec_executable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_3dec_executable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.fish_dialect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fish_dialect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.load_result_state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_result_state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.parse_results_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_results_file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.parse_results_text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_results_text
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compas_3dec.solver.result_state_plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        result_state_plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="solver">Solver<a class="headerlink" href="#solver" title="Permanent link">&para;</a></h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="compas_3dec.solver"></a>
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECAnalysis" class="doc doc-heading">
+            <code>ThreeDECAnalysis</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECAnalysis" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas.data.Data">Data</span></code></p>
+
+
+
+        <p>Portable prepared input for a 3DEC analysis.</p>
+<p>The analysis is a serialisable snapshot. Runtime configuration such as an
+executable path or working directory belongs to :class:<code>ThreeDECSolver</code>
+and is intentionally excluded.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECAnalysis.from_blockmodel" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">from_blockmodel</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECAnalysis.from_blockmodel" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create a prepared analysis from a COMPAS DEM model and problem.</p>
+<p>The method uses public model/problem data wherever available, without
+retaining either complete object. The COMPAS graph node is deliberately
+reused as the 3DEC region number.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>model</code>
+            </td>
+            <td>
+                  <code><span title="compas_dem.models.BlockModel">BlockModel</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Source block model.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>problem</code>
+            </td>
+            <td>
+                  <code><span title="compas_dem.problem.Problem">Problem</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Loads, supports, contact properties and solver options.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECAnalysis.from_dem_problem" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">from_dem_problem</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECAnalysis.from_dem_problem" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create a prepared analysis from a refactored COMPAS DEM problem.</p>
+<p>In the current <code>compas_dem</code> API the model is a transient reference
+on <code>Problem</code>. When a complete <code>compas_dem.models.Analysis</code> is
+deserialised, it restores that reference before the problem is solved.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECBlockMaterial" class="doc doc-heading">
+            <code>ThreeDECBlockMaterial</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECBlockMaterial" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas.data.Data">Data</span></code></p>
+
+
+
+        <p>Isotropic material assigned directly to 3DEC blocks.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>density</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mass density in kilograms per cubic metre.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>young_modulus</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Young's modulus in pascals.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>poisson_ratio</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Poisson's ratio.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Material name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>Rigid blocks use only <code>density</code> directly in the 3DEC input deck.
+Young's modulus and Poisson's ratio describe the source material and can
+be used to derive joint stiffness or future deformable-block properties.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="compas_3dec.solver.ThreeDECBlockMaterial.E" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">E</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECBlockMaterial.E" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>float: Young's modulus in pascals.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="compas_3dec.solver.ThreeDECBlockMaterial.G" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">G</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECBlockMaterial.G" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>float: Isotropic shear modulus in pascals.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="compas_3dec.solver.ThreeDECBlockMaterial.poisson" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">poisson</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECBlockMaterial.poisson" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>float: Poisson's ratio.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="compas_3dec.solver.ThreeDECBlockMaterial.shear_modulus" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">shear_modulus</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECBlockMaterial.shear_modulus" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>float: Isotropic shear modulus in pascals.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECContactProperties" class="doc doc-heading">
+            <code>ThreeDECContactProperties</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECContactProperties" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas.data.Data">Data</span></code></p>
+
+
+
+        <p>Direct contact parameters understood by the 3DEC deck renderer.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>stiffness_normal</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Normal joint stiffness in pascals per metre.</p>
+              </div>
+            </td>
+            <td>
+                  <code>100000000000.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stiffness_shear</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Shear joint stiffness in pascals per metre.</p>
+              </div>
+            </td>
+            <td>
+                  <code>70000000000.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>friction</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Friction angle in degrees.</p>
+              </div>
+            </td>
+            <td>
+                  <code>35.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cohesion</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Cohesive strength in pascals.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tension</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tensile strength in pascals.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Contact-property name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECEntityMap" class="doc doc-heading">
+            <code>ThreeDECEntityMap</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas.data.Data">Data</span></code></p>
+
+
+
+        <p>Persistent correspondence between analysis and 3DEC entities.</p>
+<p>Block identity is explicit and does not depend on geometry. Coordinates are
+retained only to establish the initial mesh-vertex to 3DEC-gridpoint
+correspondence. Once bound, result import uses the gridpoint IDs.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>blocks</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Block identity records.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>vertices</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mesh vertex and 3DEC gridpoint records.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edges</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Interaction graph edge and 3DEC contact records.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>schema_version</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Version of the serialised mapping schema.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the mapping.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.add_block" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">add_block</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">element_guid</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">vertices</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.add_block" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Register a block and its initial mesh vertices.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.add_edge" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">add_edge</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">contact_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s1">'model'</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.add_edge" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Register an interaction graph edge.</p>
+<p>The edge orientation from the COMPAS model is preserved. Lookup by
+region pair is orientation independent.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.bind_contact" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">bind_contact</span><span class="p">(</span><span class="n">region_a</span><span class="p">,</span> <span class="n">region_b</span><span class="p">,</span> <span class="n">contact_id</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.bind_contact" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Associate a 3DEC contact with an edge, creating it when discovered.</p>
+<p>3DEC is authoritative for contact topology. Therefore an input
+<code>BlockModel</code> does not need to contain contact edges before solving.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.bind_gridpoints" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">bind_gridpoints</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">gridpoints</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.bind_gridpoints" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Bind initial mesh vertices to 3DEC gridpoints by coordinates.</p>
+<p>This is the only geometry-based part of the identity mapping. Every
+match must be unique and within <code>tolerance</code>. The resulting
+gridpoint IDs are then persisted and used for all later result states.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>node</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>COMPAS DEM graph node.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gridpoints</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="int">int</span>, <span title="sequence">sequence</span>[<span title="float">float</span>]] | <span title="list">list</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Either <code>{gridpoint_id: xyz}</code> or records containing <code>id</code> and
+<code>xyz</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tolerance</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum initial coordinate distance.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1e-06</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>overwrite</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Permit replacement of an existing binding.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.edge_for_regions" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">edge_for_regions</span><span class="p">(</span><span class="n">region_a</span><span class="p">,</span> <span class="n">region_b</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.edge_for_regions" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the model edge joining two 3DEC regions.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.element_guid_for_node" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">element_guid_for_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.element_guid_for_node" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the element GUID mapped to a model node.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.gridpoint_distance" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">gridpoint_distance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">vertex</span><span class="p">,</span> <span class="n">xyz</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.gridpoint_distance" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the distance from a stored initial vertex position.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.gridpoint_for_vertex" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">gridpoint_for_vertex</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">vertex</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.gridpoint_for_vertex" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the bound 3DEC gridpoint for a model vertex.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.node_for_element_guid" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">node_for_element_guid</span><span class="p">(</span><span class="n">element_guid</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.node_for_element_guid" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the model node mapped to an element GUID.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.node_for_region" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">node_for_region</span><span class="p">(</span><span class="n">region</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.node_for_region" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the model node mapped to a 3DEC region.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.region_for_node" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">region_for_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.region_for_node" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the 3DEC region mapped to a model node.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECEntityMap.vertex_for_gridpoint" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">vertex_for_gridpoint</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">gridpoint</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECEntityMap.vertex_for_gridpoint" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the model vertex bound to a 3DEC gridpoint.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECFish7" class="doc doc-heading">
+            <code>ThreeDECFish7</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECFish7" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas_3dec.solver.fish.dialect.ThreeDECFishDialect">ThreeDECFishDialect</span></code></p>
+
+
+
+        <p>FISH command dialect for 3DEC 7.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECFish9" class="doc doc-heading">
+            <code>ThreeDECFish9</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECFish9" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas_3dec.solver.fish.dialect.ThreeDECFishDialect">ThreeDECFishDialect</span></code></p>
+
+
+
+        <p>FISH command dialect for 3DEC 9.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECRawResults" class="doc doc-heading">
+            <code>ThreeDECRawResults</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECRawResults" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas.data.Data">Data</span></code></p>
+
+
+
+        <p>Serialisable native records produced directly by 3DEC.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>blocks</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Native block records.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>gridpoints</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Native gridpoint records.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>contacts</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Native contact and subcontact records.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>metadata</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Solver and result-state metadata.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>schema_version</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Native result schema version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Result-set name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECRawResults.postprocess" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">postprocess</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECRawResults.postprocess" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Derive selected mechanics from these native records.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>analysis</code>
+            </td>
+            <td>
+                  <code>:class:`compas_3dec.analysis.ThreeDECAnalysis`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Analysis providing geometry and entity mappings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Options forwarded to :meth:<code>ThreeDECPostProcessor.process</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECPostProcessedResults`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Selected derived mechanics.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECRawResults.postprocess_blocks" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">postprocess_blocks</span><span class="p">(</span><span class="n">analysis</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_blocks" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute only updated rigid-block transformations.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>analysis</code>
+            </td>
+            <td>
+                  <code>:class:`compas_3dec.analysis.ThreeDECAnalysis`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Analysis providing geometry and entity mappings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECPostProcessedResults`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Block transformations without contact mechanics.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECRawResults.postprocess_contacts" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">postprocess_contacts</span><span class="p">(</span><span class="n">analysis</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_contacts" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute canonical contact forces, resultants, and application points.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>analysis</code>
+            </td>
+            <td>
+                  <code>:class:`compas_3dec.analysis.ThreeDECAnalysis`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Analysis providing geometry and entity mappings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECPostProcessedResults`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Contact mechanics without failure indicators.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECRawResults.postprocess_failure" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">postprocess_failure</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECRawResults.postprocess_failure" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute contact mechanics and failure-state indicators.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>analysis</code>
+            </td>
+            <td>
+                  <code>:class:`compas_3dec.analysis.ThreeDECAnalysis`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Analysis providing geometry and entity mappings.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Failure thresholds forwarded to the postprocessor.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECPostProcessedResults`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Contact mechanics with opening, sliding, and hinge indicators.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECRawResults.to_compas_dem_results" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_compas_dem_results</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="n">include_native</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECRawResults.to_compas_dem_results" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert these records to the compact <code>compas_dem.Results</code> contract.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>analysis</code>
+            </td>
+            <td>
+                  <code>:class:`compas_3dec.analysis.ThreeDECAnalysis`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Analysis providing the entity mapping.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>include_native</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Include duplicated native diagnostic records. Default is <code>False</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`compas_dem.problem.Results`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Compact solver-independent result contract.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECSolver" class="doc doc-heading">
+            <code>ThreeDECSolver</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECSolver" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Runtime orchestration for a 3DEC analysis.</p>
+<p>Paths and executable configuration deliberately live here rather than in
+the serialisable :class:<code>ThreeDECAnalysis</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECSolver.prepare_run" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">prepare_run</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="n">run_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECSolver.prepare_run" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create an isolated dry-run workspace and all solver input files.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>analysis</code>
+            </td>
+            <td>
+                  <code>:class:`compas_3dec.analysis.ThreeDECAnalysis`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Portable prepared analysis.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>run_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Explicit safe run-directory name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECWorkspace`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Workspace containing the generated data files and manifest.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECSolver.report_solve_summary" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">report_solve_summary</span><span class="p">(</span><span class="n">raw_results</span><span class="p">,</span> <span class="n">elapsed_seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECSolver.report_solve_summary" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Print the elapsed time, solve ratio, and equilibrium status.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>raw_results</code>
+            </td>
+            <td>
+                  <code>:class:`ThreeDECRawResults`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Native results returned by 3DEC.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>elapsed_seconds</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Total elapsed time of the solver workflow. If omitted, the value
+stored in the result metadata is used.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether equilibrium was reached, or <code>None</code> when no solve ratio
+was exported by 3DEC.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECSolver.solve" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">solve</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="n">run_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECSolver.solve" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Run a prepared analysis and return native <code>ThreeDECRawResults</code>.</p>
+<p>The 3DEC executable is launched without a shell. The generated data
+file is passed as its final command-line argument, matching the legacy
+invocation used by this repository.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>analysis</code>
+            </td>
+            <td>
+                  <code>:class:`compas_3dec.analysis.ThreeDECAnalysis`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Portable prepared analysis.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>run_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Explicit safe run-directory name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECRawResults`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Native records for the final requested state.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECStage" class="doc doc-heading">
+            <code>ThreeDECStage</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECStage" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas.data.Data">Data</span></code></p>
+
+
+
+        <p>Portable description of one semantic analysis stage.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECStagePlan" class="doc doc-heading">
+            <code>ThreeDECStagePlan</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECStagePlan" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="compas.data.Data">Data</span></code></p>
+
+
+
+        <p>Ordered semantic stages derived from a prepared analysis.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECStagePlan.from_analysis" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">from_analysis</span><span class="p">(</span><span class="n">analysis</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECStagePlan.from_analysis" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Build initialisation, gravity, load and displacement stages.</p>
+<p>COMPAS DEM boundary-condition groups become sequential 3DEC stages in
+their registered order. Gravity is extracted into the mandatory first
+stage. A group containing both loads and prescribed displacements is
+split into a load stage followed by a displacement stage. Supports are
+read from the model during analysis preparation; prescribed zero
+translations are not reinterpreted as supports.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECStagePlan.stage" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">stage</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECStagePlan.stage" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the first stage of a given kind.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>kind</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Semantic stage kind.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECStage` | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The first matching stage, or <code>None</code> when no match exists.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="compas_3dec.solver.ThreeDECWorkspace" class="doc doc-heading">
+            <code>ThreeDECWorkspace</code>
+
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Filesystem boundary for one isolated 3DEC run.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="compas_3dec.solver.ThreeDECWorkspace.manifest_path" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">manifest_path</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace.manifest_path" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Path to the JSON run manifest.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECWorkspace.create" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">create</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">analysis_name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace.create" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create a unique run directory.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>root</code>
+            </td>
+            <td>
+                  <code><span title="compas_3dec.solver.io.workspace.ThreeDECWorkspace.path">path</span> - <span title="like">like</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Parent directory. A temporary directory is used when omitted.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>run_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Explicit single-directory identifier. Path components are rejected.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>analysis_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Prefix used for an automatically generated identifier.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECWorkspace`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The created workspace.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECWorkspace.file" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">file</span><span class="p">(</span><span class="n">relative_path</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace.file" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Resolve a path relative to this workspace without allowing escape.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECWorkspace.initialise_manifest" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">initialise_manifest</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">files</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace.initialise_manifest" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create and return the initial run manifest.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECWorkspace.read_manifest" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">read_manifest</span><span class="p">()</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace.read_manifest" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Read the run manifest.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECWorkspace.update_manifest" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">update_manifest</span><span class="p">(</span><span class="o">**</span><span class="n">updates</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace.update_manifest" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Update and return the run manifest.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECWorkspace.write_analysis" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">write_analysis</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="n">relative_path</span><span class="o">=</span><span class="s1">'analysis.json'</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace.write_analysis" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Serialise an analysis inside the workspace.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="compas_3dec.solver.ThreeDECWorkspace.write_text" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">write_text</span><span class="p">(</span><span class="n">relative_path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.ThreeDECWorkspace.write_text" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Write UTF-8 text inside the workspace.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="compas_3dec.solver.bind_initial_gridpoints" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">bind_initial_gridpoints</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="n">raw_results</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.bind_initial_gridpoints" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Bind initial 3DEC gridpoint IDs to prepared COMPAS mesh vertices.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="compas_3dec.solver.find_3dec_executable" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">find_3dec_executable</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">search_roots</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.find_3dec_executable" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Find a locally installed 3DEC executable.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Requested 3DEC version, for example <code>"7.0"</code> or <code>"9.0"</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>search_roots</code>
+            </td>
+            <td>
+                  <code>sequence of path-like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Installation roots to inspect instead of the platform defaults. Each
+path may be either an Itasca directory or its parent directory.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`pathlib.Path` or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The preferred executable, or <code>None</code> if no matching installation is
+found.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p><code>COMPAS_3DEC_EXECUTABLE</code> takes priority over automatic discovery.
+Automatic discovery checks <code>PATH</code> and then bounded <code>Itasca/3DEC*</code>
+installation directories; it never searches an entire drive.</p>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="compas_3dec.solver.fish_dialect" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">fish_dialect</span><span class="p">(</span><span class="n">version</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.fish_dialect" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return the FISH dialect selected once for a solver instance.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="compas_3dec.solver.load_result_state" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">load_result_state</span><span class="p">(</span><span class="n">run_directory</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s1">'final'</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.load_result_state" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Load an analysis and one named native result state from a run folder.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="compas_3dec.solver.parse_results_file" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">parse_results_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.parse_results_file" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Parse a tagged 3DEC result log file.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filepath</code>
+            </td>
+            <td>
+                  <code><span title="path">path</span> - <span title="like">like</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Result log path.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>class:`ThreeDECRawResults`</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Parsed native solver records.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="compas_3dec.solver.parse_results_text" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">parse_results_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.parse_results_text" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Parse tagged FISH log output into portable raw result records.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="compas_3dec.solver.result_state_plan" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">result_state_plan</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="n">stage_plan</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#compas_3dec.solver.result_state_plan" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Build the ordered result-state index for an analysis.</p>
+<p>A prepared COMPAS DEM analysis stores boundary-condition groups rather than
+direct stages. In that case the solver passes the semantic stage plan it has
+already derived from those groups.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; ETH Zurich - Block Research Group
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.sections", "navigation.top", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
